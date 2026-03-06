@@ -318,6 +318,48 @@ body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;overflow-x:
 }
 .stream-card .stream-label span{font-size:13px;font-weight:600}
 
+/* ── X Videos carousel ── */
+.xvideos-carousel{
+  padding:0 0 40px;
+  overflow:hidden;
+}
+.xvideos-track{
+  display:flex;
+  gap:20px;
+  padding:16px 20px;
+  overflow-x:auto;
+  scroll-snap-type:x proximity;
+  -webkit-overflow-scrolling:touch;
+  cursor:grab;
+  scrollbar-width:none;
+  perspective:800px;
+}
+.xvideos-track::-webkit-scrollbar{display:none}
+.xvideos-track.dragging{cursor:grabbing;scroll-snap-type:none}
+.xvideo-card{
+  flex:0 0 400px;
+  min-height:460px;
+  border-radius:12px;
+  -webkit-mask-image:-webkit-radial-gradient(white,black);
+  overflow:hidden;
+  background:#0a0a0a;
+  box-shadow:0 2px 8px rgba(0,0,0,0.3), 0 8px 25px rgba(0,0,0,0.15), 0 20px 50px rgba(0,0,0,0.1);
+  transform-style:preserve-3d;
+  transition:box-shadow 0.5s ease;
+  scroll-snap-align:center;
+  will-change:transform;
+}
+.xvideo-card:hover{
+  box-shadow:0 4px 12px rgba(0,0,0,0.35), 0 12px 35px rgba(0,0,0,0.2), 0 30px 60px rgba(0,0,0,0.15);
+  z-index:10;
+}
+.xvideo-card .twitter-tweet-rendered,
+.xvideo-card twitter-widget,
+.xvideo-card .twitter-tweet{
+  margin:0!important;max-width:100%!important;width:100%!important;
+}
+.xvideo-card iframe{border:none!important;border-radius:0!important}
+
 /* ── Responsive ── */
 @media(max-width:900px){
   .grid{grid-template-columns:repeat(4,1fr)}
@@ -326,6 +368,7 @@ body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;overflow-x:
   .video-section{flex-direction:column}
   .tile.featured{aspect-ratio:auto}
   .stream-card{flex:0 0 calc((100vw - 80px) / 3)}
+  .xvideo-card{flex:0 0 360px;min-height:420px}
 }
 @media(max-width:500px){
   .grid{grid-template-columns:repeat(3,1fr)}
@@ -333,6 +376,7 @@ body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;overflow-x:
   .featured-section{flex-direction:column}
   .video-section{flex-direction:column}
   .stream-card{flex:0 0 calc((100vw - 60px) / 2)}
+  .xvideo-card{flex:0 0 300px;min-height:380px}
 }
 </style>
 </head>
@@ -364,6 +408,10 @@ body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;overflow-x:
 
 <div class="streams-carousel">
   <div class="streams-track" id="streams"></div>
+</div>
+
+<div class="xvideos-carousel">
+  <div class="xvideos-track" id="xvideos"></div>
 </div>
 
 <div class="video-section" id="video-section">
@@ -711,86 +759,151 @@ const TWEETS = [
 })();
 
 // ═══════════════════════════════════════════════════════════
-// STREAMS CAROUSEL
+// STREAMS CAROUSEL — chronological, auto-updates from YouTube RSS
 // ═══════════════════════════════════════════════════════════
 
-const STREAMS = [
-  { id:'mW3bL8Ig-hc', title:'Cursor, Coding & Contrastive Learning' },
-  { id:'9yrF_9bZWOk', title:'Comparing Britain & California 🇬🇧' },
-  { id:'rG3D1c9cXWc', title:'Why I love Star Wars' },
-  { id:'J7TiwnE1wrQ', title:'Astral Planing with a Drone 🚁' },
-  { id:'Sk2_LdB5nTc', title:'Why I am supporting Restore Britain 🇬🇧' },
-  { id:'PqpShEL43d0', title:'Being Numberless 🌅' },
-  { id:'BZNs-uqtAJ8', title:'Snow Streaming' },
-  { id:'Ed4hOlcsZd4', title:'Aura Explorer 🔮' },
-  { id:'pWbVIBzWfJk', title:'The Politics of Robotics' },
-  { id:'38mLfGHUCY8', title:'Why SpaceX will be worth $10 trillion' },
-  { id:'_cLRyzVWEPE', title:'Sunrise' },
-  { id:'Q35p5FCCJw8', title:'Sunrise Sit' },
-  { id:'WdxRJmU1xiI', title:'What is it like in Silicon Valley?' },
-  { id:'QGVj06bIYqA', title:'When was the last time you sat comfortably?' },
-  { id:'45J711I-vRQ', title:'Why I Love Communal Living' },
-  { id:'p1zw_6lDB3Q', title:'Avoid YouTubers Who Rent Yachts' },
-  { id:'kM2JYlC1KWQ', title:'Why I have mass unfollowed on X' },
-  { id:'gkzDpPRl4B4', title:'How I became an American Citizen' },
-  { id:'K9Iv-Q9GT9Q', title:'How to get your first Golden PDF' },
-  { id:'ppe6forbQoM', title:'Walk & Talk in San Francisco' },
-  { id:'BC7GalsrkNs', title:'Why You Should Invest in SpaceX' },
-  { id:'x51cAbyg3XU', title:'Can Ethereum Scale?' },
-  { id:'HC-78KJUY1A', title:'What is Ethereum?' },
-  { id:'MetwPTcDbB0', title:'The Problem with AI' },
-  { id:'Aa-JUkVSA3Q', title:'Morning Routine in California' },
-  { id:'gQQvbMPattE', title:'How to Build a Startup' },
-  { id:'SkzqrXQUkq4', title:'The Future of Work' },
-  { id:'6Xy19Q9fMe8', title:'Why I Moved to America' },
-  { id:'U7F9L1Mb1gQ', title:'Life in San Francisco' },
-  { id:'lzZOOqXDD-E', title:'The Best Books I Have Read' },
-  { id:'Tl5IlBEoKq4', title:'Reflections on 2023' },
-  { id:'lznzerG03cc', title:'Morning in Marin' },
-  { id:'xxetkG0ule8', title:'Sunset Stream' },
-  { id:'W1H3ScGltDE', title:'Building in Public' },
-  { id:'EE5LQIVJQr4', title:'The Power of Saying No' },
-  { id:'yr_ibL9Mxw4', title:'Why I Write Online' },
-  { id:'qJtVi613_yc', title:'Conversations on Crypto' },
-  { id:'-QOXZPOBC-U', title:'Afternoon Thoughts' },
-  { id:'Dzl0yGGMCv8', title:'San Francisco Living' },
-  { id:'a0QkFREZ270', title:'The Creator Economy' },
-  { id:'rYxPBk8X5mM', title:'Deep Work Session' },
-  { id:'n3GaF8YDA5w', title:'Stream from Home' },
-  { id:'EJAhYM7S77U', title:'Morning Coffee Stream' },
-  { id:'NUbCUS1o-9w', title:'Weekend Thoughts' },
-  { id:'xyWXNVw_IDw', title:'Evening Stream' },
-  { id:'gJu36NfHhMc', title:'Live Q&A' },
-  { id:'iSW6rA8M82s', title:'Studio Session' },
-  { id:'w4f_z5c9eKo', title:'Sunday Stream' },
-  { id:'D2WpVVZjEnQ', title:'Outdoor Stream' },
-  { id:'fO0XNFRF2Bo', title:'Late Night Stream' },
-  { id:'pl3SRTH0KNI', title:'Morning Stream' },
-  { id:'wPjaz-4jGog', title:'Live Coding' },
-  { id:'XgCuI3to5GA', title:'Chat & Chill' },
-  { id:'a6tdPDoJEqQ', title:'Afternoon Stream' },
-  { id:'A5o2YorNNx8', title:'Weekend Live' },
-  { id:'8TmbnJNWiIQ', title:'Evening Thoughts' },
-  { id:'60VyNi_DOPQ', title:'Sunrise Stream' },
-  { id:'hywg4FcYpc4', title:'Night Stream' },
+// Known streams in chronological order (newest first)
+const STREAM_IDS = [
+  'mW3bL8Ig-hc','9yrF_9bZWOk','rG3D1c9cXWc','J7TiwnE1wrQ',
+  'Sk2_LdB5nTc','PqpShEL43d0','BZNs-uqtAJ8','Ed4hOlcsZd4',
+  'pWbVIBzWfJk','38mLfGHUCY8','_cLRyzVWEPE','Q35p5FCCJw8',
+  'WdxRJmU1xiI','QGVj06bIYqA','45J711I-vRQ','p1zw_6lDB3Q',
+  'kM2JYlC1KWQ','gkzDpPRl4B4','K9Iv-Q9GT9Q','ppe6forbQoM',
+  'BC7GalsrkNs','x51cAbyg3XU','HC-78KJUY1A','MetwPTcDbB0',
+  'Aa-JUkVSA3Q','gQQvbMPattE','SkzqrXQUkq4','6Xy19Q9fMe8',
+  'U7F9L1Mb1gQ','lzZOOqXDD-E','Tl5IlBEoKq4','lznzerG03cc',
+  'xxetkG0ule8','W1H3ScGltDE','EE5LQIVJQr4','yr_ibL9Mxw4',
+  'qJtVi613_yc','-QOXZPOBC-U','Dzl0yGGMCv8','a0QkFREZ270',
+  'rYxPBk8X5mM','n3GaF8YDA5w','EJAhYM7S77U','NUbCUS1o-9w',
+  'xyWXNVw_IDw','gJu36NfHhMc','iSW6rA8M82s','w4f_z5c9eKo',
+  'D2WpVVZjEnQ','fO0XNFRF2Bo','pl3SRTH0KNI','wPjaz-4jGog',
+  'XgCuI3to5GA','a6tdPDoJEqQ','A5o2YorNNx8','8TmbnJNWiIQ',
+  '60VyNi_DOPQ','hywg4FcYpc4',
 ];
 
-(function buildStreams() {
-  const track = document.getElementById('streams');
-  const shuffled = shuffle(STREAMS);
+const STREAMS_CACHE_KEY = 'ricburton_streams_v1';
 
-  shuffled.forEach(stream => {
+function loadStreamsCache() {
+  try { return JSON.parse(localStorage.getItem(STREAMS_CACHE_KEY)) || { titles:{}, discovered:[], ts:0 }; }
+  catch(e) { return { titles:{}, discovered:[], ts:0 }; }
+}
+function saveStreamsCache(c) {
+  try { localStorage.setItem(STREAMS_CACHE_KEY, JSON.stringify(c)); } catch(e) {}
+}
+
+(async function buildStreams() {
+  const track = document.getElementById('streams');
+  const cache = loadStreamsCache();
+  const knownSet = new Set(STREAM_IDS);
+
+  // Fetch YouTube RSS for new videos — any new IDs get prepended
+  try {
+    const feedUrl = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCnpAcVUxoOc05E5dyAvEVMg';
+    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.status === 'ok' && data.items) {
+        const newFromRSS = [];
+        data.items.forEach(item => {
+          const match = item.link && item.link.match(/[?&]v=([^&]+)/);
+          if (!match) return;
+          const id = match[1];
+          cache.titles[id] = item.title; // always update titles from RSS
+          if (!knownSet.has(id) && !cache.discovered.includes(id)) {
+            newFromRSS.push(id);
+          }
+        });
+        // Prepend newly discovered IDs (newest first from RSS)
+        if (newFromRSS.length) {
+          cache.discovered = [...newFromRSS, ...cache.discovered];
+        }
+        cache.ts = Date.now();
+        saveStreamsCache(cache);
+      }
+    }
+  } catch(e) { console.log('Streams RSS fetch failed:', e); }
+
+  // Build final ordered list: discovered (newest) → known (chronological)
+  const allIds = [...cache.discovered, ...STREAM_IDS];
+
+  allIds.forEach(id => {
+    const title = cache.titles[id] || '';
     const a = document.createElement('a');
     a.className = 'stream-card';
-    a.href = `https://www.youtube.com/watch?v=${stream.id}`;
+    a.href = `https://www.youtube.com/watch?v=${id}`;
     a.target = '_blank';
     a.rel = 'noopener';
     a.style.cssText = tiltVars();
     a.innerHTML = `
-      <div class="stream-thumb" style="background-image:url('https://img.youtube.com/vi/${stream.id}/hqdefault.jpg')"></div>
-      <div class="stream-label"><small>Stream</small><span>${stream.title}</span></div>`;
+      <div class="stream-thumb" style="background-image:url('https://img.youtube.com/vi/${id}/hqdefault.jpg')"></div>
+      <div class="stream-label"><small>Stream</small><span>${title}</span></div>`;
     track.appendChild(a);
   });
+
+  // ── Drag to scroll ──
+  let isDown = false, startX, scrollLeft;
+
+  track.addEventListener('mousedown', e => {
+    isDown = true;
+    track.classList.add('dragging');
+    startX = e.pageX - track.offsetLeft;
+    scrollLeft = track.scrollLeft;
+  });
+  track.addEventListener('mouseleave', () => { isDown = false; track.classList.remove('dragging'); });
+  track.addEventListener('mouseup', () => { isDown = false; track.classList.remove('dragging'); });
+  track.addEventListener('mousemove', e => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - track.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    track.scrollLeft = scrollLeft - walk;
+  });
+})();
+
+// ═══════════════════════════════════════════════════════════
+// X VIDEOS CAROUSEL — native X video uploads ≥ 1 min
+// ═══════════════════════════════════════════════════════════
+
+const X_VIDEO_IDS = [
+  '2028451127315075201',
+  '2027877725533581631',
+  '2026274613228122116',
+  '2026129526204563901',
+  '2025704381874577573',
+  '2024922611738632695',
+  '2024453457579827620',
+  '2020859241876050057',
+];
+
+(function buildXVideos() {
+  const track = document.getElementById('xvideos');
+
+  // Create card containers
+  const cards = X_VIDEO_IDS.map(id => {
+    const card = document.createElement('div');
+    card.className = 'xvideo-card';
+    card.style.cssText = tiltVars();
+    card.dataset.tweetId = id;
+    track.appendChild(card);
+    return card;
+  });
+
+  // Use Twitter widgets (already loaded by tweet carousel) to embed video tweets
+  function embedVideos() {
+    if (!window.twttr || !twttr.widgets) {
+      setTimeout(embedVideos, 500);
+      return;
+    }
+    cards.forEach(card => {
+      twttr.widgets.createTweet(card.dataset.tweetId, card, {
+        theme: 'dark',
+        conversation: 'none',
+        width: 400,
+        dnt: true,
+      });
+    });
+  }
+  embedVideos();
 
   // ── Drag to scroll ──
   let isDown = false, startX, scrollLeft;
@@ -893,7 +1006,7 @@ function startWind() {
     const windDirX = speed > 0.3 ? vx / speed : 0;
     const windDirY = speed > 0.3 ? vy / speed : 0;
 
-    const tiles = document.querySelectorAll('.tile, .tweet-card, .video-card, .stream-card');
+    const tiles = document.querySelectorAll('.tile, .tweet-card, .video-card, .stream-card, .xvideo-card');
 
     for (const tile of tiles) {
       let s = states.get(tile);
