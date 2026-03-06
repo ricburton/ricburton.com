@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Richard Burton</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--sky)}
+body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;overflow-x:hidden;color:#fff;-webkit-font-smoothing:antialiased}
+
+/* ── Social bar ── */
+.social-bar{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:14px;
+  padding:32px 20px 20px;
+}
+.social-buttons{
+  display:flex;
+  gap:10px;
+}
+.social-buttons a{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 16px;
+  border-radius:8px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.1);
+  color:#fff;
+  text-decoration:none;
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:0.2px;
+  transition:background 0.3s, border-color 0.3s;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+.social-buttons a:hover{
+  background:rgba(255,255,255,0.14);
+  border-color:rgba(255,255,255,0.2);
+}
+.social-buttons a span{
+  opacity:0.5;
+  font-weight:400;
+}
+.social-links{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+.social-links a{
+  color:rgba(255,255,255,0.45);
+  text-decoration:none;
+  font-size:12px;
+  font-weight:500;
+  letter-spacing:0.5px;
+  transition:color 0.3s;
+}
+.social-links a:hover{
+  color:rgba(255,255,255,0.85);
+}
+.social-links .dot{
+  color:rgba(255,255,255,0.2);
+  font-size:10px;
+  user-select:none;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  gap:18px;
+  padding:20px;
+  perspective:800px;
+}
+
+.tile{
+  position:relative;
+  overflow:hidden;
+  cursor:pointer;
+  aspect-ratio:1;
+  text-decoration:none;
+  color:#fff;
+  display:block;
+  background:#0a0a0a;
+  border-radius:12px;
+  /* Apple-style continuous corner smoothing */
+  -webkit-mask-image:-webkit-radial-gradient(white,black);
+  box-shadow:0 2px 8px rgba(0,0,0,0.3), 0 8px 25px rgba(0,0,0,0.15), 0 20px 50px rgba(0,0,0,0.1);
+  transform-style:preserve-3d;
+  transition:box-shadow 0.5s ease;
+  opacity:0;
+  animation:fadein 0.5s ease forwards;
+  will-change:transform;
+}
+.tile:hover{
+  box-shadow:0 4px 12px rgba(0,0,0,0.35), 0 12px 35px rgba(0,0,0,0.2), 0 30px 60px rgba(0,0,0,0.15);
+  z-index:10;
+}
+@keyframes fadein{to{opacity:1}}
+
+.tile.wide{grid-column:span 2;aspect-ratio:2/1}
+
+/* ── Thumbnail tiles ── */
+.tile-thumb{
+  position:absolute;inset:-15%;
+  width:130%;height:130%;
+  background-size:cover;
+  background-position:center;
+  transition:transform 6s ease;
+  animation:ken var(--ken-dur,20s) ease-in-out infinite alternate;
+  animation-delay:var(--ken-del,0s);
+}
+@keyframes ken{
+  0%{transform:scale(1) translate(0,0)}
+  100%{transform:scale(1.08) translate(var(--ken-x,1%),var(--ken-y,1%))}
+}
+.tile:hover .tile-thumb{animation-play-state:paused}
+
+/* ── SoundCloud tiles ── */
+.tile-sc{position:absolute;inset:0}
+.tile-sc iframe{width:100%;height:100%;border:none;pointer-events:none}
+
+/* ── Animated gradient backgrounds ── */
+.tile-bg{
+  position:absolute;inset:0;
+  background-size:400% 400%;
+  animation:drift var(--dur,14s) ease-in-out infinite;
+  animation-delay:var(--del,0s);
+}
+@keyframes drift{
+  0%,100%{background-position:0% 50%}
+  25%{background-position:100% 0%}
+  50%{background-position:100% 100%}
+  75%{background-position:0% 100%}
+}
+
+/* ── Hover overlay ── */
+.tile-label{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:16px;
+  background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 55%);
+  opacity:0;
+  transition:opacity 0.3s;
+  z-index:3;
+}
+.tile:hover .tile-label{opacity:1}
+.tile-label small{
+  font-size:9px;letter-spacing:3px;text-transform:uppercase;opacity:0.6;margin-bottom:2px;
+}
+.tile-label span{font-size:14px;font-weight:600}
+
+/* ── Writing / featured tiles ── */
+.tile-writing{
+  position:relative;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:28px;
+  z-index:2;
+}
+.tile-writing small{
+  font-size:10px;letter-spacing:3px;text-transform:uppercase;opacity:0.6;margin-bottom:10px;
+}
+.tile-writing .title{
+  font-size:18px;font-weight:700;line-height:1.3;margin-bottom:10px;letter-spacing:-0.3px;
+}
+.tile-writing .excerpt{
+  font-size:13px;line-height:1.65;opacity:0.75;font-weight:400;max-width:520px;
+}
+.tile.featured{
+  aspect-ratio:auto;
+  min-height:200px;
+  border:1px solid rgba(255,255,255,0.12);
+  box-shadow:0 4px 30px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+/* ── Featured section ── */
+.featured-section{
+  display:flex;
+  gap:20px;
+  padding:4px 20px 36px;
+  perspective:800px;
+}
+
+/* ── Video section ── */
+.video-section{
+  display:flex;
+  gap:20px;
+  padding:0 20px 64px;
+  perspective:800px;
+}
+.video-card{
+  flex:1;
+  aspect-ratio:16/9;
+  border-radius:12px;
+  overflow:hidden;
+  -webkit-mask-image:-webkit-radial-gradient(white,black);
+  background:#0a0a0a;
+  box-shadow:0 2px 8px rgba(0,0,0,0.3), 0 8px 25px rgba(0,0,0,0.15), 0 20px 50px rgba(0,0,0,0.1);
+  transform-style:preserve-3d;
+  will-change:transform;
+  border:1px solid rgba(255,255,255,0.08);
+  opacity:0;
+  animation:fadein 0.6s ease forwards;
+}
+.video-card iframe{
+  width:100%;
+  height:100%;
+  border:none;
+}
+
+/* ── Tweet carousel ── */
+.carousel{
+  padding:32px 0 40px;
+  overflow:hidden;
+}
+.carousel-track{
+  display:flex;
+  gap:20px;
+  padding:16px 20px 16px;
+  overflow-x:auto;
+  scroll-snap-type:x proximity;
+  -webkit-overflow-scrolling:touch;
+  cursor:grab;
+  scrollbar-width:none;
+  perspective:800px;
+}
+.carousel-track::-webkit-scrollbar{display:none}
+.carousel-track.dragging{cursor:grabbing;scroll-snap-type:none}
+.tweet-card{
+  flex:0 0 360px;
+  height:420px;
+  border-radius:12px;
+  -webkit-mask-image:-webkit-radial-gradient(white,black);
+  overflow:hidden;
+  background:#0a0a0a;
+  box-shadow:0 2px 8px rgba(0,0,0,0.3), 0 8px 25px rgba(0,0,0,0.15), 0 20px 50px rgba(0,0,0,0.1);
+  transform-style:preserve-3d;
+  transition:box-shadow 0.5s ease;
+  scroll-snap-align:center;
+  will-change:transform;
+}
+.tweet-card:hover{
+  box-shadow:0 4px 12px rgba(0,0,0,0.35), 0 12px 35px rgba(0,0,0,0.2), 0 30px 60px rgba(0,0,0,0.15);
+  z-index:10;
+}
+.tweet-card .twitter-tweet-rendered,
+.tweet-card twitter-widget,
+.tweet-card .twitter-tweet{
+  margin:0!important;max-width:100%!important;width:100%!important;
+}
+.tweet-card iframe{border:none!important;border-radius:0!important}
+
+/* ── Responsive ── */
+@media(max-width:900px){
+  .grid{grid-template-columns:repeat(4,1fr)}
+  .tweet-card{flex:0 0 320px;height:400px}
+  .featured-section{flex-direction:column}
+  .video-section{flex-direction:column}
+  .tile.featured{aspect-ratio:auto}
+}
+@media(max-width:500px){
+  .grid{grid-template-columns:repeat(3,1fr)}
+  .tweet-card{flex:0 0 280px;height:360px}
+  .featured-section{flex-direction:column}
+  .video-section{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<div class="social-bar">
+  <div class="social-buttons">
+    <a href="https://x.com/ricburton" target="_blank" rel="noopener">X <span>@ricburton</span></a>
+    <a href="https://youtube.com/@r1cburton" target="_blank" rel="noopener">YouTube <span>@r1cburton</span></a>
+  </div>
+  <div class="social-links">
+    <a href="https://ricburton.substack.com" target="_blank" rel="noopener">Substack</a>
+    <span class="dot">·</span>
+    <a href="https://soundcloud.com/ricburton" target="_blank" rel="noopener">Soundcloud</a>
+    <span class="dot">·</span>
+    <a href="https://github.com/ricburton" target="_blank" rel="noopener">Github</a>
+    <span class="dot">·</span>
+    <a href="https://vimeo.com/ricburton" target="_blank" rel="noopener">Vimeo</a>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="featured-section" id="featured-section"></div>
+
+<div class="carousel">
+  <div class="carousel-track" id="tweets"></div>
+</div>
+
+<div class="video-section" id="video-section">
+  <div class="video-card" style="animation-delay:0.1s">
+    <iframe src="https://www.youtube.com/embed/1Ck4v9Pqong?rel=0&modestbranding=1&color=white" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+  </div>
+  <div class="video-card" style="animation-delay:0.2s">
+    <iframe src="https://www.youtube.com/embed/w1dtC9_qOzU?rel=0&modestbranding=1&color=white" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// SKY — background gradient based on SF time of day
+// ═══════════════════════════════════════════════════════════
+(function setSky() {
+  const sf = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+  const h = sf.getHours() + sf.getMinutes() / 60;
+  let sky;
+  if (h < 5.5)        sky = 'linear-gradient(to bottom, #05080f, #0a0e1a)';         // deep night
+  else if (h < 6.5)   sky = 'linear-gradient(to bottom, #0f1b2d, #1a2a40, #2c1a1a)'; // pre-dawn
+  else if (h < 7.5)   sky = 'linear-gradient(to bottom, #3a4a6a, #7a9cc0, #d4a574)'; // sunrise
+  else if (h < 9)     sky = 'linear-gradient(to bottom, #6a8cb0, #a0c0d8, #d0dce6)'; // morning
+  else if (h < 11)    sky = 'linear-gradient(to bottom, #8ab0d0, #c0d8e8, #e0e8f0)'; // late morning
+  else if (h < 14)    sky = 'linear-gradient(to bottom, #b0c8d8, #d8e4ec, #e8eff4)'; // midday
+  else if (h < 16.5)  sky = 'linear-gradient(to bottom, #9ab8d0, #c8dae6, #dce6ee)'; // afternoon
+  else if (h < 18)    sky = 'linear-gradient(to bottom, #8a7a6a, #c09870, #d4a060)'; // golden hour
+  else if (h < 19.5)  sky = 'linear-gradient(to bottom, #4a3040, #a06040, #d08050)'; // sunset
+  else if (h < 20.5)  sky = 'linear-gradient(to bottom, #1e1828, #3a2040, #6a3a3a)'; // dusk
+  else                 sky = 'linear-gradient(to bottom, #08101a, #0a0e18)';          // night
+  document.documentElement.style.setProperty('--sky', sky);
+})();
+
+const grid = document.getElementById('grid');
+
+// ═══════════════════════════════════════════════════════════
+// SOUNDCLOUD TRACKS
+// ═══════════════════════════════════════════════════════════
+
+const SOUNDCLOUD = [
+  { slug:'lane-8-room-service-festival-full-set', title:'Lane 8 — Room Service Festival' },
+  { slug:'fred-again-i-adore-you', title:'fred again.. — i adore you' },
+  { slug:'potayto-pototto-this-live-stream-is-happening-v2-2', title:'Lane 8 — Potayto Pototto' },
+];
+
+// ═══════════════════════════════════════════════════════════
+// FEATURED WRITING — always shown as highlights
+// ═══════════════════════════════════════════════════════════
+
+const FEATURED = [
+  {
+    url: 'https://medium.com/balance-io/aliens-jedi-%EF%B8%8F-cults-b1d52b681b8',
+    title: 'Aliens, Jedi ⚔️ & Cults',
+    excerpt: 'I want to explain some of the experiences I have had that very few people can relate to. I have been lucky enough to stumble across a few rocket ships before anyone else cared. … <strong>Stripe</strong> — In 2010, I started a little company selling custom apparel on the internet. I integrated Wufoo, Google Checkout &amp; PayPal to sell around 100,000 sweatshirts to students. In 2012, I read a blog post about a little company called Stripe. I instantly understood the value of what they were doing and decided to apply for a job there.',
+    src: 'Medium',
+    grad: 'linear-gradient(135deg, #252545, #353570, #2a4565)',
+  },
+  {
+    url: 'https://x.com/Ricburton/status/2014061209302212917',
+    title: 'How to Get Your First Golden PDF',
+    excerpt: 'There are many PDFs in the world. If you do one of the following things, you can get a Golden PDF which you can exchange for a lot of money. Examples: Stock Option Agreement at a startup that grows, Founding Share Agreement at a company you start, SAFE in a great company, Equity Investment in an incredible organisation, Advisor Agreement to a CEO that promises you shares, LP Participation in a fund that works, GP Agreement in a new fund.',
+    src: 'X',
+    grad: 'linear-gradient(135deg, #252530, #353545, #2a3545)',
+  },
+];
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+
+let si = 0;
+function nextSize() { return ''; }
+function ri(a, b) { return Math.floor(Math.random() * (b - a)) + a; }
+
+function tiltVars() {
+  const rx = (Math.random() - 0.5) * 2;
+  const ry = (Math.random() - 0.5) * 2;
+  const angle = 2 + Math.random() * 4;
+  return `--rx:${rx.toFixed(2)};--ry:${ry.toFixed(2)};--ra:${angle.toFixed(1)}deg`;
+}
+
+function kenVars() {
+  const x = (Math.random() > 0.5 ? '' : '-') + (1 + Math.random() * 2).toFixed(1) + '%';
+  const y = (Math.random() > 0.5 ? '' : '-') + (1 + Math.random() * 2).toFixed(1) + '%';
+  const dur = 16 + ri(0, 12);
+  const del = -ri(0, 10);
+  return `--ken-x:${x};--ken-y:${y};--ken-dur:${dur}s;--ken-del:${del}s`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// TILE CREATORS
+// ═══════════════════════════════════════════════════════════
+
+function makeThumb(href, img, cat, title, size) {
+  const a = document.createElement('a');
+  a.className = `tile ${size || nextSize()}`;
+  a.href = href;
+  a.target = '_blank'; a.rel = 'noopener';
+  a.innerHTML = `
+    <div class="tile-thumb" style="background-image:url('${img}');${kenVars()}"></div>
+    <div class="tile-label"><small>${cat}</small><span>${title}</span></div>`;
+  return a;
+}
+
+function makeSC(item) {
+  const a = document.createElement('a');
+  a.className = 'tile wide';
+  a.href = `https://soundcloud.com/ricburton/${item.slug}`;
+  a.target = '_blank'; a.rel = 'noopener';
+  const url = encodeURIComponent(`https://soundcloud.com/ricburton/${item.slug}`);
+  a.innerHTML = `
+    <div class="tile-sc">
+      <iframe src="https://w.soundcloud.com/player/?url=${url}&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true&color=%23ff5500" allow="autoplay" loading="lazy"></iframe>
+    </div>
+    <div class="tile-label"><small>Music</small><span>${item.title||''}</span></div>`;
+  return a;
+}
+
+function makeFeatured(f) {
+  const a = document.createElement('a');
+  a.className = 'tile featured';
+  a.href = f.url;
+  a.target = '_blank'; a.rel = 'noopener';
+  a.innerHTML = `
+    <div class="tile-bg" style="background:${f.grad};--dur:${10+ri(0,6)}s"></div>
+    <div class="tile-writing">
+      <small>${f.src}</small>
+      <div class="title">${f.title}</div>
+      <div class="excerpt">${f.excerpt}</div>
+    </div>`;
+  return a;
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONTENT CACHE — accumulates across visits, shuffles each load
+// ═══════════════════════════════════════════════════════════
+
+const CACHE_KEY = 'ricburton_content_v2';
+const CACHE_TTL = 1000 * 60 * 60; // re-fetch every hour, but keep old content
+const skip = /balance|uniswap/i;
+
+function loadCache() {
+  try { return JSON.parse(localStorage.getItem(CACHE_KEY)) || { vimeo:[], youtube:[], ts:0 }; }
+  catch(e) { return { vimeo:[], youtube:[], ts:0 }; }
+}
+function saveCache(cache) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch(e) {}
+}
+
+// Deduplicate by unique key
+function dedup(arr, key) {
+  const seen = new Set();
+  return arr.filter(item => {
+    const k = item[key];
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
+// Fisher-Yates shuffle
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ═══════════════════════════════════════════════════════════
+// FETCH VIMEO — grab multiple pages for a deep pool
+// ═══════════════════════════════════════════════════════════
+
+async function fetchVimeoPage(page) {
+  try {
+    const res = await fetch(`https://vimeo.com/api/v2/ricburton/videos.json?page=${page}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.map(v => ({
+      id: String(v.id),
+      title: v.title,
+      thumb: v.thumbnail_large || v.thumbnail_medium,
+      url: v.url,
+      src: 'Vimeo',
+    }));
+  } catch(e) { return []; }
+}
+
+async function fetchAllVimeo() {
+  const pages = await Promise.all([1,2,3,4,5].map(fetchVimeoPage));
+  return pages.flat().filter(v => !skip.test(v.title));
+}
+
+// ═══════════════════════════════════════════════════════════
+// FETCH YOUTUBE — via RSS → JSON proxy
+// ═══════════════════════════════════════════════════════════
+
+async function fetchAllYouTube() {
+  try {
+    const feedUrl = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCnpAcVUxoOc05E5dyAvEVMg';
+    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (data.status !== 'ok' || !data.items) return [];
+    return data.items.map(item => {
+      const match = item.link && item.link.match(/[?&]v=([^&]+)/);
+      const id = match ? match[1] : '';
+      return {
+        id,
+        title: item.title,
+        thumb: id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : '',
+        url: item.link,
+        src: 'YouTube',
+      };
+    }).filter(v => v.id && !skip.test(v.title));
+  } catch(e) {
+    console.log('YouTube fetch failed:', e);
+    return [];
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// BUILD THE GRID — cached pool + shuffle
+// ═══════════════════════════════════════════════════════════
+
+async function build() {
+  const cache = loadCache();
+  const stale = Date.now() - cache.ts > CACHE_TTL;
+
+  let vimeo = cache.vimeo;
+  let youtube = cache.youtube;
+
+  // Fetch fresh data (in background if cache exists, blocking if not)
+  if (stale || vimeo.length === 0) {
+    const [freshVimeo, freshYT] = await Promise.all([fetchAllVimeo(), fetchAllYouTube()]);
+    vimeo = dedup([...freshVimeo, ...vimeo], 'id');
+    youtube = dedup([...freshYT, ...youtube], 'id');
+    saveCache({ vimeo, youtube, ts: Date.now() });
+  }
+
+  const tiles = [];
+  let delay = 0;
+
+  function addTile(tile) {
+    tile.style.animationDelay = `${delay * 0.04}s`;
+    tile.style.cssText += tiltVars();
+    tiles.push(tile);
+    delay++;
+  }
+
+  // Build the full visual content pool
+  const pool = shuffle([
+    ...vimeo.map(v => ({ type:'thumb', ...v })),
+    ...youtube.map(v => ({ type:'thumb', ...v })),
+    ...SOUNDCLOUD.map(s => ({ type:'sc', ...s })),
+  ]);
+
+  // Show a random subset — between 24 and 40 content tiles
+  const showCount = Math.min(pool.length, 24 + Math.floor(Math.random() * 17));
+  const selection = pool.slice(0, showCount);
+
+  for (const item of selection) {
+    if (item.type === 'sc') {
+      addTile(makeSC(item));
+    } else {
+      addTile(makeThumb(item.url, item.thumb, item.src, item.title));
+    }
+  }
+
+  // Append all
+  tiles.forEach(t => grid.appendChild(t));
+}
+
+build().then(startWind);
+
+// ═══════════════════════════════════════════════════════════
+// TWEET CAROUSEL
+// ═══════════════════════════════════════════════════════════
+
+const TWEETS = [
+  '1939920235399663856',
+  '2022714104075685928',
+  '1943084483470627049',
+  '1995955910976692535',
+  '2022497819450577142',
+  '1981779011639402846',
+  '2028670663553351845',
+  '1997696206970233340',
+  '2012581006922981844',
+  '1989067324578754883',
+  '1940116199142301940',
+];
+
+(function buildTweets() {
+  const track = document.getElementById('tweets');
+  const shuffled = shuffle(TWEETS);
+
+  // Create card containers first
+  const cards = shuffled.map(id => {
+    const card = document.createElement('div');
+    card.className = 'tweet-card';
+    card.style.cssText = tiltVars();
+    card.dataset.tweetId = id;
+    track.appendChild(card);
+    return card;
+  });
+
+  // Load Twitter widgets.js then use createTweet() for each card
+  const s = document.createElement('script');
+  s.src = 'https://platform.twitter.com/widgets.js';
+  s.charset = 'utf-8';
+  s.async = true;
+  s.onload = () => {
+    if (!window.twttr || !twttr.widgets) return;
+    cards.forEach(card => {
+      twttr.widgets.createTweet(card.dataset.tweetId, card, {
+        theme: 'dark',
+        conversation: 'none',
+        width: 360,
+        dnt: true,
+      });
+    });
+  };
+  document.body.appendChild(s);
+
+  // ── Drag to scroll ──
+  let isDown = false, startX, scrollLeft;
+
+  track.addEventListener('mousedown', e => {
+    isDown = true;
+    track.classList.add('dragging');
+    startX = e.pageX - track.offsetLeft;
+    scrollLeft = track.scrollLeft;
+  });
+  track.addEventListener('mouseleave', () => { isDown = false; track.classList.remove('dragging'); });
+  track.addEventListener('mouseup', () => { isDown = false; track.classList.remove('dragging'); });
+  track.addEventListener('mousemove', e => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - track.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    track.scrollLeft = scrollLeft - walk;
+  });
+})();
+
+// ═══════════════════════════════════════════════════════════
+// FEATURED WRITING — bottom section
+// ═══════════════════════════════════════════════════════════
+
+(function buildFeatured() {
+  const section = document.getElementById('featured-section');
+  FEATURED.forEach(f => {
+    const tile = makeFeatured(f);
+    tile.style.cssText += tiltVars();
+    tile.style.flex = '1';
+    section.appendChild(tile);
+  });
+})();
+
+// ═══════════════════════════════════════════════════════════
+// WIND PHYSICS — mouse movement tilts nearby cards
+// ═══════════════════════════════════════════════════════════
+
+function startWind() {
+  let mx = -9999, my = -9999;
+  let pmx = -9999, pmy = -9999;
+  let vx = 0, vy = 0;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX;
+    my = e.clientY;
+  });
+
+  // ── Tuning — gentle, fluttery, wide influence ──
+  const RADIUS = 500;        // wide wind influence so many cards respond
+  const MAX_ANGLE = 3;       // gentle peak tilt
+  const STIFFNESS = 0.018;   // very soft spring — slow, dreamy response
+  const DAMPING = 0.90;      // high damping = lots of wobble / flutter after impulse
+  const VEL_SMOOTH = 0.88;   // heavily smoothed mouse velocity for flowing feel
+
+  // Per-tile spring state
+  const states = new WeakMap();
+
+  function initState(tile) {
+    const cs = getComputedStyle(tile);
+    const baseRx = parseFloat(cs.getPropertyValue('--rx')) || 0;
+    const baseRy = parseFloat(cs.getPropertyValue('--ry')) || 0;
+    const baseAngle = parseFloat(cs.getPropertyValue('--ra')) || 3;
+    states.set(tile, {
+      // Current spring values
+      rx: baseRx, ry: baseRy, angle: baseAngle, scale: 1,
+      // Spring velocities
+      vrx: 0, vry: 0, vangle: 0, vscale: 0,
+      // Resting pose
+      restRx: baseRx, restRy: baseRy, restAngle: baseAngle,
+      // Three-layer drift for organic fluttery idle
+      driftPhaseA: Math.random() * Math.PI * 2,
+      driftPhaseB: Math.random() * Math.PI * 2,
+      driftPhaseC: Math.random() * Math.PI * 2,
+      driftFreqA: 0.12 + Math.random() * 0.18,   // slow primary wave
+      driftFreqB: 0.08 + Math.random() * 0.14,    // even slower secondary
+      driftFreqC: 0.25 + Math.random() * 0.20,    // faster flutter layer
+      driftAmp: 0.25 + Math.random() * 0.35,
+      // Per-card mass variation — lighter cards flutter more
+      mass: 0.7 + Math.random() * 0.6,
+    });
+  }
+
+  let time = 0;
+  let lastT = performance.now();
+
+  function frame(now) {
+    const dt = Math.min((now - lastT) / 16.667, 3);
+    lastT = now;
+
+    // Smooth mouse velocity
+    vx = vx * VEL_SMOOTH + (mx - pmx) * (1 - VEL_SMOOTH);
+    vy = vy * VEL_SMOOTH + (my - pmy) * (1 - VEL_SMOOTH);
+    pmx = mx;
+    pmy = my;
+    time += dt * 0.016;
+
+    const speed = Math.sqrt(vx * vx + vy * vy);
+    const windDirX = speed > 0.3 ? vx / speed : 0;
+    const windDirY = speed > 0.3 ? vy / speed : 0;
+
+    const tiles = document.querySelectorAll('.tile, .tweet-card, .video-card');
+
+    for (const tile of tiles) {
+      let s = states.get(tile);
+      if (!s) { initState(tile); s = states.get(tile); }
+
+      const rect = tile.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = cx - mx;
+      const dy = cy - my;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      let targetRx, targetRy, targetAngle, targetScale;
+      let stiffness = STIFFNESS / s.mass;
+
+      if (dist < RADIUS && dist > 1) {
+        // ── Wind zone — smooth cubic falloff for wide gentle ripple ──
+        const t = dist / RADIUS;
+        const intensity = (1 - t) * (1 - t) * (1 - t); // cubic = very soft edges
+
+        // Blend push-away with travel direction
+        const nx = dx / dist;
+        const ny = dy / dist;
+        const blendedX = nx * 0.5 + windDirX * 0.5;
+        const blendedY = ny * 0.5 + windDirY * 0.5;
+        const bLen = Math.sqrt(blendedX * blendedX + blendedY * blendedY) || 1;
+
+        const speedBoost = 1 + Math.min(speed / 25, 0.8);
+        const tilt = intensity * speedBoost * MAX_ANGLE;
+
+        // Tilt perpendicular to push direction
+        targetRx = blendedY / bLen;
+        targetRy = -blendedX / bLen;
+        targetAngle = tilt;
+        targetScale = 1 + intensity * 0.006;
+
+        // Gently stiffer for closer cards, but still soft
+        stiffness *= (1 + intensity * 1.5);
+
+        // Blend in some idle drift even while in wind zone for flutter
+        const dC = Math.sin(time * s.driftFreqC + s.driftPhaseC) * s.driftAmp * 0.3;
+        targetRx += dC * 0.1;
+        targetRy += dC * 0.08;
+      } else {
+        // ── Idle drift — three layered sine waves for constant gentle flutter ──
+        const dA = Math.sin(time * s.driftFreqA + s.driftPhaseA) * s.driftAmp;
+        const dB = Math.sin(time * s.driftFreqB + s.driftPhaseB) * s.driftAmp * 0.6;
+        const dC = Math.sin(time * s.driftFreqC + s.driftPhaseC) * s.driftAmp * 0.35;
+        targetRx = s.restRx + (dA * 0.3 + dB * 0.2 + dC * 0.12);
+        targetRy = s.restRy + (dB * 0.25 - dA * 0.12 + dC * 0.15);
+        targetAngle = s.restAngle + dA * 1.2 + dB * 0.8 + dC * 0.4;
+        targetScale = 1;
+        stiffness *= 0.7; // responsive enough to follow the drift
+      }
+
+      // ── Damped spring integration ──
+      const forceRx = (targetRx - s.rx) * stiffness * dt;
+      const forceRy = (targetRy - s.ry) * stiffness * dt;
+      const forceAngle = (targetAngle - s.angle) * stiffness * dt;
+      const forceScale = (targetScale - s.scale) * stiffness * dt;
+
+      const damp = Math.pow(DAMPING, dt);
+      s.vrx = s.vrx * damp + forceRx;
+      s.vry = s.vry * damp + forceRy;
+      s.vangle = s.vangle * damp + forceAngle;
+      s.vscale = s.vscale * damp + forceScale;
+
+      s.rx += s.vrx * dt;
+      s.ry += s.vry * dt;
+      s.angle += s.vangle * dt;
+      s.scale += s.vscale * dt;
+
+      tile.style.transform =
+        `rotate3d(${s.rx.toFixed(3)},${s.ry.toFixed(3)},0,${s.angle.toFixed(2)}deg) scale(${s.scale.toFixed(4)})`;
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame(frame);
+}
+</script>
+</body>
+</html>
