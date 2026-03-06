@@ -255,6 +255,69 @@ body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;overflow-x:
 }
 .tweet-card iframe{border:none!important;border-radius:0!important}
 
+/* ── Streams carousel ── */
+.streams-carousel{
+  padding:0 0 40px;
+  overflow:hidden;
+}
+.streams-track{
+  display:flex;
+  gap:20px;
+  padding:16px 20px;
+  overflow-x:auto;
+  scroll-snap-type:x proximity;
+  -webkit-overflow-scrolling:touch;
+  cursor:grab;
+  scrollbar-width:none;
+  perspective:800px;
+}
+.streams-track::-webkit-scrollbar{display:none}
+.streams-track.dragging{cursor:grabbing;scroll-snap-type:none}
+.stream-card{
+  flex:0 0 calc((100vw - 100px) / 4);
+  aspect-ratio:16/9;
+  border-radius:12px;
+  -webkit-mask-image:-webkit-radial-gradient(white,black);
+  overflow:hidden;
+  background:#0a0a0a;
+  box-shadow:0 2px 8px rgba(0,0,0,0.3), 0 8px 25px rgba(0,0,0,0.15), 0 20px 50px rgba(0,0,0,0.1);
+  transform-style:preserve-3d;
+  transition:box-shadow 0.5s ease;
+  scroll-snap-align:start;
+  will-change:transform;
+  position:relative;
+  display:block;
+  text-decoration:none;
+  color:#fff;
+}
+.stream-card:hover{
+  box-shadow:0 4px 12px rgba(0,0,0,0.35), 0 12px 35px rgba(0,0,0,0.2), 0 30px 60px rgba(0,0,0,0.15);
+  z-index:10;
+}
+.stream-card .stream-thumb{
+  position:absolute;inset:0;
+  background-size:cover;
+  background-position:center;
+  transition:transform 0.5s ease;
+}
+.stream-card:hover .stream-thumb{
+  transform:scale(1.05);
+}
+.stream-card .stream-label{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:14px;
+  background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 55%);
+  opacity:0;
+  transition:opacity 0.3s;
+  z-index:3;
+}
+.stream-card:hover .stream-label{opacity:1}
+.stream-card .stream-label small{
+  font-size:9px;letter-spacing:3px;text-transform:uppercase;opacity:0.6;margin-bottom:2px;
+}
+.stream-card .stream-label span{font-size:13px;font-weight:600}
+
 /* ── Responsive ── */
 @media(max-width:900px){
   .grid{grid-template-columns:repeat(4,1fr)}
@@ -262,12 +325,14 @@ body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;overflow-x:
   .featured-section{flex-direction:column}
   .video-section{flex-direction:column}
   .tile.featured{aspect-ratio:auto}
+  .stream-card{flex:0 0 calc((100vw - 80px) / 3)}
 }
 @media(max-width:500px){
   .grid{grid-template-columns:repeat(3,1fr)}
   .tweet-card{flex:0 0 280px;height:360px}
   .featured-section{flex-direction:column}
   .video-section{flex-direction:column}
+  .stream-card{flex:0 0 calc((100vw - 60px) / 2)}
 }
 </style>
 </head>
@@ -295,6 +360,10 @@ body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;overflow-x:
 
 <div class="carousel">
   <div class="carousel-track" id="tweets"></div>
+</div>
+
+<div class="streams-carousel">
+  <div class="streams-track" id="streams"></div>
 </div>
 
 <div class="video-section" id="video-section">
@@ -642,6 +711,108 @@ const TWEETS = [
 })();
 
 // ═══════════════════════════════════════════════════════════
+// STREAMS CAROUSEL
+// ═══════════════════════════════════════════════════════════
+
+const STREAMS = [
+  { id:'mW3bL8Ig-hc', title:'Cursor, Coding & Contrastive Learning' },
+  { id:'9yrF_9bZWOk', title:'Comparing Britain & California 🇬🇧' },
+  { id:'rG3D1c9cXWc', title:'Why I love Star Wars' },
+  { id:'J7TiwnE1wrQ', title:'Astral Planing with a Drone 🚁' },
+  { id:'Sk2_LdB5nTc', title:'Why I am supporting Restore Britain 🇬🇧' },
+  { id:'PqpShEL43d0', title:'Being Numberless 🌅' },
+  { id:'BZNs-uqtAJ8', title:'Snow Streaming' },
+  { id:'Ed4hOlcsZd4', title:'Aura Explorer 🔮' },
+  { id:'pWbVIBzWfJk', title:'The Politics of Robotics' },
+  { id:'38mLfGHUCY8', title:'Why SpaceX will be worth $10 trillion' },
+  { id:'_cLRyzVWEPE', title:'Sunrise' },
+  { id:'Q35p5FCCJw8', title:'Sunrise Sit' },
+  { id:'WdxRJmU1xiI', title:'What is it like in Silicon Valley?' },
+  { id:'QGVj06bIYqA', title:'When was the last time you sat comfortably?' },
+  { id:'45J711I-vRQ', title:'Why I Love Communal Living' },
+  { id:'p1zw_6lDB3Q', title:'Avoid YouTubers Who Rent Yachts' },
+  { id:'kM2JYlC1KWQ', title:'Why I have mass unfollowed on X' },
+  { id:'gkzDpPRl4B4', title:'How I became an American Citizen' },
+  { id:'K9Iv-Q9GT9Q', title:'How to get your first Golden PDF' },
+  { id:'ppe6forbQoM', title:'Walk & Talk in San Francisco' },
+  { id:'BC7GalsrkNs', title:'Why You Should Invest in SpaceX' },
+  { id:'x51cAbyg3XU', title:'Can Ethereum Scale?' },
+  { id:'HC-78KJUY1A', title:'What is Ethereum?' },
+  { id:'MetwPTcDbB0', title:'The Problem with AI' },
+  { id:'Aa-JUkVSA3Q', title:'Morning Routine in California' },
+  { id:'gQQvbMPattE', title:'How to Build a Startup' },
+  { id:'SkzqrXQUkq4', title:'The Future of Work' },
+  { id:'6Xy19Q9fMe8', title:'Why I Moved to America' },
+  { id:'U7F9L1Mb1gQ', title:'Life in San Francisco' },
+  { id:'lzZOOqXDD-E', title:'The Best Books I Have Read' },
+  { id:'Tl5IlBEoKq4', title:'Reflections on 2023' },
+  { id:'lznzerG03cc', title:'Morning in Marin' },
+  { id:'xxetkG0ule8', title:'Sunset Stream' },
+  { id:'W1H3ScGltDE', title:'Building in Public' },
+  { id:'EE5LQIVJQr4', title:'The Power of Saying No' },
+  { id:'yr_ibL9Mxw4', title:'Why I Write Online' },
+  { id:'qJtVi613_yc', title:'Conversations on Crypto' },
+  { id:'-QOXZPOBC-U', title:'Afternoon Thoughts' },
+  { id:'Dzl0yGGMCv8', title:'San Francisco Living' },
+  { id:'a0QkFREZ270', title:'The Creator Economy' },
+  { id:'rYxPBk8X5mM', title:'Deep Work Session' },
+  { id:'n3GaF8YDA5w', title:'Stream from Home' },
+  { id:'EJAhYM7S77U', title:'Morning Coffee Stream' },
+  { id:'NUbCUS1o-9w', title:'Weekend Thoughts' },
+  { id:'xyWXNVw_IDw', title:'Evening Stream' },
+  { id:'gJu36NfHhMc', title:'Live Q&A' },
+  { id:'iSW6rA8M82s', title:'Studio Session' },
+  { id:'w4f_z5c9eKo', title:'Sunday Stream' },
+  { id:'D2WpVVZjEnQ', title:'Outdoor Stream' },
+  { id:'fO0XNFRF2Bo', title:'Late Night Stream' },
+  { id:'pl3SRTH0KNI', title:'Morning Stream' },
+  { id:'wPjaz-4jGog', title:'Live Coding' },
+  { id:'XgCuI3to5GA', title:'Chat & Chill' },
+  { id:'a6tdPDoJEqQ', title:'Afternoon Stream' },
+  { id:'A5o2YorNNx8', title:'Weekend Live' },
+  { id:'8TmbnJNWiIQ', title:'Evening Thoughts' },
+  { id:'60VyNi_DOPQ', title:'Sunrise Stream' },
+  { id:'hywg4FcYpc4', title:'Night Stream' },
+];
+
+(function buildStreams() {
+  const track = document.getElementById('streams');
+  const shuffled = shuffle(STREAMS);
+
+  shuffled.forEach(stream => {
+    const a = document.createElement('a');
+    a.className = 'stream-card';
+    a.href = `https://www.youtube.com/watch?v=${stream.id}`;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.style.cssText = tiltVars();
+    a.innerHTML = `
+      <div class="stream-thumb" style="background-image:url('https://img.youtube.com/vi/${stream.id}/hqdefault.jpg')"></div>
+      <div class="stream-label"><small>Stream</small><span>${stream.title}</span></div>`;
+    track.appendChild(a);
+  });
+
+  // ── Drag to scroll ──
+  let isDown = false, startX, scrollLeft;
+
+  track.addEventListener('mousedown', e => {
+    isDown = true;
+    track.classList.add('dragging');
+    startX = e.pageX - track.offsetLeft;
+    scrollLeft = track.scrollLeft;
+  });
+  track.addEventListener('mouseleave', () => { isDown = false; track.classList.remove('dragging'); });
+  track.addEventListener('mouseup', () => { isDown = false; track.classList.remove('dragging'); });
+  track.addEventListener('mousemove', e => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - track.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    track.scrollLeft = scrollLeft - walk;
+  });
+})();
+
+// ═══════════════════════════════════════════════════════════
 // FEATURED WRITING — bottom section
 // ═══════════════════════════════════════════════════════════
 
@@ -722,7 +893,7 @@ function startWind() {
     const windDirX = speed > 0.3 ? vx / speed : 0;
     const windDirY = speed > 0.3 ? vy / speed : 0;
 
-    const tiles = document.querySelectorAll('.tile, .tweet-card, .video-card');
+    const tiles = document.querySelectorAll('.tile, .tweet-card, .video-card, .stream-card');
 
     for (const tile of tiles) {
       let s = states.get(tile);
