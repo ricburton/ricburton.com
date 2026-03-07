@@ -894,6 +894,11 @@ const X_VIDEO_IDS = [
   const track = document.getElementById('xvideos');
   const playSVG = '<svg viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg>';
 
+  // Generate syndication token (same algorithm used by react-tweet)
+  function syndicationToken(id) {
+    return ((Number(id) / 1e15) * Math.PI).toString(36).replace(/(0+|\.)/g, '');
+  }
+
   X_VIDEO_IDS.forEach(id => {
     const card = document.createElement('a');
     card.className = 'xvideo-card';
@@ -905,21 +910,48 @@ const X_VIDEO_IDS = [
     const thumb = document.createElement('img');
     thumb.className = 'xvideo-thumb';
     thumb.alt = 'Video thumbnail';
-    thumb.loading = 'lazy';
-    thumb.src = 'https://pbs.twimg.com/tweet_video_thumb/' + id + '.jpg';
-    thumb.onerror = function() {
-      this.onerror = null;
-      this.style.display = 'none';
-      card.style.background = 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%)';
-    };
-    card.appendChild(thumb);
 
     const play = document.createElement('div');
     play.className = 'xvideo-play';
     play.innerHTML = playSVG;
-    card.appendChild(play);
 
+    card.appendChild(thumb);
+    card.appendChild(play);
     track.appendChild(card);
+
+    // Fetch thumbnail from Twitter syndication API
+    const token = syndicationToken(id);
+    fetch('https://cdn.syndication.twimg.com/tweet-result?id=' + id + '&lang=en&token=' + token)
+      .then(r => r.json())
+      .then(data => {
+        // Extract video thumbnail from tweet data
+        let thumbUrl = null;
+        const media = data.mediaDetails || [];
+        for (const m of media) {
+          if (m.video_info && m.media_url_https) {
+            thumbUrl = m.media_url_https;
+            break;
+          }
+        }
+        // Fallback to any media photo
+        if (!thumbUrl && media.length > 0) {
+          thumbUrl = media[0].media_url_https;
+        }
+        // Fallback to tweet card image
+        if (!thumbUrl && data.card && data.card.binding_values) {
+          const bv = data.card.binding_values;
+          if (bv.thumbnail_image_original) thumbUrl = bv.thumbnail_image_original.image_value.url;
+          else if (bv.player_image_original) thumbUrl = bv.player_image_original.image_value.url;
+        }
+        if (thumbUrl) {
+          thumb.src = thumbUrl;
+        } else {
+          thumb.style.display = 'none';
+        }
+      })
+      .catch(() => {
+        thumb.style.display = 'none';
+      });
   });
 
   // ── Drag to scroll ──
