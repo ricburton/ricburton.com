@@ -73,6 +73,7 @@ body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;overflow-x:
 .grid{
   display:grid;
   grid-template-columns:repeat(8,1fr);
+  grid-auto-flow:dense;
   gap:18px;
   padding:20px;
   perspective:800px;
@@ -337,28 +338,43 @@ body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;overflow-x:
 .xvideos-track::-webkit-scrollbar{display:none}
 .xvideos-track.dragging{cursor:grabbing;scroll-snap-type:none}
 .xvideo-card{
-  flex:0 0 400px;
-  min-height:460px;
+  flex:0 0 320px;
+  aspect-ratio:16/9;
   border-radius:12px;
-  -webkit-mask-image:-webkit-radial-gradient(white,black);
   overflow:hidden;
   background:#0a0a0a;
   box-shadow:0 2px 8px rgba(0,0,0,0.3), 0 8px 25px rgba(0,0,0,0.15), 0 20px 50px rgba(0,0,0,0.1);
   transform-style:preserve-3d;
-  transition:box-shadow 0.5s ease;
+  transition:box-shadow 0.5s ease, transform 0.3s ease;
   scroll-snap-align:center;
   will-change:transform;
+  position:relative;
+  cursor:pointer;
+  text-decoration:none;
+  display:block;
 }
 .xvideo-card:hover{
   box-shadow:0 4px 12px rgba(0,0,0,0.35), 0 12px 35px rgba(0,0,0,0.2), 0 30px 60px rgba(0,0,0,0.15);
   z-index:10;
+  transform:scale(1.03);
 }
-.xvideo-card .twitter-tweet-rendered,
-.xvideo-card twitter-widget,
-.xvideo-card .twitter-tweet{
-  margin:0!important;max-width:100%!important;width:100%!important;
+.xvideo-card .xvideo-thumb{
+  width:100%;height:100%;object-fit:cover;display:block;
 }
-.xvideo-card iframe{border:none!important;border-radius:0!important}
+.xvideo-card .xvideo-play{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:64px;height:64px;border-radius:50%;
+  background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;
+  transition:background 0.3s ease, transform 0.3s ease;
+  pointer-events:none;
+}
+.xvideo-card:hover .xvideo-play{
+  background:rgba(29,155,240,0.85);transform:translate(-50%,-50%) scale(1.1);
+}
+.xvideo-card .xvideo-play svg{
+  width:28px;height:28px;fill:#fff;margin-left:3px;
+}
 
 /* ── Responsive ── */
 @media(max-width:900px){
@@ -368,7 +384,7 @@ body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;overflow-x:
   .video-section{flex-direction:column}
   .tile.featured{aspect-ratio:auto}
   .stream-card{flex:0 0 calc((100vw - 80px) / 3)}
-  .xvideo-card{flex:0 0 360px;min-height:420px}
+  .xvideo-card{flex:0 0 280px}
 }
 @media(max-width:500px){
   .grid{grid-template-columns:repeat(3,1fr)}
@@ -376,7 +392,7 @@ body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;overflow-x:
   .featured-section{flex-direction:column}
   .video-section{flex-direction:column}
   .stream-card{flex:0 0 calc((100vw - 60px) / 2)}
-  .xvideo-card{flex:0 0 300px;min-height:380px}
+  .xvideo-card{flex:0 0 240px}
 }
 </style>
 </head>
@@ -877,39 +893,74 @@ const X_VIDEO_IDS = [
 
 (function buildXVideos() {
   const track = document.getElementById('xvideos');
+  const playSVG = '<svg viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg>';
 
-  // Create card containers
-  const cards = X_VIDEO_IDS.map(id => {
-    const card = document.createElement('div');
+  // Generate syndication token (same algorithm used by react-tweet)
+  function syndicationToken(id) {
+    return ((Number(id) / 1e15) * Math.PI).toString(36).replace(/(0+|\.)/g, '');
+  }
+
+  X_VIDEO_IDS.forEach(id => {
+    const card = document.createElement('a');
     card.className = 'xvideo-card';
     card.style.cssText = tiltVars();
-    card.dataset.tweetId = id;
+    card.href = 'https://x.com/ricburton/status/' + id;
+    card.target = '_blank';
+    card.rel = 'noopener';
+
+    const thumb = document.createElement('img');
+    thumb.className = 'xvideo-thumb';
+    thumb.alt = 'Video thumbnail';
+
+    const play = document.createElement('div');
+    play.className = 'xvideo-play';
+    play.innerHTML = playSVG;
+
+    card.appendChild(thumb);
+    card.appendChild(play);
     track.appendChild(card);
-    return card;
+
+    // Fetch thumbnail from Twitter syndication API
+    const token = syndicationToken(id);
+    fetch('https://cdn.syndication.twimg.com/tweet-result?id=' + id + '&lang=en&token=' + token)
+      .then(r => r.json())
+      .then(data => {
+        // Extract video thumbnail from tweet data
+        let thumbUrl = null;
+        const media = data.mediaDetails || [];
+        for (const m of media) {
+          if (m.video_info && m.media_url_https) {
+            thumbUrl = m.media_url_https;
+            break;
+          }
+        }
+        // Fallback to any media photo
+        if (!thumbUrl && media.length > 0) {
+          thumbUrl = media[0].media_url_https;
+        }
+        // Fallback to tweet card image
+        if (!thumbUrl && data.card && data.card.binding_values) {
+          const bv = data.card.binding_values;
+          if (bv.thumbnail_image_original) thumbUrl = bv.thumbnail_image_original.image_value.url;
+          else if (bv.player_image_original) thumbUrl = bv.player_image_original.image_value.url;
+        }
+        if (thumbUrl) {
+          thumb.src = thumbUrl;
+        } else {
+          thumb.style.display = 'none';
+        }
+      })
+      .catch(() => {
+        thumb.style.display = 'none';
+      });
   });
 
-  // Use Twitter widgets (already loaded by tweet carousel) to embed video tweets
-  function embedVideos() {
-    if (!window.twttr || !twttr.widgets) {
-      setTimeout(embedVideos, 500);
-      return;
-    }
-    cards.forEach(card => {
-      twttr.widgets.createTweet(card.dataset.tweetId, card, {
-        theme: 'dark',
-        conversation: 'none',
-        width: 400,
-        dnt: true,
-      });
-    });
-  }
-  embedVideos();
-
   // ── Drag to scroll ──
-  let isDown = false, startX, scrollLeft;
+  let isDown = false, startX, scrollLeft, didDrag = false;
 
   track.addEventListener('mousedown', e => {
     isDown = true;
+    didDrag = false;
     track.classList.add('dragging');
     startX = e.pageX - track.offsetLeft;
     scrollLeft = track.scrollLeft;
@@ -919,10 +970,14 @@ const X_VIDEO_IDS = [
   track.addEventListener('mousemove', e => {
     if (!isDown) return;
     e.preventDefault();
+    didDrag = true;
     const x = e.pageX - track.offsetLeft;
     const walk = (x - startX) * 1.5;
     track.scrollLeft = scrollLeft - walk;
   });
+  track.addEventListener('click', e => {
+    if (didDrag) e.preventDefault();
+  }, true);
 })();
 
 // ═══════════════════════════════════════════════════════════
