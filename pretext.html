@@ -3,66 +3,479 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Richard Burton</title>
+<title>The Writings of Richard Burton</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=IM+Fell+English:ital@0;1&family=IM+Fell+DW+Pica+SC&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=MedievalSharp&display=swap');
+
+  :root {
+    --parchment: #f4e8c1;
+    --parchment-dark: #e8d5a3;
+    --ink: #2a1a0a;
+    --ink-light: #4a3520;
+    --ink-faded: #6d5a42;
+    --rubric: #8b1a1a;
+    --gold: #b8860b;
+    --gold-bright: #daa520;
+    --blue: #1a3a6b;
+    --green: #2d5a27;
+    --margin: #c4a66a;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
   body {
-    font-family: system-ui, -apple-system, sans-serif;
-    background: #0a0a0a;
-    color: #e0e0e0;
+    background: #2a1a0a;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-height: 100vh;
-    padding: 32px 16px;
+    padding: 40px 16px;
   }
-  canvas {
-    display: block;
-    border-radius: 8px;
-    background: #1a1a1a;
-    max-width: 100%;
-    cursor: default;
+
+  .manuscript {
+    max-width: 780px;
+    width: 100%;
+    background: var(--parchment);
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(139,109,63,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(139,109,63,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(100,80,40,0.05) 0%, transparent 50%),
+      url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    padding: 60px 72px;
+    position: relative;
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.1),
+      4px 4px 20px rgba(0,0,0,0.4),
+      inset 0 0 80px rgba(139,109,63,0.1);
   }
-  .links {
+
+  .manuscript::before {
+    content: '';
+    position: absolute;
+    left: 60px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(139,26,26,0.15);
+  }
+
+  .manuscript::after {
+    content: '';
+    position: absolute;
+    left: 63px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(139,26,26,0.1);
+  }
+
+  /* ── Colophon ── */
+  .colophon {
+    text-align: center;
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 2px solid var(--gold);
+    position: relative;
+  }
+
+  .colophon::after {
+    content: '❧';
+    position: absolute;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--parchment);
+    padding: 0 16px;
+    color: var(--gold);
+    font-size: 20px;
+  }
+
+  .colophon h1 {
+    font-family: 'Cinzel Decorative', serif;
+    font-weight: 900;
+    font-size: 38px;
+    color: var(--ink);
+    letter-spacing: 3px;
+    line-height: 1.2;
+    margin-bottom: 8px;
+    text-shadow: 1px 1px 0 rgba(184,134,11,0.2);
+  }
+
+  .colophon .subtitle {
+    font-family: 'Cinzel', serif;
+    font-weight: 400;
+    font-size: 14px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+  }
+
+  /* ── Entries ── */
+  .entry {
+    margin-bottom: 40px;
+    position: relative;
+    page-break-inside: avoid;
+  }
+
+  .entry-number {
+    font-family: 'Cinzel Decorative', serif;
+    font-weight: 700;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .entry h2 {
+    font-family: 'UnifrakturMaguntia', cursive;
+    font-size: 28px;
+    color: var(--rubric);
+    line-height: 1.3;
+    margin-bottom: 12px;
+    font-weight: 400;
+  }
+
+  .entry-body {
+    font-family: 'IM Fell English', serif;
+    font-size: 17px;
+    line-height: 1.75;
+    color: var(--ink-light);
+    text-align: justify;
+    hyphens: auto;
+  }
+
+  .entry-body em {
+    font-style: italic;
+    color: var(--ink);
+  }
+
+  /* ── Drop Caps ── */
+  .drop-cap::first-letter {
+    font-family: 'UnifrakturMaguntia', cursive;
+    float: left;
+    font-size: 68px;
+    line-height: 0.8;
+    padding-right: 8px;
+    padding-top: 4px;
+    color: var(--rubric);
+    text-shadow: 1px 1px 0 rgba(139,26,26,0.15);
+  }
+
+  /* ── Pulled quotes ── */
+  .pulled-quote {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--blue);
+    text-align: center;
+    margin: 20px 24px;
+    padding: 16px 0;
+    border-top: 1px solid var(--gold);
+    border-bottom: 1px solid var(--gold);
+    line-height: 1.6;
+    letter-spacing: 0.5px;
+    position: relative;
+  }
+
+  /* ── Dividers ── */
+  .divider {
+    text-align: center;
+    margin: 36px 0;
+    color: var(--gold);
+    font-size: 18px;
+    letter-spacing: 12px;
+    user-select: none;
+  }
+
+  /* ── Flourish dividers ── */
+  .flourish {
+    text-align: center;
+    margin: 36px 0;
+    color: var(--margin);
+    font-size: 14px;
+    letter-spacing: 6px;
+    user-select: none;
+    font-family: 'Cinzel Decorative', serif;
+  }
+
+  /* ── Marginalia ── */
+  .marginalia {
+    position: absolute;
+    right: -20px;
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: 11px;
+    color: var(--ink-faded);
+    opacity: 0.5;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    letter-spacing: 1px;
+  }
+
+  /* ── Footer ── */
+  .finis {
+    text-align: center;
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 2px solid var(--gold);
+    position: relative;
+  }
+
+  .finis::before {
+    content: '⁂';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--parchment);
+    padding: 0 16px;
+    color: var(--gold);
+    font-size: 18px;
+  }
+
+  .finis-text {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+    margin-bottom: 20px;
+  }
+
+  .finis-links {
     display: flex;
     gap: 20px;
-    margin-top: 24px;
-    font-family: "SF Mono", ui-monospace, monospace;
-    font-size: 13px;
-    flex-wrap: wrap;
     justify-content: center;
+    flex-wrap: wrap;
   }
-  .links a {
-    color: #555;
+
+  .finis-links a {
+    font-family: 'IM Fell DW Pica SC', serif;
+    font-size: 14px;
+    color: var(--ink-faded);
     text-decoration: none;
-    transition: color 0.2s;
+    transition: color 0.3s;
+    letter-spacing: 1px;
   }
-  .links a:hover {
-    color: #e0e0e0;
+
+  .finis-links a:hover {
+    color: var(--rubric);
   }
+
+  .finis-links .sep {
+    color: var(--gold);
+    user-select: none;
+  }
+
+  /* ── Canvas ── */
+  #canvas {
+    display: block;
+    margin: 0 auto 32px;
+    max-width: 100%;
+  }
+
   .stats {
-    font-family: "SF Mono", ui-monospace, monospace;
-    font-size: 12px;
-    color: #333;
-    margin-top: 16px;
+    font-family: 'IM Fell DW Pica SC', serif;
+    font-size: 11px;
+    color: var(--ink-faded);
     text-align: center;
+    margin-top: 12px;
+    letter-spacing: 2px;
+    opacity: 0.5;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 700px) {
+    .manuscript { padding: 40px 32px; }
+    .manuscript::before, .manuscript::after { left: 24px; }
+    .colophon h1 { font-size: 26px; }
+    .entry h2 { font-size: 22px; }
+    .entry-body { font-size: 15px; }
+    .drop-cap::first-letter { font-size: 52px; }
+    .marginalia { display: none; }
+  }
+
+  @media (max-width: 440px) {
+    .manuscript { padding: 32px 20px; }
+    .manuscript::before, .manuscript::after { display: none; }
+    .colophon h1 { font-size: 22px; letter-spacing: 1px; }
+    .pulled-quote { margin: 16px 0; font-size: 13px; }
   }
 </style>
 </head>
 <body>
 
-<canvas id="canvas"></canvas>
+<div class="manuscript">
 
-<nav class="links">
-  <a href="https://x.com/ricburton" target="_blank">X</a>
-  <a href="https://youtube.com/@r1cburton" target="_blank">YouTube</a>
-  <a href="https://ricburton.substack.com" target="_blank">Substack</a>
-  <a href="https://soundcloud.com/ricburton" target="_blank">Soundcloud</a>
-  <a href="https://github.com/ricburton" target="_blank">Github</a>
-  <a href="https://vimeo.com/ricburton" target="_blank">Vimeo</a>
-</nav>
+  <canvas id="canvas"></canvas>
 
-<div class="stats" id="stats"></div>
+  <div class="colophon">
+    <h1>The Writings of<br>Richard Burton</h1>
+    <div class="subtitle">Collected Meditations &amp; Exhortations</div>
+  </div>
+
+  <!-- I. -->
+  <article class="entry">
+    <div class="entry-number">Chapter I</div>
+    <h2>Why We DeFi</h2>
+    <p class="entry-body drop-cap">Bitcoin gave the people a place to hold their wealth. Ethereum gave them a place to build their contracts. And from those contracts grew an open source financial system&thinsp;&mdash;&thinsp;a living organism composed of communities forging tools for all. Written as the GameStop saga shook Wall Street, Burton draws a line from the Linux revolution to decentralised finance: both are peaceful uprisings of open code against closed power. <em>&ldquo;Why Occupy Wall Street? DeFi Wall Street Instead.&rdquo;</em></p>
+  </article>
+
+  <div class="flourish">&#10047; &middot; &#10047; &middot; &#10047;</div>
+
+  <!-- II. -->
+  <article class="entry">
+    <div class="entry-number">Chapter II</div>
+    <h2>The Etherean &amp; American Dream</h2>
+    <p class="entry-body drop-cap">America was born by telling the British monarchy to jog on. Ethereum was born by telling centralised servers to do the same. Burton draws a sweeping parallel between these two frontier cultures&thinsp;&mdash;&thinsp;both reward the adventurous, forgive honest failure, and back unproven dreamers. Both are credibly neutral substrates upon which anyone may build. <em>&ldquo;If your smart contract has a dumb bug that costs everyone hundreds of millions, we all learn together.&rdquo;</em></p>
+    <div class="pulled-quote">&ldquo;The best Americans and Ethereans are crazily adventurous. They fund wild charitable experiments, back the most unproven founders, and get involved in some of the most extreme sporting activities.&rdquo;</div>
+  </article>
+
+  <div class="divider">&#10040; &#10040; &#10040;</div>
+
+  <!-- III. -->
+  <article class="entry">
+    <div class="entry-number">Chapter III</div>
+    <h2>Ethereum&rsquo;s Moat Is Its Culture</h2>
+    <p class="entry-body drop-cap">Every great castle needs a moat, and Ethereum&rsquo;s is not built of water but of people. Burton identifies three pillars of defence: obsessive developer service, an opt-in communal culture where the best contributions come from the unlikeliest places, and a deep care for cultural expression through tasteful tokens. <em>&ldquo;Open Source is entirely Opt-In. You can have a full-time team working all hours get absolutely schooled by someone in their spare time.&rdquo;</em></p>
+    <span class="marginalia">on moats &amp; crocodiles</span>
+  </article>
+
+  <div class="flourish">&#10053; &middot; &#10053; &middot; &#10053;</div>
+
+  <!-- IV. -->
+  <article class="entry">
+    <div class="entry-number">Chapter IV</div>
+    <h2>Open Source Monetary Policy</h2>
+    <p class="entry-body drop-cap">Fewer than one thousand souls control the monetary pulse of the entire planet&thinsp;&mdash;&thinsp;the governors of the Federal Reserve, the Bank of England, the European Central Bank, and the People&rsquo;s Bank of China. Bitcoin proposed a radical experiment: print twenty-one million coins across a hundred and forty-four years and see what happens. But the world&rsquo;s monetary woes demand something more complex, more open, more communal.</p>
+  </article>
+
+  <div class="divider">&#10042; &#10042; &#10042;</div>
+
+  <!-- V. -->
+  <article class="entry">
+    <div class="entry-number">Chapter V</div>
+    <h2>Social Networks &amp; Sociable Protocols</h2>
+    <p class="entry-body drop-cap">When Facebook added tagging to images, it sparked the social networking revolution. When Ethereum added the NFT standard to images, it sparked the sociable protocol revolution. Burton envisions a future where connections between people are owned by the people themselves&thinsp;&mdash;&thinsp;not by corporations. Where earning surpasses liking. Where communities choose their own algorithms. <em>&ldquo;Earning is way more powerful than getting likes.&rdquo;</em></p>
+  </article>
+
+  <div class="flourish">&#10048; &middot; &#10048; &middot; &#10048;</div>
+
+  <!-- VI. -->
+  <article class="entry">
+    <div class="entry-number">Chapter VI</div>
+    <h2>Token Tests</h2>
+    <p class="entry-body drop-cap">Four market cycles have taught Burton a bitter lesson: token trading rewires the brain for failure. Trading algorithms are worse than feed algorithms, getting young men addicted to leverage they cannot handle, killing their creativity entirely. His counsel, hard-won: when speculators are manic, buy something real; when they are depressed, send money to ethical founders. <em>&ldquo;Stop trading shitcoins and start creating tasteful tokens.&rdquo;</em></p>
+    <span class="marginalia">a warning to the young</span>
+  </article>
+
+  <div class="divider">&#10040; &#10040; &#10040;</div>
+
+  <!-- VII. -->
+  <article class="entry">
+    <div class="entry-number">Chapter VII</div>
+    <h2>The Liquidity Liability</h2>
+    <p class="entry-body drop-cap">In the old world, startup employees clutch illiquid options for decades, praying for an exit. In the new world, protocol contributors can access liquidity within months. But Burton warns that instant liquidity is not always a blessing&thinsp;&mdash;&thinsp;it can be a curse. Illiquidity, paradoxically, can be a feature: it forces patience, commitment, and long-term thinking upon those who hold.</p>
+  </article>
+
+  <div class="flourish">&#10047; &middot; &#10047; &middot; &#10047;</div>
+
+  <!-- VIII. -->
+  <article class="entry">
+    <div class="entry-number">Chapter VIII</div>
+    <h2>Tokens&rsquo; Powers</h2>
+    <p class="entry-body drop-cap">If you own any crypto at all, ask yourself this: which token will you never sell? Burton shares his answer&thinsp;&mdash;&thinsp;genesis Ether, a valentines NFT minted for a friend using Balance, objects imbued with memory and meaning far beyond market price. These are not assets. They are relics. <em>&ldquo;I am never selling. I am not for sale.&rdquo;</em></p>
+    <div class="pulled-quote">&ldquo;Those will be collectors&rsquo; items in the future but I am never selling them.&rdquo;</div>
+  </article>
+
+  <div class="divider">&#10042; &#10042; &#10042;</div>
+
+  <!-- IX. -->
+  <article class="entry">
+    <div class="entry-number">Chapter IX</div>
+    <h2>People, Protocols &amp; Private Keys</h2>
+    <p class="entry-body drop-cap">A seed phrase can generate an infinite number of Ethereum addresses&thinsp;&mdash;&thinsp;think of it as a single key that opens multiple locks to different homes. Burton maps the future of wallets: one interface for many chains, colours and patterns to make network selection explicit, and a radical simplicity that keeps the conceptual model clear. One seed phrase, one wallet, one person.</p>
+  </article>
+
+  <div class="flourish">&#10053; &middot; &#10053; &middot; &#10053;</div>
+
+  <!-- X. -->
+  <article class="entry">
+    <div class="entry-number">Chapter X</div>
+    <h2>Token Gated Spaces</h2>
+    <p class="entry-body drop-cap">Your wallet can unlock doors both digital and physical, with tokens acting as the key. Burton chronicles a new architecture of access: the $BAE crew gating events with crowdfunded ERC20 tokens, Guild.xyz creating token-gated channels, OurSpaces.xyz bridging private online clubs with real-world venues. Digital objects now grant passage to places otherwise unreachable.</p>
+  </article>
+
+  <div class="divider">&#10040; &#10040; &#10040;</div>
+
+  <!-- XI. -->
+  <article class="entry">
+    <div class="entry-number">Chapter XI</div>
+    <h2>Token Gated Messaging</h2>
+    <p class="entry-body drop-cap">Discord, Telegram, Discourse&thinsp;&mdash;&thinsp;all were built by Web&nbsp;2 founders for a Web&nbsp;2 world. They do not consider how tokens change everything. Burton envisions messaging where tokens prove genuine interest rather than mere claim. Where holders of governance tokens may read developer discussions, and only the committed may reply. <em>&ldquo;People prove their interest rather than just claiming it online.&rdquo;</em></p>
+    <span class="marginalia">on gated discourse</span>
+  </article>
+
+  <div class="flourish">&#10048; &middot; &#10048; &middot; &#10048;</div>
+
+  <!-- XII. -->
+  <article class="entry">
+    <div class="entry-number">Chapter XII</div>
+    <h2>PadawanDAO</h2>
+    <p class="entry-body drop-cap">One man does not scale. A community does. After years of personally funding young people&rsquo;s journeys to Ethereum conferences, Burton watched the kids from Lisbon form PadawanDAO themselves&thinsp;&mdash;&thinsp;using the very technology they had come to learn. Donors become Jedi Masters. The apprentices become the teachers. The cycle continues.</p>
+    <div class="pulled-quote">&ldquo;If you have made money from Ethereum,<br>help teach the next generation.&rdquo;</div>
+  </article>
+
+  <div class="divider">&#10042; &#10042; &#10042;</div>
+
+  <!-- XIII. -->
+  <article class="entry">
+    <div class="entry-number">Chapter XIII</div>
+    <h2>Direct Messages Are Anything But</h2>
+    <p class="entry-body drop-cap">Perhaps ten million messages have been directed his way across a lifetime of screens&thinsp;&mdash;&thinsp;AOL&nbsp;IM, MSN, Slack, Discord, Twitter, iMessage. And yet so rarely are they truly direct. They are indirect, laden with miscommunication. A direct message is a route to your neural pathways: someone loading letters into your eye sockets. With age, Burton has learned to close that door and attend only to what he loves.</p>
+  </article>
+
+  <div class="flourish">&#10047; &middot; &#10047; &middot; &#10047;</div>
+
+  <!-- XIV. -->
+  <article class="entry">
+    <div class="entry-number">Chapter XIV</div>
+    <h2>Say It To My Face</h2>
+    <p class="entry-body drop-cap">They diddle out little text messages, write sub-tweets, send emails, mention him in private Telegram groups&thinsp;&mdash;&thinsp;but they will never say it to his face. When Rainbow forked away from Balance, the team communicated by email, timed during his grandmother&rsquo;s funeral while he was in the United Kingdom. This is a raw call for directness, for courage, for the ancient human dignity of looking someone in the eye.</p>
+    <span class="marginalia">on courage &amp; cowardice</span>
+  </article>
+
+  <div class="divider">&#10040; &#10040; &#10040;</div>
+
+  <!-- XV. -->
+  <article class="entry">
+    <div class="entry-number">Chapter XV</div>
+    <h2>Dropping Out &amp; Dropping In</h2>
+    <p class="entry-body drop-cap">Dropping out of Edinburgh University was easy&thinsp;&mdash;&thinsp;it took days. Dropping in to the right community took years. From selling his apparel company Hoodeasy, to teaching himself Ruby on Rails, to joining Stripe, to finding Ethereum, Burton traces the winding path that no institution could have charted. The leaving is quick. The arriving is the life&rsquo;s work.</p>
+    <div class="pulled-quote">&ldquo;Dropping out of Edinburgh University was easy&thinsp;&mdash;&thinsp;it took days.<br>Dropping in to the right community took years.&rdquo;</div>
+  </article>
+
+  <!-- FINIS -->
+  <div class="finis">
+    <div class="finis-text">Finis</div>
+    <nav class="finis-links">
+      <a href="https://ricburton.substack.com" target="_blank">Substack</a>
+      <span class="sep">&middot;</span>
+      <a href="https://x.com/ricburton" target="_blank">X</a>
+      <span class="sep">&middot;</span>
+      <a href="https://youtube.com/@r1cburton" target="_blank">YouTube</a>
+      <span class="sep">&middot;</span>
+      <a href="https://soundcloud.com/ricburton" target="_blank">Soundcloud</a>
+      <span class="sep">&middot;</span>
+      <a href="https://github.com/ricburton" target="_blank">Github</a>
+      <span class="sep">&middot;</span>
+      <a href="https://vimeo.com/ricburton" target="_blank">Vimeo</a>
+    </nav>
+    <div class="stats" id="stats"></div>
+  </div>
+
+</div>
 
 <script type="module">
 import {
@@ -70,79 +483,71 @@ import {
   layoutWithLines
 } from 'https://esm.sh/@chenglou/pretext'
 
-const TEXT = `Richard Burton is a designer and engineer interested in interfaces, film, music and the internet.`
-
-const TITLE_FONT = 'bold 28px system-ui, -apple-system, sans-serif'
-const BODY_FONT = '18px/30px Georgia, "Times New Roman", serif'
-const BODY_FONT_CANVAS = '18px Georgia, Times New Roman, serif'
-const TITLE = 'Richard Burton'
-const LINE_HEIGHT = 30
-const TITLE_LINE_HEIGHT = 36
-const PADDING = 48
-const GAP = 32
+const TITLE = 'The Writings of Richard Burton'
+const SUBTITLE = 'Collected Meditations & Exhortations upon Tokens, Culture & the Open Internet'
+const TITLE_FONT = '900 42px Cinzel Decorative, serif'
+const SUB_FONT = '400 16px Cinzel, serif'
+const TITLE_LH = 52
+const SUB_LH = 26
 
 const canvas = document.getElementById('canvas')
 const ctx = canvas.getContext('2d')
-const stats = document.getElementById('stats')
 const dpr = window.devicePixelRatio || 1
 
-let titlePrepared, bodyPrepared
-
-function init() {
-  titlePrepared = prepareWithSegments(TITLE, TITLE_FONT)
-  bodyPrepared = prepareWithSegments(TEXT, BODY_FONT_CANVAS)
-  render()
-}
-
 function render() {
-  const maxW = Math.min(640, window.innerWidth - 32)
-  const contentW = maxW - PADDING * 2
+  const manuscript = document.querySelector('.manuscript')
+  const maxW = manuscript.clientWidth - 144 // match padding
+  const contentW = maxW
 
   const t0 = performance.now()
-  const titleLayout = layoutWithLines(titlePrepared, contentW, TITLE_LINE_HEIGHT)
-  const bodyLayout = layoutWithLines(bodyPrepared, contentW, LINE_HEIGHT)
+
+  const titlePrep = prepareWithSegments(TITLE, TITLE_FONT)
+  const subPrep = prepareWithSegments(SUBTITLE, SUB_FONT)
+  const titleLayout = layoutWithLines(titlePrep, contentW, TITLE_LH)
+  const subLayout = layoutWithLines(subPrep, contentW, SUB_LH)
+
   const layoutMs = (performance.now() - t0).toFixed(3)
 
-  const totalHeight = PADDING + titleLayout.height + GAP + bodyLayout.height + PADDING
+  const pad = 32
+  const gap = 20
+  const totalH = pad + titleLayout.height + gap + subLayout.height + pad
+  const totalW = maxW
 
-  canvas.style.width = maxW + 'px'
-  canvas.style.height = totalHeight + 'px'
-  canvas.width = maxW * dpr
-  canvas.height = totalHeight * dpr
-  ctx.scale(dpr, dpr)
+  canvas.style.width = totalW + 'px'
+  canvas.style.height = totalH + 'px'
+  canvas.width = totalW * dpr
+  canvas.height = totalH * dpr
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
-  // Background
-  ctx.fillStyle = '#1a1a1a'
-  ctx.roundRect(0, 0, maxW, totalHeight, 8)
-  ctx.fill()
+  // Clear
+  ctx.clearRect(0, 0, totalW, totalH)
 
   // Title
   ctx.font = TITLE_FONT
-  ctx.fillStyle = '#e0e0e0'
-  let y = PADDING + TITLE_LINE_HEIGHT * 0.8
+  ctx.fillStyle = '#2a1a0a'
+  ctx.textAlign = 'center'
+  let y = pad + TITLE_LH * 0.78
   for (const line of titleLayout.lines) {
-    ctx.fillText(line.text, PADDING, y)
-    y += TITLE_LINE_HEIGHT
+    ctx.fillText(line.text, totalW / 2, y)
+    y += TITLE_LH
   }
 
-  // Body
-  ctx.font = BODY_FONT_CANVAS
-  ctx.fillStyle = '#999'
-  y = PADDING + titleLayout.height + GAP + LINE_HEIGHT * 0.8
-  for (const line of bodyLayout.lines) {
-    ctx.fillText(line.text, PADDING, y)
-    y += LINE_HEIGHT
+  // Subtitle
+  ctx.font = SUB_FONT
+  ctx.fillStyle = '#6d5a42'
+  y = pad + titleLayout.height + gap + SUB_LH * 0.78
+  for (const line of subLayout.lines) {
+    ctx.fillText(line.text, totalW / 2, y)
+    y += SUB_LH
   }
 
-  stats.textContent = `pretext layout: ${layoutMs}ms · ${bodyLayout.lineCount} lines`
+  document.getElementById('stats').textContent =
+    `Laid out by Pretext in ${layoutMs}ms`
 }
 
-window.addEventListener('resize', () => {
-  ctx.setTransform(1, 0, 0, 1, 0, 0)
-  render()
-})
-
-init()
+// Wait for fonts to load
+document.fonts.ready.then(render)
+window.addEventListener('resize', render)
 </script>
 
 </body>
