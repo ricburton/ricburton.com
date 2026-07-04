@@ -239,49 +239,58 @@ try{
 }
 
 /* ═══════════════════ Webcams ═══════════════════
-   Each cam tries its candidate live-frame URLs in order in YOUR browser;
-   whichever loads becomes the feed (refreshed every 60 s). If none load
-   (feed moved, or the source blocks hotlinking) the panel falls back to a
-   direct link to the official live stream. */
+   Same embed technique as musselrockwx.com: cams with a YouTube live
+   stream get an embedded player (yt: video id). Cams without one show
+   refreshing still frames — ALERTCalifornia cameras publish a new
+   latest-frame.jpg every 15 s. If nothing loads, the panel falls back
+   to a direct link to the official live stream. */
 const CAMS = [
   {
     id:'funston', name:'Fort Funston', sub:'THE FORT · COASTAL SOARING',
     lat:37.7168, lon:-122.5030, elevM:60, elevLabel:'200 FT BLUFF',
+    yt:null, // Fellow Feathers 4K livestream — set video id to embed
     sources:[
       'https://archive.flyfunston.org/newwebcam/fortfunstoncam.jpg',
       'https://archive.flyfunston.org/webcam/fortfunstoncam.jpg',
       'https://flyfunston.org/webcam/fortfunstoncam.jpg'
     ],
+    refreshMs:60000,
     link:'https://flyfunston.org/dashboard/',
     credit:'Fellow Feathers of Fort Funston'
   },
   {
     id:'musselrock', name:'Mussel Rock', sub:'THE DUMPS · DALY CITY',
     lat:37.6742, lon:-122.4935, elevM:150, elevLabel:'500 FT CLIFFS',
-    sources:[
-      'https://flypacifica.com/cams/musselrock/latest.jpg'
-    ],
-    link:'https://flypacifica.com/',
-    credit:'Fly Pacifica'
+    yt:'vZEINdmawdc', // "Mussel Rock Park" live stream (streams 5am–9pm PT)
+    sources:[],
+    link:'https://www.youtube.com/watch?v=vZEINdmawdc',
+    credit:'Mussel Rock cam · Free Flight Research Lab'
   },
   {
     id:'mttam', name:'Mt Tamalpais', sub:'EAST PEAK · MARIN',
     lat:37.9235, lon:-122.5965, elevM:784, elevLabel:'2,571 FT',
+    yt:null,
     sources:[
       'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtTamEast/latest-frame.jpg',
       'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtTamalpaisEast/latest-frame.jpg',
+      'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtTam1/latest-frame.jpg',
       'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtTamWest/latest-frame.jpg'
     ],
+    refreshMs:15000,
     link:'https://alertwest.live/cam-console/2192',
     credit:'ALERTCalifornia · UC San Diego'
   },
   {
     id:'mtdiablo', name:'Mt Diablo', sub:'SUMMIT · CONTRA COSTA',
     lat:37.8816, lon:-121.9143, elevM:1173, elevLabel:'3,849 FT',
+    yt:null,
     sources:[
       'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtDiablo/latest-frame.jpg',
-      'https://cameras.alertcalifornia.org/public-camera-data/Axis-MountDiablo/latest-frame.jpg'
+      'https://cameras.alertcalifornia.org/public-camera-data/Axis-MountDiablo/latest-frame.jpg',
+      'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtDiablo1/latest-frame.jpg',
+      'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtDiabloNorth/latest-frame.jpg'
     ],
+    refreshMs:15000,
     link:'https://alertwest.live/cam-console/2156',
     credit:'ALERTCalifornia · UC San Diego'
   }
@@ -662,14 +671,30 @@ const pName=document.getElementById('p-name'),pCoords=document.getElementById('p
       pStatus=document.getElementById('p-status'),pRefresh=document.getElementById('p-refresh'),
       pLink=document.getElementById('p-link'),pStaticLink=document.getElementById('p-static-link'),
       pCredit=document.getElementById('p-credit');
-let feedTimer=null,activeCam=null;
+let feedTimer=null,activeCam=null,ytFrame=null;
 
-function stopFeed(){if(feedTimer){clearInterval(feedTimer);feedTimer=null;}}
+function stopFeed(){
+  if(feedTimer){clearInterval(feedTimer);feedTimer=null;}
+  if(ytFrame){ytFrame.remove();ytFrame=null;}
+}
 function bust(u){return u+(u.includes('?')?'&':'?')+'t='+Date.now();}
 
 function startFeed(cam){
   stopFeed();
   pImg.style.display='none';pImg.removeAttribute('src');
+  if(cam.yt){
+    // musselrockwx.com-style embed: the YouTube live stream player itself
+    pStatic.style.display='none';
+    ytFrame=document.createElement('iframe');
+    ytFrame.src='https://www.youtube-nocookie.com/embed/'+cam.yt+'?autoplay=1&mute=1&playsinline=1&rel=0';
+    ytFrame.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';
+    ytFrame.allowFullscreen=true;
+    ytFrame.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0;';
+    document.querySelector('.feed').appendChild(ytFrame);
+    pStatus.innerHTML='<span class="live-tag">live stream</span>';
+    pRefresh.textContent='youtube · tap for sound';
+    return;
+  }
   pStatic.style.display='flex';
   pStatic.querySelector('.sig').textContent='◍ acquiring signal…';
   pStatus.textContent='searching feed';pRefresh.textContent='';
@@ -685,13 +710,14 @@ function startFeed(cam){
     probe.onload=()=>{
       if(cam!==activeCam)return;
       pImg.src=probe.src;pImg.style.display='block';pStatic.style.display='none';
+      const every=cam.refreshMs||60000;
       pStatus.innerHTML='<span class="live-tag">live frame</span>';
-      pRefresh.textContent='refreshes · 60 s';
+      pRefresh.textContent='refreshes · '+Math.round(every/1000)+' s';
       feedTimer=setInterval(()=>{
         const next=new Image();
         next.onload=()=>{if(cam===activeCam)pImg.src=next.src;};
         next.src=bust(url);
-      },60000);
+      },every);
     };
     probe.onerror=tryNext;
     probe.src=bust(url);
