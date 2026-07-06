@@ -298,23 +298,25 @@ const CAMS = [
     credit:'Mussel Rock cam · Free Flight Research Lab'
   },
   {
-    id:'mttam', name:'Mt Tamalpais', sub:'EAST PEAK · MARIN',
+    id:'mttam', name:'Mt Tamalpais', sub:'EAST + WEST PEAK CAMS · MARIN',
     lat:37.9235, lon:-122.5965, elevM:784, elevLabel:'2,571 FT',
     yt:null,
+    discover:{lat:37.9235,lon:-122.5965,km:3.5,max:3}, // nearest ALERTCalifornia cams to the peak
     sources:[
       'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtTamEast/latest-frame.jpg',
+      'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtTamWest/latest-frame.jpg',
       'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtTamalpaisEast/latest-frame.jpg',
-      'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtTam1/latest-frame.jpg',
-      'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtTamWest/latest-frame.jpg'
+      'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtTam1/latest-frame.jpg'
     ],
     refreshMs:15000,
-    link:'https://alertwest.live/cam-console/2192',
-    credit:'ALERTCalifornia · UC San Diego'
+    link:'https://www.rntl.net/mt-tam-cam-tamalpais-webcam/',
+    credit:'ALERTCalifornia · via Mt Tam Cam (rntl.net)'
   },
   {
-    id:'mtdiablo', name:'Mt Diablo', sub:'SUMMIT · CONTRA COSTA',
+    id:'mtdiablo', name:'Mt Diablo', sub:'SUMMIT FIRE CAMS · CONTRA COSTA',
     lat:37.8816, lon:-121.9143, elevM:1173, elevLabel:'3,849 FT',
     yt:null,
+    discover:{lat:37.8816,lon:-121.9143,km:4,max:3},
     sources:[
       'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtDiablo/latest-frame.jpg',
       'https://cameras.alertcalifornia.org/public-camera-data/Axis-MountDiablo/latest-frame.jpg',
@@ -322,10 +324,55 @@ const CAMS = [
       'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtDiabloNorth/latest-frame.jpg'
     ],
     refreshMs:15000,
-    link:'https://alertwest.live/cam-console/2156',
-    credit:'ALERTCalifornia · UC San Diego'
+    link:'https://www.rntl.net/mt-diablo-fire-cams/',
+    credit:'ALERTCalifornia · via rntl.net fire cams'
   }
 ];
+
+/* ── ALERTCalifornia camera discovery (rntl.net-style feeds) ──
+   The visitor's browser pulls ALERTCalifornia's public camera index and
+   picks the cameras nearest each peak, so the exact camera ids never go
+   stale. Falls back to the hand-listed candidates above if the index
+   can't be fetched. */
+const AC_INDEX='https://cameras.alertcalifornia.org/public-camera-data/all_cameras-v3.json';
+let acListPromise=null;
+function acCameras(){
+  if(!acListPromise){
+    acListPromise=fetch(AC_INDEX)
+      .then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
+      .then(j=>{
+        const feats=j.features||j.cameras||j.data||[];
+        return feats.map(f=>{
+          const p=f.properties||f;
+          const g=f.geometry&&f.geometry.coordinates;
+          const lon=g?+g[0]:+(p.longitude??p.lon??p.lng);
+          const lat=g?+g[1]:+(p.latitude??p.lat);
+          return {id:p.id||p.camera_id||p.name,lat,lon};
+        }).filter(c=>c.id&&isFinite(c.lat)&&isFinite(c.lon));
+      })
+      .catch(()=>[]);
+  }
+  return acListPromise;
+}
+function kmBetween(lat1,lon1,lat2,lon2){
+  const rad=Math.PI/180,R=6371;
+  const x=(lon2-lon1)*rad*Math.cos((lat1+lat2)*0.5*rad),y=(lat2-lat1)*rad;
+  return Math.sqrt(x*x+y*y)*R;
+}
+function withTimeout(p,ms,fb){return Promise.race([p,new Promise(res=>setTimeout(()=>res(fb),ms))]);}
+async function discoverSources(cam){
+  if(!cam.discover||cam._discovered)return cam.sources;
+  cam._discovered=true;
+  const cams=await withTimeout(acCameras(),5000,[]);
+  const near=cams
+    .map(c=>({c,d:kmBetween(cam.discover.lat,cam.discover.lon,c.lat,c.lon)}))
+    .filter(o=>o.d<=cam.discover.km)
+    .sort((a,b)=>a.d-b.d)
+    .slice(0,cam.discover.max||3)
+    .map(o=>'https://cameras.alertcalifornia.org/public-camera-data/'+o.c.id+'/latest-frame.jpg');
+  if(near.length)cam.sources=[...near,...cam.sources.filter(u=>!near.includes(u))];
+  return cam.sources;
+}
 
 /* ═══════════════════ Geography ═══════════════════ */
 const LON0=-122.82, LON1=-121.80, LAT0=37.28, LAT1=38.22;
@@ -685,26 +732,51 @@ function initCardFeed(cam,host){
   img.alt=cam.name+' live frame';
   img.style.display='none';
   host.appendChild(img);
-  let i=0;
-  const tryNext=()=>{
-    if(i>=cam.sources.length){
+  const working=[];
+  let idx=0,started=false;
+  const show=u=>{
+    const n=new Image();
+    n.onload=()=>{
+      img.src=n.src;
+      img.style.display='block';
+      const fb=host.querySelector('.cc-fallback');
+      if(fb)fb.remove();
+    };
+    n.onerror=()=>{const k=working.indexOf(u);if(k>=0)working.splice(k,1);};
+    n.src=bust(u);
+  };
+  const start=()=>{
+    if(started)return;
+    started=true;
+    show(working[0]);
+    // each tick: fresh frame, advancing through every working view (East/West…)
+    setInterval(()=>{
+      if(!working.length)return;
+      idx=(idx+1)%working.length;
+      show(working[idx]);
+    },cam.refreshMs||60000);
+  };
+  discoverSources(cam).then(srcs=>{
+    let pending=srcs.length;
+    if(!pending){
       host.insertAdjacentHTML('beforeend','<div class="cc-fallback">◍ signal via<br>external stream</div>');
       return;
     }
-    const url=cam.sources[i++],probe=new Image();
-    probe.onload=()=>{
-      img.src=probe.src;
-      img.style.display='block';
-      setInterval(()=>{
-        const n=new Image();
-        n.onload=()=>{img.src=n.src;};
-        n.src=bust(url);
-      },cam.refreshMs||60000);
-    };
-    probe.onerror=tryNext;
-    probe.src=bust(url);
-  };
-  tryNext();
+    srcs.forEach(u=>{
+      const probe=new Image();
+      probe.onload=()=>{
+        working.push(u);
+        start();
+        pending--;
+      };
+      probe.onerror=()=>{
+        if(--pending===0&&!working.length){
+          host.insertAdjacentHTML('beforeend','<div class="cc-fallback">◍ signal via<br>external stream</div>');
+        }
+      };
+      probe.src=bust(u);
+    });
+  });
 }
 
 /* ═════════ live wind → flowing airlines over the terrain ═════════
@@ -893,7 +965,7 @@ function startFeed(cam){
     probe.onerror=tryNext;
     probe.src=bust(url);
   };
-  tryNext();
+  discoverSources(cam).then(()=>{if(cam===activeCam)tryNext();});
 }
 function openPanel(cam){
   activeCam=cam;
