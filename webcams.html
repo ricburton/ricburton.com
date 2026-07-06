@@ -63,6 +63,22 @@ body{
 
 #hud-hint{right:26px;bottom:24px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);text-align:right;line-height:1.9}
 
+/* ── mode toggle ── */
+#modes{
+  position:fixed;z-index:22;top:22px;right:26px;display:flex;gap:8px;pointer-events:auto;
+}
+#modes .chip.active{
+  background:rgba(0,229,255,0.14);color:#fff;border-color:var(--cyan);
+  box-shadow:0 0 18px rgba(0,229,255,0.4),inset 0 0 12px rgba(0,229,255,0.10);
+}
+#attrib{
+  position:fixed;z-index:21;right:8px;bottom:6px;display:none;
+  font-size:8px;letter-spacing:1px;color:rgba(160,215,255,0.4);text-transform:uppercase;
+}
+@media (max-width:640px){
+  #modes{top:14px;right:12px}
+}
+
 /* ── cam chips ── */
 #chips{
   position:fixed;z-index:22;left:50%;transform:translateX(-50%);bottom:20px;
@@ -220,6 +236,12 @@ body{
 <div class="hud" id="hud-hint">
   drag · orbit<br>scroll · zoom<br>tap a beacon · live feed
 </div>
+
+<div id="modes">
+  <button class="chip mode active" id="mode-grid">Grid</button>
+  <button class="chip mode" id="mode-sat">Satellite</button>
+</div>
+<div id="attrib">imagery © Esri · Maxar · Earthstar Geographics</div>
 
 <div id="chips"></div>
 
@@ -519,29 +541,45 @@ for(let i=0;i<pos.count;i++){
 }
 geo.setAttribute('elev',new THREE.BufferAttribute(elevArr,1));
 geo.computeVertexNormals();
+// web-mercator-correct the v coordinate so draped satellite tiles line up
+{
+  const merc=lat=>Math.log(Math.tan(Math.PI/4+lat*Math.PI/360));
+  const mN=merc(LAT1),mS=merc(LAT0);
+  const uvAttr=geo.attributes.uv;
+  for(let i=0;i<uvAttr.count;i++){
+    const lat=LAT1-(pos.getZ(i)/D+0.5)*(LAT1-LAT0);
+    uvAttr.setY(i,(merc(lat)-mS)/(mN-mS));
+  }
+}
 
+const blankTex=new THREE.DataTexture(new Uint8Array([6,12,32,255]),1,1);
+blankTex.needsUpdate=true;
 const uniforms={
   uTime:{value:0},
   uScanMax:{value:1250},
   uMinor:{value:50},
   uMajor:{value:250},
-  uFog:{value:new THREE.Color(0x04071a)}
+  uFog:{value:new THREE.Color(0x04071a)},
+  uSat:{value:blankTex},
+  uSatMix:{value:0}
 };
 const terrainMat=new THREE.ShaderMaterial({
   uniforms,
   vertexShader:/*glsl*/`
     attribute float elev;
-    varying float vE; varying vec3 vW; varying vec3 vN;
+    varying float vE; varying vec3 vW; varying vec3 vN; varying vec2 vUv;
     void main(){
       vE=elev;
+      vUv=uv;
       vec4 wp=modelMatrix*vec4(position,1.0);
       vW=wp.xyz;
       vN=normalize(normalMatrix*normal);
       gl_Position=projectionMatrix*viewMatrix*wp;
     }`,
   fragmentShader:/*glsl*/`
-    varying float vE; varying vec3 vW; varying vec3 vN;
-    uniform float uTime,uScanMax,uMinor,uMajor;
+    varying float vE; varying vec3 vW; varying vec3 vN; varying vec2 vUv;
+    uniform float uTime,uScanMax,uMinor,uMajor,uSatMix;
+    uniform sampler2D uSat;
     uniform vec3 uFog;
     float contour(float e,float step){
       float g=e/step;
@@ -559,6 +597,10 @@ const terrainMat=new THREE.ShaderMaterial({
       // hillshade from a cool key light
       float dif=clamp(dot(normalize(vN),normalize(vec3(-0.5,0.8,0.35))),0.0,1.0);
       col*=0.45+0.75*dif;
+
+      // satellite drape: real imagery under the neon systems
+      vec3 sat=texture2D(uSat,vUv).rgb*(0.5+0.7*dif);
+      col=mix(col,sat,uSatMix);
 
       // ── height lines ──
       float land=smoothstep(2.0,14.0,vE);
@@ -608,7 +650,7 @@ const oceanMat=new THREE.ShaderMaterial({
       gl_Position=projectionMatrix*viewMatrix*wp;
     }`,
   fragmentShader:/*glsl*/`
-    uniform float uTime;
+    uniform float uTime,uSatMix;
     uniform vec3 uFog;
     varying vec3 vW;
     void main(){
@@ -617,10 +659,11 @@ const oceanMat=new THREE.ShaderMaterial({
       float line=1.0-min(min(f.x,f.y),1.0);
       float pulse=0.75+0.25*sin(uTime*1.5-length(vW.xz)*0.12);
       vec3 col=vec3(0.016,0.05,0.16);
-      col+=vec3(0.10,0.42,1.0)*line*pulse*0.9;
+      col+=vec3(0.10,0.42,1.0)*line*pulse*(0.9-0.45*uSatMix);
       float dist=length(vW.xz);
       col=mix(col,uFog,smoothstep(90.0,210.0,dist));
       float a=mix(0.92,0.0,smoothstep(120.0,210.0,dist));
+      a*=1.0-0.72*uSatMix; // let the real water show through in satellite mode
       gl_FragColor=vec4(col,a);
     }`
 });
@@ -877,6 +920,73 @@ function updateWind(dt,t){
   windGeo.attributes.color.needsUpdate=true;
 }
 
+/* ═════════ satellite drape (cyberpunk + real) ═════════
+   Esri World Imagery tiles stitched to one canvas in the browser and
+   draped over the terrain, neon systems glowing on top. Lazy-loaded on
+   the first switch to satellite mode. */
+const satState={loaded:false,loading:false};
+let satTarget=0;
+async function loadSatTexture(){
+  const z=11,T=256,n=1<<z;
+  const px=lon=>(lon+180)/360*n*T;
+  const py=lat=>{const s=Math.sin(lat*Math.PI/180);return (0.5-Math.log((1+s)/(1-s))/(4*Math.PI))*n*T;};
+  const x0=px(LON0),x1=px(LON1),y0=py(LAT1),y1=py(LAT0);
+  const canvas=document.createElement('canvas');
+  canvas.width=Math.round(x1-x0);canvas.height=Math.round(y1-y0);
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0a1626';ctx.fillRect(0,0,canvas.width,canvas.height);
+  const tx0=Math.floor(x0/T),tx1=Math.floor((x1-1)/T),ty0=Math.floor(y0/T),ty1=Math.floor((y1-1)/T);
+  let ok=0,total=0;
+  const jobs=[];
+  for(let ty=ty0;ty<=ty1;ty++)for(let tx=tx0;tx<=tx1;tx++){
+    total++;
+    jobs.push(new Promise(res=>{
+      const im=new Image();
+      im.crossOrigin='anonymous';
+      im.onload=()=>{ctx.drawImage(im,Math.round(tx*T-x0),Math.round(ty*T-y0));ok++;res();};
+      im.onerror=()=>res();
+      im.src='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+z+'/'+ty+'/'+tx;
+    }));
+  }
+  await Promise.all(jobs);
+  if(ok<total*0.6)return false;
+  const tex=new THREE.CanvasTexture(canvas);
+  // no sRGB tag: this raw ShaderMaterial pipeline never re-encodes output,
+  // so a linear-decoded texture would render far too dark
+  tex.anisotropy=renderer.capabilities.getMaxAnisotropy();
+  uniforms.uSat.value=tex;
+  return true;
+}
+const modeGrid=document.getElementById('mode-grid');
+const modeSat=document.getElementById('mode-sat');
+const attrib=document.getElementById('attrib');
+modeSat.addEventListener('click',async()=>{
+  if(!satState.loaded){
+    if(satState.loading)return;
+    satState.loading=true;
+    modeSat.textContent='Loading…';
+    const ok=await loadSatTexture().catch(()=>false);
+    satState.loading=false;
+    modeSat.textContent='Satellite';
+    if(!ok){
+      modeSat.textContent='Sat offline';
+      setTimeout(()=>{modeSat.textContent='Satellite';},2500);
+      return;
+    }
+    satState.loaded=true;
+  }
+  satTarget=1;
+  modeSat.classList.add('active');
+  modeGrid.classList.remove('active');
+  attrib.style.display='block';
+});
+modeGrid.addEventListener('click',()=>{
+  satTarget=0;
+  modeGrid.classList.add('active');
+  modeSat.classList.remove('active');
+  attrib.style.display='none';
+});
+
 /* ── chips ── */
 const chipsEl=document.getElementById('chips');
 CAMS.forEach(cam=>{
@@ -973,13 +1083,13 @@ function openPanel(cam){
   pCoords.innerHTML=`${cam.sub}<br><b>${cam.lat.toFixed(4)}° N</b> / <b>${Math.abs(cam.lon).toFixed(4)}° W</b> · <b>${cam.elevLabel}</b>`;
   pLink.href=cam.link;pStaticLink.href=cam.link;
   pCredit.textContent='feed · '+cam.credit;
-  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.dataset.cam===cam.id));
+  document.querySelectorAll('#chips .chip').forEach(c=>c.classList.toggle('active',c.dataset.cam===cam.id));
   panel.classList.add('open');
   startFeed(cam);
 }
 document.getElementById('close').addEventListener('click',()=>{
   panel.classList.remove('open');activeCam=null;stopFeed();
-  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('#chips .chip').forEach(c=>c.classList.remove('active'));
 });
 
 /* ── loop ── */
@@ -991,6 +1101,7 @@ function tick(){
   const dt=Math.min(clock.getDelta(),0.05);
   const t=clock.elapsedTime;
   uniforms.uTime.value=t;
+  uniforms.uSatMix.value+=(satTarget-uniforms.uSatMix.value)*Math.min(1,dt*2.4);
   updateWind(dt,t);
   controls.autoRotate=(t-lastInteract)>8;
   controls.update();
