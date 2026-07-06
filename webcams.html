@@ -78,21 +78,51 @@ body{
 .chip:hover,.chip.active{border-color:var(--cyan);color:#fff;box-shadow:0 0 18px rgba(0,229,255,0.35),inset 0 0 12px rgba(0,229,255,0.08)}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
 
-/* ── 3D labels ── */
-.marker-label{
-  position:fixed;z-index:15;transform:translate(-50%,-100%);pointer-events:auto;cursor:pointer;
-  text-align:center;white-space:nowrap;transition:opacity .2s;
+/* ── floating cam cards over the terrain ── */
+.cam-card{
+  position:fixed;z-index:15;pointer-events:auto;cursor:pointer;
+  transform-origin:50% 100%;transform:translate(-50%,-100%);
+  width:232px;
+  background:rgba(4,10,28,0.82);
+  border:1px solid rgba(0,229,255,0.45);
+  border-radius:4px;overflow:hidden;
+  box-shadow:0 0 26px rgba(0,140,255,0.35),inset 0 0 18px rgba(0,90,255,0.08);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  transition:opacity .2s,border-color .25s,box-shadow .25s;
 }
-.marker-label .name{
-  font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#eaffff;
-  text-shadow:0 0 8px rgba(0,229,255,0.95),0 0 20px rgba(0,120,255,0.7);
+.cam-card:hover{border-color:var(--cyan);box-shadow:0 0 38px rgba(0,229,255,0.55),inset 0 0 18px rgba(0,229,255,0.10)}
+.cam-card::after{ /* stem tick pointing at the beacon */
+  content:'';position:absolute;left:50%;bottom:-1px;width:1px;height:0;
 }
-.marker-label .meta{font-size:9px;letter-spacing:2px;color:var(--dim);margin-top:2px}
-.marker-label .live{
+.cc-head{
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+  padding:6px 9px;font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  color:#eaffff;text-shadow:0 0 8px rgba(0,229,255,0.8);
+  border-bottom:1px solid rgba(0,229,255,0.25);
+  background:linear-gradient(180deg,rgba(0,229,255,0.10),transparent);
+  white-space:nowrap;
+}
+.cc-head .live{
   display:inline-block;margin-right:6px;width:5px;height:5px;border-radius:50%;
   background:var(--pink);box-shadow:0 0 8px var(--pink);animation:blink 1.6s infinite;vertical-align:1px;
 }
-.marker-label:hover .name{color:var(--cyan)}
+.cc-elev{color:var(--dim);font-size:8px;letter-spacing:1.5px}
+.cc-feed{position:relative;aspect-ratio:16/9;background:#02040f}
+.cc-feed img,.cc-feed iframe{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border:0;display:block}
+.cc-shield{position:absolute;inset:0}
+.cc-fallback{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);padding:8px;line-height:1.8;
+  background:
+    repeating-linear-gradient(0deg,rgba(0,229,255,0.05) 0 1px,transparent 1px 4px),
+    radial-gradient(ellipse at 50% 60%,rgba(0,90,255,0.20),transparent 70%);
+}
+.cc-wind{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 9px;font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);
+  border-top:1px solid rgba(0,229,255,0.2);
+}
+.cc-wind b{font-weight:400;color:var(--cyan);text-shadow:0 0 8px rgba(0,229,255,0.6)}
 
 /* ── stream panel ── */
 #panel{
@@ -159,6 +189,10 @@ body{
   #hud-hint{display:none}
   #chips{bottom:14px;gap:6px}
   .chip{padding:8px 10px;font-size:10px;letter-spacing:1px}
+  .cam-card{width:152px}
+  .cc-head{padding:5px 7px;font-size:8px;letter-spacing:1px}
+  .cc-elev{display:none}
+  .cc-wind{padding:4px 7px;font-size:8px;letter-spacing:1px}
   #panel{top:auto;bottom:0;right:0;left:0;width:100%;border-radius:12px 12px 0 0;transform:translateY(110%)}
   #panel.open{transform:translateY(0)}
 }
@@ -179,7 +213,8 @@ body{
   Elevation scan
   <div class="bar"><i id="scanbar"></i></div>
   <span class="val" id="scanval">0 m</span> / 1250 m<br>
-  contour interval 50 m · index 250 m
+  contour interval 50 m · index 250 m<br>
+  wind flow · live · open-meteo · 10 min
 </div>
 
 <div class="hud" id="hud-hint">
@@ -249,6 +284,7 @@ const CAMS = [
     id:'funston', name:'Fort Funston', sub:'THE FORT · COASTAL SOARING',
     lat:37.7168, lon:-122.5030, elevM:60, elevLabel:'200 FT BLUFF',
     yt:null, // Fellow Feathers 4K livestream — set video id to embed
+    cardLift:7, // float higher: Mussel Rock is next door
     sources:[
       'https://archive.flyfunston.org/newwebcam/fortfunstoncam.jpg',
       'https://archive.flyfunston.org/webcam/fortfunstoncam.jpg',
@@ -424,7 +460,7 @@ controls.minDistance=25;
 controls.maxDistance=220;
 controls.maxPolarAngle=Math.PI*0.49;
 let lastInteract=-99;
-controls.addEventListener('start',()=>{lastInteract=clock?clock.getElapsedTime():0;});
+controls.addEventListener('start',()=>{lastInteract=clock?clock.elapsedTime:0;});
 
 /* ── terrain ── */
 const geo=new THREE.PlaneGeometry(W,D,RES-1,RES-1);
@@ -626,13 +662,153 @@ CAMS.forEach((cam,i)=>{
   scene.add(grp);
 
   const el=document.createElement('div');
-  el.className='marker-label';
-  el.innerHTML=`<div class="name"><span class="live"></span>${cam.name}</div><div class="meta">${cam.elevLabel}</div>`;
+  el.className='cam-card';
+  el.innerHTML=`
+    <div class="cc-head"><span><span class="live"></span>${cam.name}</span><span class="cc-elev">${cam.elevLabel}</span></div>
+    <div class="cc-feed"></div>
+    <div class="cc-wind"><span>WIND</span><b>—</b></div>`;
   el.addEventListener('click',()=>openPanel(cam));
   labelLayer.appendChild(el);
+  initCardFeed(cam,el.querySelector('.cc-feed'));
 
-  markers.push({cam,grp,el,topY:y+beamH*0.85});
+  markers.push({cam,grp,el,topY:y+beamH*0.9,lift:cam.cardLift??1.5,phase:i*1.4});
 });
+
+/* always-on floating feeds: YouTube player when the cam has a live
+   stream, refreshing frames otherwise, styled fallback if neither loads */
+function initCardFeed(cam,host){
+  if(cam.yt){
+    const f=document.createElement('iframe');
+    f.src='https://www.youtube-nocookie.com/embed/'+cam.yt+'?autoplay=1&mute=1&playsinline=1&controls=0&rel=0';
+    f.allow='autoplay; encrypted-media';
+    f.loading='lazy';
+    host.appendChild(f);
+    host.insertAdjacentHTML('beforeend','<div class="cc-shield"></div>');
+    return;
+  }
+  const img=document.createElement('img');
+  img.alt=cam.name+' live frame';
+  img.style.display='none';
+  host.appendChild(img);
+  let i=0;
+  const tryNext=()=>{
+    if(i>=cam.sources.length){
+      host.insertAdjacentHTML('beforeend','<div class="cc-fallback">◍ signal via<br>external stream</div>');
+      return;
+    }
+    const url=cam.sources[i++],probe=new Image();
+    probe.onload=()=>{
+      img.src=probe.src;
+      img.style.display='block';
+      setInterval(()=>{
+        const n=new Image();
+        n.onload=()=>{img.src=n.src;};
+        n.src=bust(url);
+      },cam.refreshMs||60000);
+    };
+    probe.onerror=tryNext;
+    probe.src=bust(url);
+  };
+  tryNext();
+}
+
+/* ═════════ live wind → flowing airlines over the terrain ═════════
+   Current wind speed/direction at each of the four sites (Open-Meteo,
+   fetched in-browser, refreshed every 10 min) drives a particle field:
+   glowing streaks advected through an inverse-distance blend of the
+   station vectors. Faster wind = longer, brighter, quicker streaks. */
+const DEG=Math.PI/180;
+function compass(d){
+  const pts=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return pts[Math.round((((d%360)+360)%360)/22.5)%16];
+}
+const stations=CAMS.map(cam=>({x:toX(cam.lon),z:toZ(cam.lat),vx:0,vz:0,spd:0}));
+function setStation(i,spd,dir){
+  if(!(spd>=0)||!(dir>=0))return;
+  const s=stations[i],th=(dir+180)*DEG;   // meteo dir = where wind comes FROM
+  s.spd=spd;
+  s.vx=spd*Math.sin(th);
+  s.vz=-spd*Math.cos(th);                 // north is -z
+  const b=markers[i]&&markers[i].el.querySelector('.cc-wind b');
+  if(b)b.textContent=Math.round(spd)+' mph · '+compass(dir);
+}
+CAMS.forEach((c,i)=>setStation(i,12,290)); // onshore WNW default until live data lands
+async function fetchWind(){
+  try{
+    const la=CAMS.map(c=>c.lat.toFixed(4)).join(','),lo=CAMS.map(c=>c.lon.toFixed(4)).join(',');
+    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+la+'&longitude='+lo+'&current=wind_speed_10m,wind_direction_10m&wind_speed_unit=mph');
+    if(!r.ok)throw new Error(r.status);
+    const j=await r.json();
+    (Array.isArray(j)?j:[j]).forEach((d,i)=>{
+      if(d&&d.current)setStation(i,d.current.wind_speed_10m,d.current.wind_direction_10m);
+    });
+  }catch(e){/* keep last known wind */}
+}
+fetchWind();
+setInterval(fetchWind,10*60*1000);
+
+const wv={x:0,z:0};
+function windAt(x,z){
+  let ax=0,az=0,tw=0;
+  for(const s of stations){
+    const dx=x-s.x,dz=z-s.z;
+    const w=1/(dx*dx+dz*dz+60);
+    ax+=s.vx*w;az+=s.vz*w;tw+=w;
+  }
+  wv.x=ax/tw;wv.z=az/tw;
+  return wv;
+}
+// bilinear terrain height from the already-computed elevation grid
+function heightAtWorld(x,z){
+  const gx=Math.min(RES-1.001,Math.max(0,(x/W+0.5)*(RES-1)));
+  const gz=Math.min(RES-1.001,Math.max(0,(z/D+0.5)*(RES-1)));
+  const x0=Math.floor(gx),z0=Math.floor(gz),fx=gx-x0,fz=gz-z0;
+  const i00=z0*RES+x0,i10=i00+1,i01=i00+RES,i11=i01+1;
+  const e=elevArr[i00]*(1-fx)*(1-fz)+elevArr[i10]*fx*(1-fz)
+         +elevArr[i01]*(1-fx)*fz+elevArr[i11]*fx*fz;
+  return e*S;
+}
+const NP=460;
+const wpos=new Float32Array(NP*6),wcol=new Float32Array(NP*6);
+const parts=[];
+function respawn(p){
+  p.x=(Math.random()-0.5)*(W+36);
+  p.z=(Math.random()-0.5)*(D+36);
+  p.h=0.8+Math.random()*3.2;
+  p.life=4+Math.random()*7;
+}
+for(let i=0;i<NP;i++){const p={};respawn(p);p.life=Math.random()*10;parts.push(p);}
+const windGeo=new THREE.BufferGeometry();
+windGeo.setAttribute('position',new THREE.BufferAttribute(wpos,3).setUsage(THREE.DynamicDrawUsage));
+windGeo.setAttribute('color',new THREE.BufferAttribute(wcol,3).setUsage(THREE.DynamicDrawUsage));
+scene.add(new THREE.LineSegments(windGeo,new THREE.LineBasicMaterial({
+  vertexColors:true,transparent:true,opacity:0.9,blending:THREE.AdditiveBlending,depthWrite:false
+})));
+function updateWind(dt,t){
+  const ADVECT=0.16; // world units per second per mph
+  for(let i=0;i<NP;i++){
+    const p=parts[i],w=windAt(p.x,p.z);
+    const spd=Math.hypot(w.x,w.z);
+    p.x+=w.x*ADVECT*dt;
+    p.z+=w.z*ADVECT*dt;
+    p.life-=dt;
+    if(p.life<0||Math.abs(p.x)>W/2+22||Math.abs(p.z)>D/2+22)respawn(p);
+    const y=Math.max(heightAtWorld(p.x,p.z),0.2)+p.h;
+    const tail=Math.min(4.5,0.4+spd*0.17);
+    const inv=spd>0.01?tail/spd:0;
+    const tx=p.x-w.x*inv,tz=p.z-w.z*inv;
+    const ty=Math.max(heightAtWorld(tx,tz),0.2)+p.h;
+    const o=i*6;
+    wpos[o]=tx;wpos[o+1]=ty;wpos[o+2]=tz;
+    wpos[o+3]=p.x;wpos[o+4]=y;wpos[o+5]=p.z;
+    const a=Math.min(1,0.18+spd/20);
+    const fl=0.7+0.3*Math.sin(t*3.1+i*1.7);
+    wcol[o]=0.02;wcol[o+1]=0.10*a;wcol[o+2]=0.24*a;           // tail: dim blue
+    wcol[o+3]=0.30*a*fl;wcol[o+4]=0.95*a*fl;wcol[o+5]=1.0*a*fl; // head: bright cyan
+  }
+  windGeo.attributes.position.needsUpdate=true;
+  windGeo.attributes.color.needsUpdate=true;
+}
 
 /* ── chips ── */
 const chipsEl=document.getElementById('chips');
@@ -745,8 +921,10 @@ const clock=new THREE.Clock();
 const v=new THREE.Vector3();
 function tick(){
   requestAnimationFrame(tick);
-  const t=clock.getElapsedTime();
+  const dt=Math.min(clock.getDelta(),0.05);
+  const t=clock.elapsedTime;
   uniforms.uTime.value=t;
+  updateWind(dt,t);
   controls.autoRotate=(t-lastInteract)>8;
   controls.update();
 
@@ -757,12 +935,17 @@ function tick(){
     r.material.opacity=(1-s)*0.55;
   }
   for(const m of markers){
-    v.set(m.grp.position.x,m.topY+1.6,m.grp.position.z).project(camera);
+    const bob=Math.sin(t*0.8+m.phase)*0.45;
+    v.set(m.grp.position.x,m.topY+m.lift+bob,m.grp.position.z).project(camera);
     const behind=v.z>1;
     m.el.style.opacity=behind?0:1;
     m.el.style.pointerEvents=behind?'none':'auto';
     m.el.style.left=(v.x*0.5+0.5)*innerWidth+'px';
     m.el.style.top=(-v.y*0.5+0.5)*innerHeight+'px';
+    const dist=camera.position.distanceTo(m.grp.position);
+    const s=Math.min(1.1,Math.max(0.42,90/dist));
+    m.el.style.transform=`translate(-50%,-100%) scale(${s.toFixed(3)})`;
+    m.el.style.zIndex=Math.max(1,Math.round(1600-dist*4));
   }
   const scanE=(t*0.055%1)*uniforms.uScanMax.value;
   scanval.textContent=Math.round(scanE)+' m';
