@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bay Area Webcam Grid — Richard Burton</title>
-<meta name="description" content="A 3D synthwave terrain map of the San Francisco Bay Area with live webcams at Fort Funston, Mussel Rock, Mt Tamalpais and Mt Diablo.">
+<title>Norfolk Webcam Grid — Richard Burton</title>
+<meta name="description" content="A 3D synthwave terrain map of the Norfolk coast with live webcams at Hunstanton, Wells-next-the-Sea, Cromer and Gorleston.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M2 26 L12 8 L18 18 L23 10 L30 26 Z' fill='none' stroke='%2300e5ff' stroke-width='2.5' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -274,16 +274,16 @@ body{
 <div id="crt"></div>
 
 <div class="hud" id="hud-top">
-  <a class="back" href="/">← ricburton.com</a>&nbsp;&nbsp;<a class="back" href="/norfolk.html">Norfolk ▸</a>
-  <h1>Bay Area <span>//</span> Webcam Grid</h1>
-  <div class="sub">Fort Funston <b>·</b> Mussel Rock <b>·</b> Mt Tam <b>·</b> Mt Diablo</div>
+  <a class="back" href="/">← ricburton.com</a>&nbsp;&nbsp;<a class="back" href="/webcams.html">SF Bay ▸</a>
+  <h1>Norfolk <span>//</span> Webcam Grid</h1>
+  <div class="sub">Hunstanton <b>·</b> Wells <b>·</b> Cromer <b>·</b> Gorleston</div>
 </div>
 
 <div class="hud" id="hud-scan">
   Elevation scan
   <div class="bar"><i id="scanbar"></i></div>
-  <span class="val" id="scanval">0 m</span> / 1250 m<br>
-  contour interval 50 m · index 250 m<br>
+  <span class="val" id="scanval">0 m</span> / 120 m<br>
+  contour interval 10 m · index 50 m<br>
   wind flow · live · open-meteo · 10 min
 </div>
 
@@ -369,51 +369,41 @@ try{
    to a direct link to the official live stream. */
 const CAMS = [
   {
-    id:'funston', name:'Fort Funston', sub:'THE FORT · COASTAL SOARING',
-    lat:37.7168, lon:-122.5030, elevM:60, elevLabel:'200 FT BLUFF',
-    yt:'eLt-QEwVnxc', // Fellow Feathers 4K livestream
-    cardLift:7, // float higher: Mussel Rock is next door
+    id:'hunstanton', name:'Hunstanton', sub:'CLIFF SOARING · THE WASH',
+    lat:52.9422, lon:0.4926, elevM:18, elevLabel:'60 FT CLIFFS',
+    ytChannel:'UC3qmS7ikrnRTtyNsah26uQA', // Hunstanton Webcams live channel
     sources:[],
-    link:'https://www.youtube.com/live/eLt-QEwVnxc',
-    credit:'Fellow Feathers of Fort Funston'
+    link:'https://hunstanton.webcam/',
+    credit:'Hunstanton Webcams'
   },
   {
-    id:'musselrock', name:'Mussel Rock', sub:'THE DUMPS · DALY CITY',
-    lat:37.6742, lon:-122.4935, elevM:150, elevLabel:'500 FT CLIFFS',
-    yt:'vZEINdmawdc', // "Mussel Rock Park" live stream (streams 5am–9pm PT)
+    id:'wells', name:'Wells-next-the-Sea', sub:'HARBOUR · NORTH COAST',
+    lat:52.9560, lon:0.8510, elevM:6, elevLabel:'HARBOUR',
+    sources:[
+      'https://www.portofwells.co.uk/webcam/live.jpg',
+      'https://www.portofwells.co.uk/webcam/latest.jpg'
+    ],
+    refreshMs:60000,
+    link:'https://www.portofwells.co.uk/webcam/',
+    credit:'Port of Wells'
+  },
+  {
+    id:'cromer', name:'Cromer', sub:'PIER · CROMER RIDGE',
+    lat:52.9340, lon:1.3020, elevM:60, elevLabel:'NCI LOOKOUT',
+    sources:[
+      'https://camsecure.co/CCTV/cromerpier.jpg',
+      'https://www.camsecure.co.uk/CCTV/cromerpier.jpg'
+    ],
+    refreshMs:60000,
+    link:'https://camsecure.co/httpswebcam/cromerpier/cromerpier.html',
+    credit:'Camsecure · Cromer NCI lookout'
+  },
+  {
+    id:'gorleston', name:'Gorleston', sub:'BANDSTAND · GT YARMOUTH',
+    lat:52.5730, lon:1.7270, elevM:15, elevLabel:'PROMENADE',
     sources:[],
-    link:'https://www.youtube.com/watch?v=vZEINdmawdc',
-    credit:'Mussel Rock cam · Free Flight Research Lab'
-  },
-  {
-    id:'mttam', name:'Mt Tamalpais', sub:'EAST + WEST PEAK CAMS · MARIN',
-    lat:37.9235, lon:-122.5965, elevM:784, elevLabel:'2,571 FT',
-    yt:null,
-    discover:{lat:37.9235,lon:-122.5965,km:3.5,max:3}, // nearest ALERTCalifornia cams to the peak
-    sources:[
-      'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtTamEast/latest-frame.jpg',
-      'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtTamWest/latest-frame.jpg',
-      'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtTamalpaisEast/latest-frame.jpg',
-      'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtTam1/latest-frame.jpg'
-    ],
-    refreshMs:15000,
-    link:'https://www.rntl.net/mt-tam-cam-tamalpais-webcam/',
-    credit:'ALERTCalifornia · via Mt Tam Cam (rntl.net)'
-  },
-  {
-    id:'mtdiablo', name:'Mt Diablo', sub:'SUMMIT FIRE CAMS · CONTRA COSTA',
-    lat:37.8816, lon:-121.9143, elevM:1173, elevLabel:'3,849 FT',
-    yt:null,
-    discover:{lat:37.8816,lon:-121.9143,km:4,max:3},
-    sources:[
-      'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtDiablo/latest-frame.jpg',
-      'https://cameras.alertcalifornia.org/public-camera-data/Axis-MountDiablo/latest-frame.jpg',
-      'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtDiablo1/latest-frame.jpg',
-      'https://cameras.alertcalifornia.org/public-camera-data/Axis-MtDiabloNorth/latest-frame.jpg'
-    ],
-    refreshMs:15000,
-    link:'https://www.rntl.net/mt-diablo-fire-cams/',
-    credit:'ALERTCalifornia · via rntl.net fire cams'
+    link:'https://www.gorlestonpavilion.co.uk/webcam',
+    credit:'Gorleston Pavilion · Anglia Technology'
   }
 ];
 
@@ -463,15 +453,15 @@ async function discoverSources(cam){
 }
 
 /* ═══════════════════ Geography ═══════════════════ */
-const LON0=-122.82, LON1=-121.80, LAT0=37.28, LAT1=38.22;
-const W=86, D=100;                 // world units
-const S=0.0115;                    // vertical exaggeration: world units per metre
+const LON0=0.10, LON1=1.85, LAT0=52.30, LAT1=53.10;
+const W=110, D=84;                 // world units
+const S=0.085;                     // Norfolk is flat — heavy vertical exaggeration
 const RES=256;
 
 const toX = lon => ((lon-LON0)/(LON1-LON0)-0.5)*W;
 const toZ = lat => ((LAT1-lat)/(LAT1-LAT0)-0.5)*D;
 // distance helper in "latitude degrees" with longitude compressed by cos(38°)
-const KX=0.79;
+const KX=0.606;   // cos(52.7°)
 const d2=(lon,lat,lon2,lat2)=>{const dx=(lon-lon2)*KX, dy=lat-lat2; return dx*dx+dy*dy;};
 const segD2=(lon,lat,a,b)=>{
   const ax=a[0]*KX, ay=a[1], bx=b[0]*KX, by=b[1], px=lon*KX, py=lat;
@@ -487,71 +477,63 @@ const sstep=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-
 const peak =(lon,lat,h,s)=>p=>h*gauss(d2(p[0],p[1],lon,lat),s);
 const ridge=(a,b,h,s)=>p=>h*gauss(segD2(p[0],p[1],a,b),s);
 const FEATS=[
-  peak(-122.5965,37.9235, 784,0.030),                       // Mt Tam East Peak
-  ridge([-122.66,37.930],[-122.585,37.923], 620,0.040),     // Tam massif
-  ridge([-122.72,38.03],[-122.63,37.945], 420,0.030),       // Bolinas Ridge
-  peak(-122.520,37.828, 290,0.028),                         // Marin Headlands
-  peak(-122.545,38.035, 440,0.038),                         // Big Rock Ridge
-  peak(-122.600,38.130, 400,0.045),                         // Mt Burdell
-  peak(-122.240,38.170, 380,0.060),                         // north hills
-  peak(-121.9143,37.8816, 1173,0.058),                      // Mt Diablo
-  peak(-121.892,37.897, 980,0.028),                         // Diablo North Peak
-  ridge([-122.02,37.82],[-121.95,37.86], 420,0.030),        // Diablo foothills
-  ridge([-122.245,37.925],[-122.10,37.77], 500,0.026),      // East Bay hills
-  ridge([-122.10,37.77],[-121.97,37.68], 340,0.026),        // Chabot ridge
-  peak(-121.881,37.512, 1080,0.045),                        // Mission Peak
-  ridge([-121.955,37.66],[-121.90,37.56], 420,0.028),       // Pleasanton Ridge
-  ridge([-122.455,37.687],[-122.402,37.680], 390,0.016),    // San Bruno Mtn
-  peak(-122.447,37.752, 270,0.013),                         // Twin Peaks
-  peak(-122.503,37.7168, 70,0.011),                         // Fort Funston bluff
-  ridge([-122.494,37.700],[-122.489,37.655], 170,0.011),    // Mussel Rock cliffs
-  ridge([-122.475,37.605],[-122.445,37.635], 360,0.014),    // Sweeney Ridge
-  peak(-122.455,37.556, 575,0.030),                         // Montara Mtn
-  ridge([-122.40,37.49],[-122.16,37.295], 720,0.048),       // Santa Cruz Mtns
-  peak(-122.430,37.858, 235,0.013)                          // Angel Island
+  peak(1.335,52.922, 103,0.020),                       // Beacon Hill — Norfolk's roof
+  ridge([1.10,52.905],[1.34,52.915], 88,0.030),        // Cromer Ridge
+  ridge([1.34,52.915],[1.43,52.880], 68,0.024),        // ridge toward Trimingham
+  ridge([1.00,52.915],[1.09,52.885], 60,0.024),        // Holt ridge
+  ridge([0.56,52.945],[0.63,52.620], 62,0.030),        // West Norfolk greensand ridge
+  peak(0.4926,52.9422, 20,0.010),                      // Hunstanton cliffs
+  peak(0.70,52.44, 48,0.080),                          // The Brecks
+  peak(0.95,52.68, 52,0.120),                          // mid-Norfolk plateau
+  peak(1.15,52.58, 42,0.080),                          // south-central plateau
+  peak(1.42,52.80, 34,0.050)                           // NE gentle rise
 ];
 
-// Pacific coastline: [lat, lon] north-bound
-const COAST=[
-  [37.28,-122.410],[37.46,-122.455],[37.52,-122.485],[37.60,-122.500],
-  [37.66,-122.495],[37.71,-122.507],[37.79,-122.513],[37.812,-122.527],
-  [37.832,-122.540],[37.87,-122.585],[37.905,-122.645],[37.95,-122.690],
-  [38.05,-122.760],[38.22,-122.820]
+// North Norfolk coast: [lon, lat] west→east
+const NCOAST=[
+  [0.485,52.955],[0.60,52.966],[0.75,52.974],[0.90,52.972],
+  [1.05,52.958],[1.21,52.946],[1.33,52.930]
 ];
-function coastLon(lat){
-  if(lat<=COAST[0][0])return COAST[0][1];
-  for(let i=1;i<COAST.length;i++){
-    if(lat<=COAST[i][0]){
-      const [l0,x0]=COAST[i-1],[l1,x1]=COAST[i];
+function northLat(lon){
+  if(lon<=NCOAST[0][0])return NCOAST[0][1];
+  for(let i=1;i<NCOAST.length;i++){
+    if(lon<=NCOAST[i][0]){
+      const [x0,l0]=NCOAST[i-1],[x1,l1]=NCOAST[i];
+      return l0+(l1-l0)*(lon-x0)/(x1-x0);
+    }
+  }
+  return NCOAST[NCOAST.length-1][1];
+}
+// East coast: [lat, lon] north→south
+const ECOAST=[
+  [52.930,1.330],[52.820,1.530],[52.710,1.700],
+  [52.600,1.735],[52.470,1.755],[52.300,1.780]
+];
+function eastLon(lat){
+  if(lat>=ECOAST[0][0])return ECOAST[0][1];
+  for(let i=1;i<ECOAST.length;i++){
+    if(lat>=ECOAST[i][0]){
+      const [l0,x0]=ECOAST[i-1],[l1,x1]=ECOAST[i];
       return x0+(x1-x0)*(lat-l0)/(l1-l0);
     }
   }
-  return COAST[COAST.length-1][1];
+  return ECOAST[ECOAST.length-1][1];
 }
-// Bay water bodies as capsules/blobs → waterness 0..1
-const WATER=[
-  [[-122.530,37.818],[-122.446,37.825],0.016],  // Golden Gate strait
-  [[-122.455,37.880],[-122.350,37.800],0.050],  // Central Bay
-  [[-122.480,37.873],[-122.480,37.873],0.020],  // Richardson Bay
-  [[-122.330,37.755],[-122.060,37.480],0.052],  // South Bay
-  [[-122.395,38.065],[-122.395,38.065],0.092],  // San Pablo Bay
-  [[-122.300,38.060],[-121.830,38.055],0.024]   // Carquinez → Suisun
-];
 function waterness(lon,lat){
-  const c=coastLon(lat);
-  let w=1-sstep(c-0.012,c+0.004,lon);           // Pacific
-  for(const [a,b,r] of WATER){
-    const d=Math.sqrt(segD2(lon,lat,a,b));
-    w=Math.max(w,1-sstep(r*0.72,r,d));
-  }
-  w*=1-0.96*gauss(d2(lon,lat,-122.430,37.858),0.011); // keep Angel Island
+  const nl=northLat(lon);
+  let w=sstep(nl-0.006,nl+0.012,lat);                 // North Sea (north coast)
+  const el=eastLon(lat);
+  w=Math.max(w,sstep(el-0.008,el+0.014,lon));         // North Sea (east coast)
+  const dx=(lon-0.25)/0.225,dy=(lat-52.92)/0.20;      // The Wash
+  w=Math.max(w,1-sstep(0.72,1.0,dx*dx+dy*dy));
+  w=Math.max(w,1-sstep(0.014,0.022,Math.sqrt(d2(lon,lat,1.665,52.595)))); // Breydon Water
   return Math.min(1,Math.max(0,w));
 }
 function baseNoise(lon,lat){
   const x=lon*40,y=lat*40;
   let n=Math.sin(x*1.7+y*2.3)*Math.sin(x*0.9-y*1.1)
        +0.5*Math.sin(x*4.1+y*3.3)*Math.sin(x*2.7+y*5.9);
-  return Math.max(14,26+n*15);
+  return Math.max(3,9+n*4);
 }
 function elevAt(lon,lat){
   let h=0;
@@ -559,10 +541,15 @@ function elevAt(lon,lat){
   for(const f of FEATS)h=Math.max(h,f(p));
   // roughen the analytic cones so contours aren't perfect circles
   const x=lon*90,y=lat*90;
-  h*=0.90+0.20*(0.5+0.5*Math.sin(x*1.3+y*2.1)*Math.sin(x*0.7-y*1.7));
+  h*=0.94+0.12*(0.5+0.5*Math.sin(x*1.3+y*2.1)*Math.sin(x*0.7-y*1.7));
   h=Math.max(h,baseNoise(lon,lat));
+  // flatten the Fens (west) and the Broads (east) toward sea level
+  const fen=gauss(d2(lon,lat,0.24,52.52),0.14)+gauss(d2(lon,lat,0.32,52.38),0.12);
+  const broads=gauss(d2(lon,lat,1.58,52.64),0.09)+gauss(d2(lon,lat,1.62,52.72),0.06);
+  h*=(1-0.9*Math.min(1,fen))*(1-0.85*Math.min(1,broads));
+  h=Math.max(h,2.5);
   const w=waterness(lon,lat);
-  return h*(1-w)-95*w;
+  return h*(1-w)-30*w;   // shallow North Sea
 }
 
 /* ═══════════════════ Scene ═══════════════════ */
@@ -622,9 +609,9 @@ const blankTex=new THREE.DataTexture(new Uint8Array([6,12,32,255]),1,1);
 blankTex.needsUpdate=true;
 const uniforms={
   uTime:{value:0},
-  uScanMax:{value:1250},
-  uMinor:{value:50},
-  uMajor:{value:250},
+  uScanMax:{value:120},
+  uMinor:{value:10},
+  uMajor:{value:50},
   uFog:{value:new THREE.Color(0x04071a)},
   uSat:{value:blankTex},
   uSatMix:{value:0}
@@ -653,12 +640,12 @@ const terrainMat=new THREE.ShaderMaterial({
       return 1.0-min(f,1.0);
     }
     void main(){
-      float t=clamp(vE/1200.0,0.0,1.0);
+      float t=clamp(vE/110.0,0.0,1.0);
       vec3 col=mix(vec3(0.040,0.10,0.26),vec3(0.043,0.16,0.42),smoothstep(0.0,0.18,t));
       col=mix(col,vec3(0.066,0.32,0.75),smoothstep(0.18,0.45,t));
       col=mix(col,vec3(0.09,0.58,0.94),smoothstep(0.45,0.75,t));
       col=mix(col,vec3(0.55,0.95,1.0),smoothstep(0.75,1.0,t));
-      if(vE<2.0)col=mix(vec3(0.012,0.03,0.10),vec3(0.028,0.075,0.20),clamp((vE+95.0)/97.0,0.0,1.0));
+      if(vE<2.0)col=mix(vec3(0.012,0.03,0.10),vec3(0.028,0.075,0.20),clamp((vE+30.0)/32.0,0.0,1.0));
 
       // hillshade from a cool key light
       float dif=clamp(dot(normalize(vN),normalize(vec3(-0.5,0.8,0.35))),0.0,1.0);
@@ -669,7 +656,7 @@ const terrainMat=new THREE.ShaderMaterial({
       col=mix(col,sat,uSatMix);
 
       // ── height lines ──
-      float land=smoothstep(2.0,14.0,vE);
+      float land=smoothstep(1.0,5.0,vE);
       float minor=contour(vE,uMinor)*0.38;
       float major=contour(vE,uMajor)*0.9;
       vec3 lineCol=vec3(0.15,0.85,1.0);
@@ -678,11 +665,11 @@ const terrainMat=new THREE.ShaderMaterial({
 
       // rising elevation scan lights the contours it passes
       float scanE=fract(uTime*0.055)*uScanMax;
-      float band=exp(-pow((vE-scanE)/22.0,2.0));
+      float band=exp(-pow((vE-scanE)/4.0,2.0));
       col+=vec3(0.55,0.98,1.0)*band*land*(0.35+1.4*max(minor,major));
 
       // shoreline glow
-      float shore=exp(-pow((vE-1.0)/5.0,2.0));
+      float shore=exp(-pow((vE-1.0)/2.5,2.0));
       col+=vec3(0.1,0.65,1.0)*shore*0.55;
 
       // rim light on peaks
@@ -827,10 +814,15 @@ CAMS.forEach((cam,i)=>{
 
 /* always-on floating feeds: YouTube player when the cam has a live
    stream, refreshing frames otherwise, styled fallback if neither loads */
+function ytEmbedBase(cam){
+  return cam.yt
+    ?'https://www.youtube-nocookie.com/embed/'+cam.yt+'?rel=0'
+    :'https://www.youtube-nocookie.com/embed/live_stream?channel='+cam.ytChannel;
+}
 function initCardFeed(cam,host){
-  if(cam.yt){
+  if(cam.yt||cam.ytChannel){
     const f=document.createElement('iframe');
-    f.src='https://www.youtube-nocookie.com/embed/'+cam.yt+'?autoplay=1&mute=1&playsinline=1&controls=0&rel=0';
+    f.src=ytEmbedBase(cam)+'&autoplay=1&mute=1&playsinline=1&controls=0';
     f.allow='autoplay; encrypted-media';
     f.loading='lazy';
     host.appendChild(f);
@@ -913,7 +905,7 @@ function setStation(i,spd,dir){
     if(ar)ar.style.transform='rotate('+Math.round(dir+180)+'deg)'; // points where the wind is going
   }
 }
-CAMS.forEach((c,i)=>setStation(i,12,290)); // onshore WNW default until live data lands
+CAMS.forEach((c,i)=>setStation(i,12,225)); // prevailing SW default until live data lands
 const FC={sites:CAMS.map(()=>null),nowIdx:0,days:7,hover:-1};
 async function fetchWind(){
   try{
@@ -921,7 +913,7 @@ async function fetchWind(){
     const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+la+'&longitude='+lo
       +'&current=wind_speed_10m,wind_direction_10m'
       +'&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m'
-      +'&forecast_days=10&wind_speed_unit=mph&timezone=America%2FLos_Angeles');
+      +'&forecast_days=10&wind_speed_unit=mph&timezone=Europe%2FLondon');
     if(!r.ok)throw new Error(r.status);
     const j=await r.json();
     (Array.isArray(j)?j:[j]).forEach((d,i)=>{
@@ -1307,11 +1299,11 @@ function bust(u){return u+(u.includes('?')?'&':'?')+'t='+Date.now();}
 function startFeed(cam){
   stopFeed();
   pImg.style.display='none';pImg.removeAttribute('src');
-  if(cam.yt){
-    // musselrockwx.com-style embed: the YouTube live stream player itself
+  if(cam.yt||cam.ytChannel){
+    // embedded live player
     pStatic.style.display='none';
     ytFrame=document.createElement('iframe');
-    ytFrame.src='https://www.youtube-nocookie.com/embed/'+cam.yt+'?autoplay=1&mute=1&playsinline=1&rel=0';
+    ytFrame.src=ytEmbedBase(cam)+'&autoplay=1&mute=1&playsinline=1';
     ytFrame.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';
     ytFrame.allowFullscreen=true;
     ytFrame.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0;';
