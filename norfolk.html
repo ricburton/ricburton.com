@@ -295,6 +295,7 @@ body{
 <div id="modes">
   <button class="chip mode active" id="mode-grid">Grid</button>
   <button class="chip mode" id="mode-sat">Satellite</button>
+  <button class="chip mode" id="mode-arcade">Arcade</button>
 </div>
 <div id="attrib">imagery © Esri · Maxar · Earthstar Geographics</div>
 
@@ -622,7 +623,8 @@ const uniforms={
   uMajor:{value:50},
   uFog:{value:new THREE.Color(0x04071a)},
   uSat:{value:blankTex},
-  uSatMix:{value:0}
+  uSatMix:{value:0},
+  uArcMix:{value:0}
 };
 const terrainMat=new THREE.ShaderMaterial({
   uniforms,
@@ -639,7 +641,7 @@ const terrainMat=new THREE.ShaderMaterial({
     }`,
   fragmentShader:/*glsl*/`
     varying float vE; varying vec3 vW; varying vec3 vN; varying vec2 vUv;
-    uniform float uTime,uScanMax,uMinor,uMajor,uSatMix;
+    uniform float uTime,uScanMax,uMinor,uMajor,uSatMix,uArcMix;
     uniform sampler2D uSat;
     uniform vec3 uFog;
     float contour(float e,float step){
@@ -685,6 +687,28 @@ const terrainMat=new THREE.ShaderMaterial({
       float rim=pow(1.0-clamp(dot(normalize(vN),V),0.0,1.0),3.0);
       col+=vec3(0.1,0.5,1.0)*rim*0.45*land;
 
+      // ── arcade mode: cel-shaded, terraced, vibrant ──
+      if(uArcMix>0.001){
+        vec3 arc;
+        if(vE<1.5){
+          arc=mix(vec3(0.05,0.30,0.68),vec3(0.16,0.55,0.92),clamp((vE+35.0)/36.5,0.0,1.0));
+        }else{
+          float tq=clamp((floor(vE/uMinor)*uMinor)/110.0,0.0,1.0);
+          vec3 c=mix(vec3(0.10,0.63,0.16),vec3(0.47,0.88,0.16),smoothstep(0.0,0.30,tq));
+          c=mix(c,vec3(1.00,0.84,0.25),smoothstep(0.30,0.55,tq));
+          c=mix(c,vec3(0.96,0.52,0.12),smoothstep(0.55,0.78,tq));
+          c=mix(c,vec3(0.62,0.36,0.16),smoothstep(0.78,0.92,tq));
+          c=mix(c,vec3(1.0,1.0,1.0),smoothstep(0.92,1.0,tq));
+          if(vE<4.0)c=vec3(0.99,0.88,0.45);           // sandy shoreline ring
+          arc=c;
+        }
+        float cel=0.72+0.34*floor(dif*3.0+0.5)/3.0;   // chunky toon light bands
+        arc*=cel;
+        arc*=1.0-0.36*max(minor,major)*land;          // contour lines as cartoon inking
+        arc+=vec3(1.0)*band*land*0.14;                // soft white elevation sweep
+        col=mix(col,arc,uArcMix);
+      }
+
       // fade map edges into the void
       float edge=max(abs(vW.x)/(0.5*${W.toFixed(1)}),abs(vW.z)/(0.5*${D.toFixed(1)}));
       col=mix(col,uFog,smoothstep(0.86,1.0,edge));
@@ -711,7 +735,7 @@ const oceanMat=new THREE.ShaderMaterial({
       gl_Position=projectionMatrix*viewMatrix*wp;
     }`,
   fragmentShader:/*glsl*/`
-    uniform float uTime,uSatMix;
+    uniform float uTime,uSatMix,uArcMix;
     uniform vec3 uFog;
     varying vec3 vW;
     void main(){
@@ -725,6 +749,12 @@ const oceanMat=new THREE.ShaderMaterial({
       col=mix(col,uFog,smoothstep(90.0,210.0,dist));
       float a=mix(0.92,0.0,smoothstep(120.0,210.0,dist));
       a*=1.0-0.72*uSatMix; // let the real water show through in satellite mode
+      if(uArcMix>0.001){
+        vec3 ac=vec3(0.04,0.40,0.90)+vec3(0.92,0.99,1.0)*line*pulse*0.60;
+        ac=mix(ac,uFog,smoothstep(90.0,210.0,dist));
+        col=mix(col,ac,uArcMix);
+        a=mix(a,mix(0.96,0.0,smoothstep(120.0,210.0,dist)),uArcMix);
+      }
       gl_FragColor=vec4(col,a);
     }`
 });
@@ -733,6 +763,7 @@ ocean.position.y=0.1;
 scene.add(ocean);
 
 /* ── stars ── */
+let starMat;
 {
   const n=1400,sp=new Float32Array(n*3);
   for(let i=0;i<n;i++){
@@ -743,10 +774,11 @@ scene.add(ocean);
   }
   const sg=new THREE.BufferGeometry();
   sg.setAttribute('position',new THREE.BufferAttribute(sp,3));
-  scene.add(new THREE.Points(sg,new THREE.PointsMaterial({
+  starMat=new THREE.PointsMaterial({
     color:0x9fd4ff,size:1.4,sizeAttenuation:false,transparent:true,opacity:0.75,
     blending:THREE.AdditiveBlending,depthWrite:false
-  })));
+  });
+  scene.add(new THREE.Points(sg,starMat));
 }
 
 /* ── beacons ── */
@@ -1284,7 +1316,17 @@ async function loadSatTexture(){
 }
 const modeGrid=document.getElementById('mode-grid');
 const modeSat=document.getElementById('mode-sat');
+const modeArc=document.getElementById('mode-arcade');
 const attrib=document.getElementById('attrib');
+let arcTarget=0;
+function setMode(m){
+  satTarget=m==='sat'?1:0;
+  arcTarget=m==='arcade'?1:0;
+  modeGrid.classList.toggle('active',m==='grid');
+  modeSat.classList.toggle('active',m==='sat');
+  modeArc.classList.toggle('active',m==='arcade');
+  attrib.style.display=m==='sat'?'block':'none';
+}
 modeSat.addEventListener('click',async()=>{
   if(!satState.loaded){
     if(satState.loading)return;
@@ -1300,17 +1342,10 @@ modeSat.addEventListener('click',async()=>{
     }
     satState.loaded=true;
   }
-  satTarget=1;
-  modeSat.classList.add('active');
-  modeGrid.classList.remove('active');
-  attrib.style.display='block';
+  setMode('sat');
 });
-modeGrid.addEventListener('click',()=>{
-  satTarget=0;
-  modeGrid.classList.add('active');
-  modeSat.classList.remove('active');
-  attrib.style.display='none';
-});
+modeGrid.addEventListener('click',()=>setMode('grid'));
+modeArc.addEventListener('click',()=>setMode('arcade'));
 
 /* ── chips ── */
 const chipsEl=document.getElementById('chips');
@@ -1428,12 +1463,26 @@ document.getElementById('close').addEventListener('click',()=>{
 const scanval=document.getElementById('scanval'),scanbar=document.getElementById('scanbar');
 const clock=new THREE.Clock();
 const v=new THREE.Vector3();
+const NIGHT_SKY=new THREE.Color(0x04071a),DAY_SKY=new THREE.Color(0x8fd1f7),skyTmp=new THREE.Color();
+const crtEl=document.getElementById('crt');
+let lastAm=-1;
 function tick(){
   requestAnimationFrame(tick);
   const dt=Math.min(clock.getDelta(),0.05);
   const t=clock.elapsedTime;
   uniforms.uTime.value=t;
   uniforms.uSatMix.value+=(satTarget-uniforms.uSatMix.value)*Math.min(1,dt*2.4);
+  uniforms.uArcMix.value+=(arcTarget-uniforms.uArcMix.value)*Math.min(1,dt*2.4);
+  {
+    const am=uniforms.uArcMix.value;
+    skyTmp.copy(NIGHT_SKY).lerp(DAY_SKY,am);
+    scene.background.copy(skyTmp);
+    scene.fog.color.copy(skyTmp);
+    uniforms.uFog.value.copy(skyTmp);
+    starMat.opacity=0.75*(1-am);
+    scene.fog.density=0.0028-0.0017*am;
+    if(Math.abs(am-lastAm)>0.002){crtEl.style.opacity=(1-am*0.85).toFixed(3);lastAm=am;}
+  }
   updateWind(dt,t);
   controls.autoRotate=(t-lastInteract)>8;
   controls.update();
