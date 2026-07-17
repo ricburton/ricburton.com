@@ -284,7 +284,8 @@ body{
   <div class="bar"><i id="scanbar"></i></div>
   <span class="val" id="scanval">0 m</span> / 120 m<br>
   contour interval 10 m · index 50 m<br>
-  wind flow · live · open-meteo · 10 min
+  wind flow · live · open-meteo · 10 min<br>
+  <span id="terrainsrc">terrain · approximate · loading dem…</span>
 </div>
 
 <div class="hud" id="hud-hint">
@@ -389,7 +390,7 @@ const CAMS = [
   },
   {
     id:'cromer', name:'Cromer', sub:'PIER · CROMER RIDGE',
-    lat:52.9340, lon:1.3020, elevM:60, elevLabel:'NCI LOOKOUT',
+    lat:52.9340, lon:1.3020, elevM:30, elevLabel:'NCI LOOKOUT',
     sources:[
       'https://camsecure.co/CCTV/cromerpier.jpg',
       'https://www.camsecure.co.uk/CCTV/cromerpier.jpg'
@@ -455,7 +456,7 @@ async function discoverSources(cam){
 /* ═══════════════════ Geography ═══════════════════ */
 const LON0=0.10, LON1=1.85, LAT0=52.30, LAT1=53.10;
 const W=110, D=84;                 // world units
-const S=0.085;                     // Norfolk is flat — heavy vertical exaggeration
+const S=0.065;                     // Norfolk is flat — strong (but not silly) exaggeration
 const RES=256;
 
 const toX = lon => ((lon-LON0)/(LON1-LON0)-0.5)*W;
@@ -491,8 +492,9 @@ const FEATS=[
 
 // North Norfolk coast: [lon, lat] west→east
 const NCOAST=[
-  [0.485,52.955],[0.60,52.966],[0.75,52.974],[0.90,52.972],
-  [1.05,52.958],[1.21,52.946],[1.33,52.930]
+  [0.10,53.085],[0.20,53.060],[0.32,53.005],[0.42,52.965],   // Lincolnshire shore
+  [0.485,52.960],[0.60,52.972],[0.73,52.978],[0.90,52.977],  // Holme→Wells
+  [1.00,52.968],[1.10,52.955],[1.21,52.944],[1.33,52.930]    // Blakeney→Cromer
 ];
 function northLat(lon){
   if(lon<=NCOAST[0][0])return NCOAST[0][1];
@@ -506,8 +508,9 @@ function northLat(lon){
 }
 // East coast: [lat, lon] north→south
 const ECOAST=[
-  [52.930,1.330],[52.820,1.530],[52.710,1.700],
-  [52.600,1.735],[52.470,1.755],[52.300,1.780]
+  [52.930,1.335],[52.870,1.435],[52.822,1.540],[52.760,1.622],
+  [52.713,1.697],[52.650,1.733],[52.575,1.732],[52.480,1.757],
+  [52.420,1.723],[52.300,1.672]
 ];
 function eastLon(lat){
   if(lat>=ECOAST[0][0])return ECOAST[0][1];
@@ -524,7 +527,7 @@ function waterness(lon,lat){
   let w=sstep(nl-0.006,nl+0.012,lat);                 // North Sea (north coast)
   const el=eastLon(lat);
   w=Math.max(w,sstep(el-0.008,el+0.014,lon));         // North Sea (east coast)
-  const dx=(lon-0.25)/0.225,dy=(lat-52.92)/0.20;      // The Wash
+  const dx=(lon-0.30)/0.17,dy=(lat-52.97)/0.16;       // The Wash
   w=Math.max(w,1-sstep(0.72,1.0,dx*dx+dy*dy));
   w=Math.max(w,1-sstep(0.014,0.022,Math.sqrt(d2(lon,lat,1.665,52.595)))); // Breydon Water
   return Math.min(1,Math.max(0,w));
@@ -584,16 +587,21 @@ const geo=new THREE.PlaneGeometry(W,D,RES-1,RES-1);
 geo.rotateX(-Math.PI/2);
 const pos=geo.attributes.position;
 const elevArr=new Float32Array(pos.count);
-for(let i=0;i<pos.count;i++){
-  const x=pos.getX(i),z=pos.getZ(i);
-  const lon=LON0+(x/W+0.5)*(LON1-LON0);
-  const lat=LAT1-(z/D+0.5)*(LAT1-LAT0);
-  const e=elevAt(lon,lat);
-  elevArr[i]=e;
-  pos.setY(i,e*S);
-}
 geo.setAttribute('elev',new THREE.BufferAttribute(elevArr,1));
-geo.computeVertexNormals();
+function applyHeights(fn){
+  for(let i=0;i<pos.count;i++){
+    const x=pos.getX(i),z=pos.getZ(i);
+    const lon=LON0+(x/W+0.5)*(LON1-LON0);
+    const lat=LAT1-(z/D+0.5)*(LAT1-LAT0);
+    const e=fn(lon,lat);
+    elevArr[i]=e;
+    pos.setY(i,e*S);
+  }
+  pos.needsUpdate=true;
+  geo.attributes.elev.needsUpdate=true;
+  geo.computeVertexNormals();
+}
+applyHeights(elevAt);
 // web-mercator-correct the v coordinate so draped satellite tiles line up
 {
   const merc=lat=>Math.log(Math.tan(Math.PI/4+lat*Math.PI/360));
@@ -763,12 +771,13 @@ const beamMat=phase=>new THREE.ShaderMaterial({
       gl_FragColor=vec4(0.15,0.85,1.0,a*0.85);
     }`
 });
+const BEAM_H=9;
 const markers=[],hitTargets=[],rings=[];
 const labelLayer=document.body;
 CAMS.forEach((cam,i)=>{
   const x=toX(cam.lon),z=toZ(cam.lat);
   const y=Math.max(elevAt(cam.lon,cam.lat),cam.elevM)*S;
-  const beamH=9;
+  const beamH=BEAM_H;
   const grp=new THREE.Group();
   grp.position.set(x,y,z);
 
@@ -811,6 +820,65 @@ CAMS.forEach((cam,i)=>{
 
   markers.push({cam,grp,el,topY:y+beamH*0.9,lift:cam.cardLift??1.5,phase:i*1.4});
 });
+
+/* ═════════ real terrain: SRTM-derived DEM, fetched in-browser ═════════
+   AWS Open Data "terrain tiles" (terrarium PNG encoding, includes
+   bathymetry). Loaded after first paint; the analytic terrain above is
+   only the instant placeholder + offline fallback. */
+async function loadRealTerrain(){
+  const z=10,T=256,n=1<<z;
+  const px=lon=>(lon+180)/360*n*T;
+  const py=lat=>{const sn=Math.sin(lat*Math.PI/180);return (0.5-Math.log((1+sn)/(1-sn))/(4*Math.PI))*n*T;};
+  const x0=px(LON0),x1=px(LON1),y0=py(LAT1),y1=py(LAT0);
+  const cw=Math.round(x1-x0),ch=Math.round(y1-y0);
+  const canvas=document.createElement('canvas');
+  canvas.width=cw;canvas.height=ch;
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  const tx0=Math.floor(x0/T),tx1=Math.floor((x1-1)/T),ty0=Math.floor(y0/T),ty1=Math.floor((y1-1)/T);
+  let ok=0,total=0;
+  const jobs=[];
+  for(let ty=ty0;ty<=ty1;ty++)for(let tx=tx0;tx<=tx1;tx++){
+    total++;
+    jobs.push(new Promise(res=>{
+      const im=new Image();
+      im.crossOrigin='anonymous';
+      im.onload=()=>{ctx.drawImage(im,Math.round(tx*T-x0),Math.round(ty*T-y0));ok++;res();};
+      im.onerror=()=>res();
+      im.src='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/'+z+'/'+tx+'/'+ty+'.png';
+    }));
+  }
+  await Promise.all(jobs);
+  if(ok<total)return false;                       // partial DEM would tear the mesh
+  let data;
+  try{data=ctx.getImageData(0,0,cw,ch).data;}catch(e){return false;}
+  const demAt=(lon,lat)=>{
+    const fx=Math.min(cw-1.001,Math.max(0,px(lon)-x0));
+    const fy=Math.min(ch-1.001,Math.max(0,py(lat)-y0));
+    const ix=Math.floor(fx),iy=Math.floor(fy),ax=fx-ix,ay=fy-iy;
+    const at=(X,Y)=>{const o=(Y*cw+X)*4;return data[o]*256+data[o+1]+data[o+2]/256-32768;};
+    return at(ix,iy)*(1-ax)*(1-ay)+at(ix+1,iy)*ax*(1-ay)
+          +at(ix,iy+1)*(1-ax)*ay+at(ix+1,iy+1)*ax*ay;
+  };
+  const realElev=(lon,lat)=>{
+    const hd=demAt(lon,lat);
+    let w=waterness(lon,lat);
+    if(hd>4)w=Math.min(w,1-sstep(4,7,hd));        // real high ground overrides the mask
+    if(hd<-2.5)w=Math.max(w,1-sstep(-5,-2.5,hd)); // real depths override it too
+    const land=Math.max(hd,1.8);
+    const depth=Math.min(35,Math.max(4,-hd));
+    return land*(1-w)-depth*w;
+  };
+  applyHeights(realElev);
+  markers.forEach(m=>{
+    const y=Math.max(realElev(m.cam.lon,m.cam.lat),m.cam.elevM)*S;
+    m.grp.position.y=y;
+    m.topY=y+BEAM_H*0.9;
+  });
+  const src=document.getElementById('terrainsrc');
+  if(src)src.textContent='terrain · real dem · aws open data';
+  return true;
+}
+loadRealTerrain();
 
 /* always-on floating feeds: YouTube player when the cam has a live
    stream, refreshing frames otherwise, styled fallback if neither loads */
