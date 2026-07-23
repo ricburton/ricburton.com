@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Music — Richard Burton</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--sky,#0a0e1a)}
+body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;overflow-x:hidden;color:#fff;-webkit-font-smoothing:antialiased;min-height:100vh}
+a{color:inherit}
+
+/* ── Social bar (matches index) ── */
+.social-bar{display:flex;flex-direction:column;align-items:center;gap:14px;padding:32px 20px 10px}
+.social-buttons{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.social-buttons a{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);color:#fff;text-decoration:none;font-size:13px;font-weight:600;letter-spacing:0.2px;transition:background .3s,border-color .3s;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.social-buttons a:hover{background:rgba(255,255,255,0.14);border-color:rgba(255,255,255,0.2)}
+.social-buttons a span{opacity:.5;font-weight:400}
+
+.page-head{text-align:center;padding:18px 20px 6px}
+.page-head h1{font-size:34px;font-weight:800;letter-spacing:-0.5px}
+.page-head h1 em{font-style:normal;color:#ff5500}
+.page-head p{margin-top:8px;font-size:14px;color:rgba(255,255,255,0.55);max-width:560px;margin-left:auto;margin-right:auto;line-height:1.5}
+
+/* ── Status bar ── */
+.status-bar{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 20px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);font-size:12.5px;color:rgba(255,255,255,0.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.pill .spin{width:12px;height:12px;border:2px solid rgba(255,255,255,0.25);border-top-color:#ff5500;border-radius:50%;animation:rot 0.8s linear infinite;display:none}
+.pill.busy .spin{display:inline-block}
+@keyframes rot{to{transform:rotate(360deg)}}
+button.chip{cursor:pointer;padding:7px 14px;border-radius:999px;background:rgba(255,85,0,0.15);border:1px solid rgba(255,85,0,0.35);color:#ffb08a;font-size:12.5px;font-weight:600;transition:background .25s}
+button.chip:hover{background:rgba(255,85,0,0.28)}
+button.chip.ghost{background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.12);color:rgba(255,255,255,0.7)}
+button.chip.ghost:hover{background:rgba(255,255,255,0.13)}
+
+/* ── Settings / setup card ── */
+.setup{max-width:640px;margin:10px auto;padding:20px 22px;border-radius:16px;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.12);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:none}
+.setup.show{display:block}
+.setup h3{font-size:15px;margin-bottom:8px}
+.setup p{font-size:13px;line-height:1.6;color:rgba(255,255,255,0.65);margin-bottom:10px}
+.setup code{background:rgba(255,255,255,0.1);padding:1px 6px;border-radius:5px;font-size:12px}
+.setup .row{display:flex;gap:8px;margin-top:6px}
+.setup input{flex:1;padding:9px 12px;border-radius:9px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.35);color:#fff;font-size:13px;outline:none}
+.setup input:focus{border-color:#ff5500}
+
+/* ── Sections ── */
+section{max-width:1180px;margin:0 auto;padding:26px 20px 6px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+.sec-head h2{font-size:20px;font-weight:750;letter-spacing:-0.3px}
+.sec-head small{font-size:12.5px;color:rgba(255,255,255,0.45);font-weight:500}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.toolbar input,.toolbar select{padding:7px 12px;border-radius:9px;border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.3);color:#fff;font-size:12.5px;outline:none}
+.toolbar input{width:170px}
+.toolbar input:focus,.toolbar select:focus{border-color:rgba(255,85,0,0.6)}
+.toolbar select option{background:#14161c}
+
+/* ── Suggestion hero cards ── */
+.sug-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.sug-card{position:relative;border-radius:16px;overflow:hidden;background:#0a0a0a;border:1px solid rgba(255,255,255,0.1);box-shadow:0 4px 14px rgba(0,0,0,0.35),0 14px 40px rgba(0,0,0,0.2);opacity:0;animation:fadein .5s ease forwards;display:flex;flex-direction:column}
+.art{background-color:#14161d;background-image:linear-gradient(135deg,#1c1f2a,#111319)}
+.sug-card .art{position:relative;aspect-ratio:16/10;background-size:cover;background-position:center;cursor:pointer}
+.sug-card .art::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.75),rgba(0,0,0,0.05) 55%)}
+.sug-card .rank{position:absolute;top:10px;left:10px;z-index:2;background:rgba(255,85,0,0.92);color:#fff;font-size:11px;font-weight:800;letter-spacing:1px;padding:4px 10px;border-radius:999px;text-transform:uppercase}
+.sug-card .dur{position:absolute;top:10px;right:10px;z-index:2;background:rgba(0,0,0,0.65);font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:7px;backdrop-filter:blur(4px)}
+.playbtn{position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;background:rgba(255,85,0,0.92);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .2s,background .2s;box-shadow:0 6px 20px rgba(0,0,0,0.4)}
+.playbtn:hover{transform:translate(-50%,-50%) scale(1.08);background:#ff5500}
+.playbtn::after{content:'';display:block;margin-left:4px;border-style:solid;border-width:10px 0 10px 17px;border-color:transparent transparent transparent #fff}
+.sug-card .meta{padding:14px 16px 15px;display:flex;flex-direction:column;gap:6px;flex:1}
+.sug-card .meta .t{font-size:15px;font-weight:700;line-height:1.35}
+.sug-card .meta .why{font-size:12px;color:rgba(255,255,255,0.5);line-height:1.5}
+.sug-card .actions{display:flex;gap:8px;margin-top:auto;padding-top:10px}
+.sug-card .actions button,.sug-card .actions a{flex:1;text-align:center;padding:7px 0;font-size:12px;font-weight:650;border-radius:8px;cursor:pointer;text-decoration:none;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.85);transition:background .2s}
+.sug-card .actions button:hover,.sug-card .actions a:hover{background:rgba(255,255,255,0.15)}
+.sug-card .actions .done:hover{background:rgba(80,200,120,0.25);border-color:rgba(80,200,120,0.5)}
+.sug-card .embed{aspect-ratio:16/10}
+.sug-card .embed iframe{width:100%;height:100%;border:0}
+
+/* ── Mix grid ── */
+.mix-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.mix-card{position:relative;border-radius:13px;overflow:hidden;background:#0a0a0a;border:1px solid rgba(255,255,255,0.09);box-shadow:0 2px 8px rgba(0,0,0,0.3),0 10px 28px rgba(0,0,0,0.14);opacity:0;animation:fadein .45s ease forwards;transition:transform .25s ease,box-shadow .25s ease}
+.mix-card:hover{transform:translateY(-3px);box-shadow:0 6px 16px rgba(0,0,0,0.4),0 18px 44px rgba(0,0,0,0.22)}
+.mix-card .art{position:relative;aspect-ratio:1.9;background-size:cover;background-position:center;cursor:pointer}
+.mix-card .art::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7),rgba(0,0,0,0) 60%)}
+.mix-card .dur{position:absolute;top:8px;right:8px;z-index:2;background:rgba(0,0,0,0.65);font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;backdrop-filter:blur(4px)}
+.mix-card .playbtn{width:44px;height:44px;opacity:0;transition:opacity .2s,transform .2s}
+.mix-card .playbtn::after{border-width:8px 0 8px 13px}
+.mix-card:hover .playbtn{opacity:1}
+.mix-card .meta{padding:11px 13px 12px}
+.mix-card .meta .t{font-size:13px;font-weight:650;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mix-card .meta .sub{margin-top:5px;font-size:11px;color:rgba(255,255,255,0.45);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.badge{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase}
+.badge.like{background:rgba(255,85,0,0.18);color:#ffa273}
+.badge.repost{background:rgba(90,160,255,0.16);color:#9cc3ff}
+.badge.playlist{background:rgba(170,120,255,0.16);color:#c9aaff}
+.badge.played{background:rgba(80,200,120,0.16);color:#8fe0ac}
+.mix-card .embed{aspect-ratio:1.9}
+.mix-card .embed iframe{width:100%;height:100%;border:0}
+.mix-card .mark{position:absolute;top:8px;left:8px;z-index:3;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.75);font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;opacity:0;transition:opacity .2s}
+.mix-card:hover .mark{opacity:1}
+.mix-card .mark:hover{background:rgba(80,200,120,0.4)}
+.mix-card.is-played .art{filter:saturate(0.4) brightness(0.75)}
+
+/* ── Playlists ── */
+.pl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.pl-card{border-radius:13px;overflow:hidden;background:#0a0a0a;border:1px solid rgba(255,255,255,0.09);box-shadow:0 2px 8px rgba(0,0,0,0.3);opacity:0;animation:fadein .45s ease forwards;transition:transform .25s}
+.pl-card:hover{transform:translateY(-3px)}
+.pl-card .art{position:relative;aspect-ratio:1.6;background-size:cover;background-position:center;cursor:pointer}
+.pl-card .art::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7),rgba(0,0,0,0) 60%)}
+.pl-card .meta{padding:11px 13px 12px}
+.pl-card .meta .t{font-size:13px;font-weight:650;line-height:1.35}
+.pl-card .meta .sub{margin-top:4px;font-size:11px;color:rgba(255,255,255,0.45);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pl-card .embed{aspect-ratio:1.6}
+.pl-card .embed iframe{width:100%;height:100%;border:0}
+.pl-card .playbtn{width:44px;height:44px;opacity:0}
+.pl-card:hover .playbtn{opacity:1}
+
+.empty{padding:34px 20px;text-align:center;color:rgba(255,255,255,0.45);font-size:13.5px;line-height:1.6}
+footer{padding:40px 20px 50px;text-align:center;font-size:12px;color:rgba(255,255,255,0.3)}
+footer a{color:rgba(255,255,255,0.5)}
+@keyframes fadein{to{opacity:1}}
+
+@media(max-width:860px){
+  .sug-grid{grid-template-columns:1fr}
+  .page-head h1{font-size:28px}
+}
+</style>
+</head>
+<body>
+
+<div class="social-bar">
+  <div class="social-buttons">
+    <a href="/">← Home</a>
+    <a href="https://soundcloud.com/ricburton" target="_blank" rel="noopener">SoundCloud <span>@ricburton</span></a>
+  </div>
+</div>
+
+<div class="page-head">
+  <h1>Music <em>·</em> Long Mixes</h1>
+  <p>Every 1&nbsp;hour+ mix from my SoundCloud likes, reposts &amp; playlists — pulled live from SoundCloud in your browser — with three picks for what to listen to next.</p>
+</div>
+
+<div class="status-bar">
+  <span class="pill" id="status"><span class="spin"></span><span id="status-text">Loading…</span></span>
+  <button class="chip" id="btn-refresh">↻ Refresh</button>
+  <button class="chip ghost" id="btn-settings">⚙ Settings</button>
+</div>
+
+<div class="setup" id="setup">
+  <h3>SoundCloud connection</h3>
+  <p>This page reads public SoundCloud data directly from your browser using SoundCloud's web API. It auto-discovers the public <code>client_id</code> SoundCloud's own site uses; if discovery ever fails, grab one manually: open <a href="https://soundcloud.com" target="_blank" rel="noopener">soundcloud.com</a> → DevTools → Network tab → type <code>client_id</code> in the filter → copy the value from any request URL, and paste it below.</p>
+  <div class="row">
+    <input id="cid-input" placeholder="client_id (32 characters)" spellcheck="false" autocomplete="off">
+    <button class="chip" id="cid-save">Save</button>
+  </div>
+  <p id="setup-msg" style="margin-top:10px;margin-bottom:0"></p>
+</div>
+
+<section id="sec-sug" style="display:none">
+  <div class="sec-head">
+    <h2>▶ Next 3 listens</h2>
+    <div class="toolbar">
+      <small id="sug-note"></small>
+      <button class="chip ghost" id="btn-reroll">🎲 Re-roll</button>
+    </div>
+  </div>
+  <div class="sug-grid" id="sug-grid"></div>
+</section>
+
+<section id="sec-mixes" style="display:none">
+  <div class="sec-head">
+    <h2>All mixes <small id="mix-count"></small></h2>
+    <div class="toolbar">
+      <input id="search" placeholder="Search mixes…" autocomplete="off">
+      <select id="sort">
+        <option value="recent">Recently added</option>
+        <option value="longest">Longest first</option>
+        <option value="alpha">A – Z</option>
+        <option value="unplayed">Unplayed first</option>
+      </select>
+    </div>
+  </div>
+  <div class="mix-grid" id="mix-grid"></div>
+</section>
+
+<section id="sec-pl" style="display:none">
+  <div class="sec-head">
+    <h2>Playlists <small id="pl-count"></small></h2>
+  </div>
+  <div class="pl-grid" id="pl-grid"></div>
+</section>
+
+<div class="empty" id="empty" style="display:none"></div>
+
+<footer>Data is fetched client-side from SoundCloud's public web API and cached in this browser. <a href="https://soundcloud.com/ricburton/likes" target="_blank" rel="noopener">View likes on SoundCloud →</a></footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// SKY — background gradient based on SF time of day (matches index)
+// ═══════════════════════════════════════════════════════════
+(function setSky() {
+  const sf = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+  const h = sf.getHours() + sf.getMinutes() / 60;
+  let sky;
+  if (h < 5.5)        sky = 'linear-gradient(to bottom, #05080f, #0a0e1a)';
+  else if (h < 6.5)   sky = 'linear-gradient(to bottom, #0f1b2d, #1a2a40, #2c1a1a)';
+  else if (h < 7.5)   sky = 'linear-gradient(to bottom, #3a4a6a, #7a9cc0, #d4a574)';
+  else if (h < 9)     sky = 'linear-gradient(to bottom, #6a8cb0, #a0c0d8, #d0dce6)';
+  else if (h < 11)    sky = 'linear-gradient(to bottom, #8ab0d0, #c0d8e8, #e0e8f0)';
+  else if (h < 14)    sky = 'linear-gradient(to bottom, #b0c8d8, #d8e4ec, #e8eff4)';
+  else if (h < 16.5)  sky = 'linear-gradient(to bottom, #9ab8d0, #c8dae6, #dce6ee)';
+  else if (h < 18)    sky = 'linear-gradient(to bottom, #8a7a6a, #c09870, #d4a060)';
+  else if (h < 19.5)  sky = 'linear-gradient(to bottom, #4a3040, #a06040, #d08050)';
+  else if (h < 20.5)  sky = 'linear-gradient(to bottom, #1e1828, #3a2040, #6a3a3a)';
+  else                 sky = 'linear-gradient(to bottom, #08101a, #0a0e18)';
+  document.documentElement.style.setProperty('--sky', sky);
+  document.body.style.background = sky;
+  document.body.style.backgroundAttachment = 'fixed';
+})();
+
+// ═══════════════════════════════════════════════════════════
+// CONFIG + STORAGE
+// ═══════════════════════════════════════════════════════════
+const PROFILE = 'https://soundcloud.com/ricburton';
+const API = 'https://api-v2.soundcloud.com';
+const HOUR_MS = 60 * 60 * 1000;
+const CACHE_KEY = 'scmix.cache.v1';
+const CID_KEY = 'scmix.clientId';
+const PLAYED_KEY = 'scmix.played.v1';
+const SUGLOG_KEY = 'scmix.suglog.v1';
+const SUGTODAY_KEY = 'scmix.today.v1';
+const CACHE_TTL = 6 * HOUR_MS;
+// Public CORS relays used only as fallback when a direct fetch is blocked.
+const PROXIES = [
+  u => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
+  u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
+  u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u),
+];
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+let played = store.get(PLAYED_KEY, {});          // trackId -> timestamp
+let sugLog = store.get(SUGLOG_KEY, {});          // trackId -> last suggested timestamp
+let model = null;                                // { tracks, playlists, user, syncedAt }
+let rerollBump = 0;
+
+// ═══════════════════════════════════════════════════════════
+// FETCH LAYER — direct first, then CORS relays
+// ═══════════════════════════════════════════════════════════
+async function fetchAny(url, asJson) {
+  const attempts = [u => u, ...PROXIES];
+  let lastErr;
+  for (const wrap of attempts) {
+    try {
+      const res = await fetch(wrap(url), { headers: { 'Accept': asJson ? 'application/json' : '*/*' } });
+      if (res.status === 401 || res.status === 403) { const e = new Error('auth'); e.auth = true; throw e; }
+      if (!res.ok) throw new Error('http ' + res.status);
+      return asJson ? await res.json() : await res.text();
+    } catch (e) {
+      lastErr = e;
+      if (e.auth) throw e; // bad client_id — no point trying proxies
+    }
+  }
+  throw lastErr;
+}
+
+// ═══════════════════════════════════════════════════════════
+// CLIENT_ID DISCOVERY — same approach as SoundCloud's own web app
+// consumers (scrape script bundles for client_id:"…")
+// ═══════════════════════════════════════════════════════════
+async function discoverClientId(status) {
+  status('Discovering SoundCloud client key…');
+  const html = await fetchAny('https://soundcloud.com/', false);
+  const scripts = [...html.matchAll(/src="(https:\/\/a-v2\.sndcdn\.com\/assets\/[^"]+\.js)"/g)].map(m => m[1]);
+  for (const src of scripts.reverse()) {
+    try {
+      const js = await fetchAny(src, false);
+      const m = js.match(/client_id\s*[:=]\s*"([0-9a-zA-Z]{32})"/);
+      if (m) return m[1];
+    } catch {}
+  }
+  throw new Error('client_id not found');
+}
+
+async function getClientId(status, force) {
+  if (!force) {
+    const saved = store.get(CID_KEY, null);
+    if (saved) return saved;
+  }
+  const cid = await discoverClientId(status);
+  store.set(CID_KEY, cid);
+  return cid;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SOUNDCLOUD API
+// ═══════════════════════════════════════════════════════════
+const api = (path, cid, params = {}) => {
+  const u = new URL(API + path);
+  Object.entries({ client_id: cid, app_locale: 'en', ...params }).forEach(([k, v]) => u.searchParams.set(k, v));
+  return u.toString();
+};
+
+async function paginate(firstUrl, cid, maxItems, status, label) {
+  const out = [];
+  let url = firstUrl;
+  while (url && out.length < maxItems) {
+    const page = await fetchAny(url, true);
+    out.push(...(page.collection || []));
+    status(`${label}: ${out.length} loaded…`);
+    url = page.next_href ? page.next_href + (page.next_href.includes('client_id=') ? '' : `&client_id=${cid}`) : null;
+  }
+  return out;
+}
+
+function trackLen(t) { return Math.max(t.full_duration || 0, t.duration || 0); }
+
+function slimTrack(t) {
+  return {
+    id: t.id,
+    title: t.title,
+    artist: (t.user && t.user.username) || '',
+    permalink: t.permalink_url,
+    art: t.artwork_url || (t.user && t.user.avatar_url) || '',
+    dur: trackLen(t),
+    genre: t.genre || '',
+    plays: t.playback_count || 0,
+  };
+}
+
+async function syncFromSoundCloud(status) {
+  let cid = await getClientId(status, false);
+
+  async function call(fn) {
+    try { return await fn(cid); }
+    catch (e) {
+      if (!e.auth) throw e;
+      // client_id rotated — rediscover once and retry
+      cid = await getClientId(status, true);
+      return fn(cid);
+    }
+  }
+
+  status('Finding profile…');
+  const user = await call(c => fetchAny(api('/resolve', c, { url: PROFILE }), true));
+
+  status('Loading likes…');
+  const likes = await call(c => paginate(api(`/users/${user.id}/track_likes`, c, { limit: 100 }), c, 800, status, 'Likes'));
+  status('Loading reposts…');
+  const reposts = await call(c => paginate(api(`/stream/users/${user.id}/reposts`, c, { limit: 100 }), c, 500, status, 'Reposts'));
+  status('Loading playlists…');
+  let playlists = [];
+  try { playlists = await call(c => paginate(api(`/users/${user.id}/playlists_without_albums`, c, { limit: 50 }), c, 200, status, 'Playlists')); }
+  catch { playlists = await call(c => paginate(api(`/users/${user.id}/playlists`, c, { limit: 50 }), c, 200, status, 'Playlists')); }
+  let likedPls = [];
+  try { likedPls = await call(c => paginate(api(`/users/${user.id}/playlist_likes`, c, { limit: 50 }), c, 200, status, 'Liked playlists')); }
+  catch {}
+
+  // ── Merge into track map with sources ──
+  const tracks = new Map();
+  const touch = (t, source, when, extra) => {
+    if (!t || t.kind !== 'track' || !t.id) return;
+    const cur = tracks.get(t.id) || { ...slimTrack(t), sources: [] };
+    if (trackLen(t) > cur.dur) cur.dur = trackLen(t);
+    if (!cur.art && t.artwork_url) cur.art = t.artwork_url;
+    cur.sources.push({ type: source, when: when ? Date.parse(when) : 0, ...(extra || {}) });
+    tracks.set(t.id, cur);
+  };
+
+  likes.forEach(item => touch(item.track, 'like', item.created_at));
+  reposts.forEach(item => {
+    if (item.track) touch(item.track, 'repost', item.created_at);
+    if (item.playlist) likedPls.push({ created_at: item.created_at, playlist: item.playlist, reposted: true });
+  });
+
+  // ── Playlist tracks: hydrate stubs (api-v2 returns id-only stubs past ~5 tracks) ──
+  const allPls = [
+    ...playlists.map(p => ({ pl: p, rel: 'mine', when: p.created_at })),
+    ...likedPls.map(x => ({ pl: x.playlist, rel: x.reposted ? 'reposted' : 'liked', when: x.created_at })),
+  ].filter(x => x.pl && x.pl.id);
+
+  const stubIds = [];
+  allPls.forEach(({ pl }) => (pl.tracks || []).forEach(t => { if (!t.title) stubIds.push(t.id); }));
+  const hydrated = new Map();
+  const idsToFetch = [...new Set(stubIds)].slice(0, 600);
+  for (let i = 0; i < idsToFetch.length; i += 50) {
+    status(`Loading playlist tracks: ${i}/${idsToFetch.length}…`);
+    try {
+      const batch = await call(c => fetchAny(api('/tracks', c, { ids: idsToFetch.slice(i, i + 50).join(',') }), true));
+      batch.forEach(t => hydrated.set(t.id, t));
+    } catch {}
+  }
+
+  const plOut = [];
+  const seenPl = new Set();
+  allPls.forEach(({ pl, rel, when }) => {
+    if (seenPl.has(pl.id)) return;
+    seenPl.add(pl.id);
+    (pl.tracks || []).forEach(t => {
+      const full = t.title ? t : hydrated.get(t.id);
+      if (full) touch(full, 'playlist', when || pl.created_at, { name: pl.title });
+    });
+    plOut.push({
+      id: pl.id,
+      title: pl.title,
+      permalink: pl.permalink_url,
+      art: pl.artwork_url || (pl.tracks && pl.tracks.find(t => t.artwork_url) || {}).artwork_url || '',
+      count: pl.track_count || (pl.tracks || []).length,
+      dur: pl.duration || 0,
+      rel,
+    });
+  });
+
+  model = {
+    user: { id: user.id, name: user.username, avatar: user.avatar_url },
+    tracks: [...tracks.values()],
+    playlists: plOut,
+    syncedAt: Date.now(),
+  };
+  store.set(CACHE_KEY, model);
+  return model;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SUGGESTIONS — 3 next listens, deterministic per day, avoids
+// repeats + already-listened, spreads across sources
+// ═══════════════════════════════════════════════════════════
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+
+function mixes() {
+  return (model ? model.tracks : []).filter(t => t.dur >= HOUR_MS);
+}
+function primarySource(t) {
+  const order = { like: 0, repost: 1, playlist: 2 };
+  return [...t.sources].sort((a, b) => order[a.type] - order[b.type] || b.when - a.when)[0];
+}
+function latestWhen(t) { return Math.max(0, ...t.sources.map(s => s.when || 0)); }
+
+function pickSuggestions() {
+  const pool = mixes().filter(t => !played[t.id]);
+  const usable = pool.length >= 3 ? pool : mixes(); // if you've heard nearly everything, allow repeats
+  if (!usable.length) return [];
+
+  const byId = new Map(mixes().map(t => [t.id, t]));
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Reuse today's picks so the trio is stable across reloads; drop any
+  // marked-listened and top the set back up to 3.
+  const saved = store.get(SUGTODAY_KEY, null);
+  const keep = (saved && saved.date === today && saved.bump === rerollBump)
+    ? saved.ids.map(id => byId.get(id)).filter(t => t && !played[t.id])
+    : [];
+  if (keep.length === 3) return keep;
+
+  const rand = mulberry32(hashStr(today) + rerollBump * 7919);
+  const now = Date.now();
+  const newest = Math.max(1, ...usable.map(latestWhen));
+
+  const weight = t => {
+    let w = 1;
+    w += 0.7 * (latestWhen(t) / newest);                       // newer saves float up
+    w += Math.min(0.5, (t.dur - HOUR_MS) / (4 * HOUR_MS));     // longer mixes nudged up
+    const lastSug = sugLog[t.id] || 0;
+    if (now - lastSug < 5 * 24 * HOUR_MS) w *= 0.15;           // suggested recently → rest it
+    if (played[t.id]) w *= 0.1;
+    return w;
+  };
+
+  const pickFrom = (cands, exclude) => {
+    const list = cands.filter(t => !exclude.has(t.id));
+    if (!list.length) return null;
+    let total = 0;
+    const ws = list.map(t => { const w = weight(t); total += w; return w; });
+    let r = rand() * total;
+    for (let i = 0; i < list.length; i++) { r -= ws[i]; if (r <= 0) return list[i]; }
+    return list[list.length - 1];
+  };
+
+  const bySource = s => usable.filter(t => t.sources.some(x => x.type === s));
+  const chosen = [...keep];
+  const used = new Set(chosen.map(t => t.id));
+  for (const src of ['like', 'repost', 'playlist']) {
+    if (chosen.length >= 3) break;
+    const p = pickFrom(bySource(src), used) || pickFrom(usable, used);
+    if (p) { chosen.push(p); used.add(p.id); }
+  }
+  while (chosen.length < 3) {
+    const p = pickFrom(usable, used);
+    if (!p) break;
+    chosen.push(p); used.add(p.id);
+  }
+  chosen.forEach(t => { sugLog[t.id] = now; });
+  store.set(SUGLOG_KEY, sugLog);
+  store.set(SUGTODAY_KEY, { date: today, bump: rerollBump, ids: chosen.map(t => t.id) });
+  return chosen;
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER HELPERS
+// ═══════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const esc = s => String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const artUrl = (u, size) => u ? u.replace('-large.', `-${size || 't500x500'}.`) : '';
+function fmtDur(ms) {
+  const h = Math.floor(ms / HOUR_MS), m = Math.round((ms % HOUR_MS) / 60000);
+  return h ? `${h}h ${String(m).padStart(2, '0')}m` : `${m}m`;
+}
+function fmtAgo(ts) {
+  if (!ts) return '';
+  const d = Math.floor((Date.now() - ts) / (24 * HOUR_MS));
+  if (d < 1) return 'today';
+  if (d < 30) return `${d}d ago`;
+  if (d < 365) return `${Math.floor(d / 30)}mo ago`;
+  return `${Math.floor(d / 365)}y ago`;
+}
+function widgetSrc(permalink, autoplay) {
+  const u = encodeURIComponent(permalink);
+  return `https://w.soundcloud.com/player/?url=${u}&auto_play=${autoplay ? 'true' : 'false'}&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=true&color=%23ff5500`;
+}
+function embedInto(el, permalink) {
+  el.outerHTML = `<div class="embed"><iframe src="${widgetSrc(permalink, true)}" allow="autoplay" loading="lazy"></iframe></div>`;
+}
+function sourceBadges(t) {
+  const types = [...new Set(t.sources.map(s => s.type))];
+  const label = { like: 'Liked', repost: 'Reposted', playlist: 'Playlist' };
+  let html = types.map(x => `<span class="badge ${x}">${label[x]}</span>`).join('');
+  if (played[t.id]) html += '<span class="badge played">✓ Heard</span>';
+  return html;
+}
+function whyText(t) {
+  const s = primarySource(t);
+  const verb = { like: 'You liked this', repost: 'You reposted this', playlist: s.name ? `In your playlist “${esc(s.name)}”` : 'In one of your playlists' }[s.type];
+  const when = s.when ? ` ${fmtAgo(s.when)}` : '';
+  return `${verb}${when} · ${fmtDur(t.dur)}${t.genre ? ' · ' + esc(t.genre) : ''}`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════
+function renderSuggestions() {
+  const picks = pickSuggestions();
+  const sec = $('sec-sug');
+  if (!picks.length) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+  $('sug-note').textContent = 'Rotates daily · skips what you’ve marked heard';
+  $('sug-grid').innerHTML = picks.map((t, i) => `
+    <div class="sug-card" style="animation-delay:${i * 0.08}s" data-id="${t.id}">
+      <div class="art" style="background-image:url('${esc(artUrl(t.art))}')" data-permalink="${esc(t.permalink)}">
+        <span class="rank">Listen ${i + 1}</span>
+        <span class="dur">${fmtDur(t.dur)}</span>
+        <button class="playbtn" aria-label="Play"></button>
+      </div>
+      <div class="meta">
+        <div class="t">${esc(t.title)}</div>
+        <div class="why">${whyText(t)}${t.artist ? ' · ' + esc(t.artist) : ''}</div>
+        <div class="actions">
+          <button class="done" data-done="${t.id}">✓ Listened</button>
+          <a href="${esc(t.permalink)}" target="_blank" rel="noopener">SoundCloud ↗</a>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderMixes() {
+  const sec = $('sec-mixes');
+  let list = mixes();
+  if (!list.length) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+
+  const q = $('search').value.trim().toLowerCase();
+  if (q) list = list.filter(t => (t.title + ' ' + t.artist + ' ' + t.genre).toLowerCase().includes(q));
+  const sort = $('sort').value;
+  if (sort === 'recent') list.sort((a, b) => latestWhen(b) - latestWhen(a));
+  else if (sort === 'longest') list.sort((a, b) => b.dur - a.dur);
+  else if (sort === 'alpha') list.sort((a, b) => a.title.localeCompare(b.title));
+  else if (sort === 'unplayed') list.sort((a, b) => (played[a.id] ? 1 : 0) - (played[b.id] ? 1 : 0) || latestWhen(b) - latestWhen(a));
+
+  $('mix-count').textContent = `${list.length} mixes over 1 hour`;
+  $('mix-grid').innerHTML = list.map((t, i) => `
+    <div class="mix-card ${played[t.id] ? 'is-played' : ''}" style="animation-delay:${Math.min(i, 20) * 0.03}s" data-id="${t.id}">
+      <div class="art" style="background-image:url('${esc(artUrl(t.art))}')" data-permalink="${esc(t.permalink)}">
+        <span class="dur">${fmtDur(t.dur)}</span>
+        <button class="mark" data-done="${t.id}">${played[t.id] ? '↺ Unheard' : '✓ Heard'}</button>
+        <button class="playbtn" aria-label="Play"></button>
+      </div>
+      <div class="meta">
+        <div class="t">${esc(t.title)}</div>
+        <div class="sub">${sourceBadges(t)}<span>${esc(t.artist)}</span></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderPlaylists() {
+  const sec = $('sec-pl');
+  const pls = (model && model.playlists) || [];
+  if (!pls.length) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+  $('pl-count').textContent = `${pls.length} playlists`;
+  const relLabel = { mine: 'Playlist', liked: 'Liked', reposted: 'Reposted' };
+  $('pl-grid').innerHTML = pls.map((p, i) => `
+    <div class="pl-card" style="animation-delay:${Math.min(i, 20) * 0.03}s">
+      <div class="art" style="background-image:url('${esc(artUrl(p.art))}')" data-permalink="${esc(p.permalink)}">
+        <button class="playbtn" aria-label="Play"></button>
+      </div>
+      <div class="meta">
+        <div class="t">${esc(p.title)}</div>
+        <div class="sub"><span class="badge playlist">${relLabel[p.rel] || 'Playlist'}</span><span>${p.count} tracks${p.dur ? ' · ' + fmtDur(p.dur) : ''}</span></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderAll() {
+  renderSuggestions();
+  renderMixes();
+  renderPlaylists();
+  const any = mixes().length || (model && model.playlists.length);
+  $('empty').style.display = any ? 'none' : '';
+  if (!any && model) $('empty').textContent = 'Synced, but found no 1h+ mixes in likes, reposts or playlists yet.';
+}
+
+// ═══════════════════════════════════════════════════════════
+// STATUS + EVENTS
+// ═══════════════════════════════════════════════════════════
+function setStatus(text, busy) {
+  $('status-text').textContent = text;
+  $('status').classList.toggle('busy', !!busy);
+}
+
+document.addEventListener('click', e => {
+  const art = e.target.closest('.art');
+  if (art && !e.target.closest('[data-done]')) {
+    if (art.dataset.permalink) embedInto(art, art.dataset.permalink);
+    return;
+  }
+  const done = e.target.closest('[data-done]');
+  if (done) {
+    const id = done.dataset.done;
+    if (played[id]) delete played[id]; else played[id] = Date.now();
+    store.set(PLAYED_KEY, played);
+    renderAll();
+  }
+});
+
+$('search').addEventListener('input', renderMixes);
+$('sort').addEventListener('change', renderMixes);
+$('btn-reroll').addEventListener('click', () => { rerollBump++; renderSuggestions(); });
+$('btn-settings').addEventListener('click', () => {
+  $('setup').classList.toggle('show');
+  $('cid-input').value = store.get(CID_KEY, '') || '';
+});
+$('cid-save').addEventListener('click', () => {
+  const v = $('cid-input').value.trim();
+  if (!/^[0-9a-zA-Z]{20,40}$/.test(v)) { $('setup-msg').textContent = 'That doesn’t look like a client_id.'; return; }
+  store.set(CID_KEY, v);
+  $('setup-msg').textContent = 'Saved — syncing…';
+  sync(true);
+});
+$('btn-refresh').addEventListener('click', () => sync(true));
+
+// ═══════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════
+async function sync(force) {
+  setStatus('Syncing with SoundCloud…', true);
+  try {
+    await syncFromSoundCloud(t => setStatus(t, true));
+    setStatus(`Synced · ${mixes().length} long mixes · just now`, false);
+    renderAll();
+  } catch (e) {
+    console.warn('sync failed', e);
+    if (model) {
+      setStatus(`Offline — showing cached data from ${fmtAgo(model.syncedAt)}`, false);
+      renderAll();
+    } else {
+      setStatus('Couldn’t reach SoundCloud', false);
+      $('setup').classList.add('show');
+      $('setup-msg').textContent = 'Auto-discovery failed — paste a client_id above and hit Save.';
+      $('empty').style.display = '';
+      $('empty').innerHTML = 'Nothing loaded yet. Once connected, this page fills with every 1h+ mix from <a href="https://soundcloud.com/ricburton/likes" target="_blank" rel="noopener">your likes</a>, reposts and playlists.';
+    }
+  }
+}
+
+(function boot() {
+  const cached = store.get(CACHE_KEY, null);
+  if (cached && cached.tracks) {
+    model = cached;
+    setStatus(`Loaded cache from ${fmtAgo(model.syncedAt)}`, false);
+    renderAll();
+    if (Date.now() - model.syncedAt > CACHE_TTL) sync(false);
+  } else {
+    sync(false);
+  }
+})();
+</script>
+</body>
+</html>
