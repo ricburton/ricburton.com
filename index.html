@@ -70,6 +70,52 @@ body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;overflow-x:
   user-select:none;
 }
 
+/* ── Experiments band ── */
+.experiments-bar{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  padding:18px 20px 22px;
+  margin:0 20px;
+  border-top:1px solid rgba(255,255,255,0.08);
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.experiments-bar .band-label{
+  font-size:9px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.35);
+  user-select:none;
+}
+.experiments-links{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+.experiments-links a{
+  display:inline-flex;
+  align-items:center;
+  padding:6px 14px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.1);
+  color:rgba(255,255,255,0.75);
+  text-decoration:none;
+  font-size:12px;
+  font-weight:500;
+  letter-spacing:0.3px;
+  transition:background 0.3s, border-color 0.3s, color 0.3s;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+.experiments-links a:hover{
+  background:rgba(255,255,255,0.12);
+  border-color:rgba(255,255,255,0.2);
+  color:#fff;
+}
+
 .grid{
   display:grid;
   grid-template-columns:repeat(8,1fr);
@@ -408,16 +454,18 @@ body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;overflow-x:
     <span class="dot">·</span>
     <a href="https://soundcloud.com/ricburton" target="_blank" rel="noopener">Soundcloud</a>
     <span class="dot">·</span>
-    <a href="/music.html">Music</a>
-    <span class="dot">·</span>
     <a href="https://github.com/ricburton" target="_blank" rel="noopener">Github</a>
     <span class="dot">·</span>
     <a href="https://vimeo.com/ricburton" target="_blank" rel="noopener">Vimeo</a>
-    <span class="dot">·</span>
+  </div>
+</div>
+
+<div class="experiments-bar">
+  <span class="band-label">Experiments</span>
+  <div class="experiments-links">
+    <a href="/music.html">Music</a>
     <a href="/webcams.html">Bay Area Webcams</a>
-    <span class="dot">·</span>
     <a href="/norfolk.html">Norfolk Webcams</a>
-    <span class="dot">·</span>
     <a href="/news">News</a>
   </div>
 </div>
