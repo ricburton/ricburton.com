@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>News — Richard Burton</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0b0d10;
+  --panel:rgba(255,255,255,0.03);
+  --border:rgba(255,255,255,0.08);
+  --text:rgba(255,255,255,0.88);
+  --dim:rgba(255,255,255,0.38);
+}
+html,body{background:var(--bg)}
+body{
+  font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+
+/* ── Top bar ── */
+.top{
+  display:flex;
+  align-items:baseline;
+  gap:14px;
+  padding:22px 24px 10px;
+  flex-wrap:wrap;
+}
+.top h1{font-size:18px;font-weight:700;letter-spacing:0.2px}
+.top a.home{
+  color:var(--dim);
+  text-decoration:none;
+  font-size:12px;
+  font-weight:500;
+  transition:color 0.3s;
+}
+.top a.home:hover{color:var(--text)}
+.top .updated{
+  margin-left:auto;
+  color:var(--dim);
+  font-size:12px;
+  font-variant-numeric:tabular-nums;
+}
+.top button{
+  background:rgba(255,255,255,0.08);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:8px;
+  padding:5px 12px;
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  transition:background 0.3s;
+}
+.top button:hover{background:rgba(255,255,255,0.14)}
+.top button:disabled{opacity:0.4;cursor:default}
+
+/* ── Columns ── */
+.columns{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:14px;
+  padding:12px 20px 40px;
+  align-items:start;
+}
+.col{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  max-height:calc(100vh - 110px);
+}
+.col-head{
+  position:sticky;
+  top:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:12px 14px;
+  background:rgba(11,13,16,0.92);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--border);
+  z-index:2;
+}
+.col-head .dot{
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 8px var(--accent);
+  flex:none;
+}
+.col-head a{
+  color:var(--text);
+  text-decoration:none;
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:0.3px;
+}
+.col-head a:hover{color:var(--accent)}
+.col-head .status{
+  margin-left:auto;
+  font-size:11px;
+  color:var(--dim);
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.col-body{
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(255,255,255,0.15) transparent;
+}
+
+/* ── Items ── */
+.item{
+  display:flex;
+  gap:10px;
+  padding:9px 14px;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  text-decoration:none;
+  transition:background 0.2s;
+}
+.item:hover{background:rgba(255,255,255,0.05)}
+.item:last-child{border-bottom:none}
+.item .age{
+  flex:none;
+  width:34px;
+  font-size:11px;
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+  color:var(--dim);
+  padding-top:2px;
+  text-align:right;
+}
+.item.fresh .age{color:var(--accent)}
+.item .title{
+  font-size:13px;
+  line-height:1.42;
+  color:var(--text);
+  overflow-wrap:anywhere;
+}
+.item.old .title{color:rgba(255,255,255,0.55)}
+.item .meta{
+  display:block;
+  margin-top:2px;
+  font-size:11px;
+  color:var(--dim);
+}
+.item .meta a{color:var(--dim);text-decoration:none}
+.item .meta a:hover{color:var(--text);text-decoration:underline}
+
+.note{
+  padding:18px 14px;
+  font-size:12px;
+  color:var(--dim);
+  line-height:1.5;
+}
+.note.err{color:#e08a8a}
+.note button{
+  margin-top:8px;
+  display:block;
+  background:rgba(255,255,255,0.08);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:6px;
+  padding:4px 10px;
+  font-size:11px;
+  cursor:pointer;
+}
+
+/* ── Loading shimmer ── */
+.skel{padding:12px 14px}
+.skel .bar{
+  height:10px;
+  border-radius:5px;
+  background:linear-gradient(90deg,rgba(255,255,255,0.05) 25%,rgba(255,255,255,0.11) 50%,rgba(255,255,255,0.05) 75%);
+  background-size:200% 100%;
+  animation:shimmer 1.4s linear infinite;
+  margin-bottom:12px;
+}
+.skel .bar:nth-child(odd){width:85%}
+@keyframes shimmer{to{background-position:-200% 0}}
+
+/* ── Responsive ── */
+@media (max-width:1200px){
+  .columns{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .col{max-height:70vh}
+}
+@media (max-width:760px){
+  .columns{grid-template-columns:1fr;padding:10px 12px 30px}
+  .col{max-height:none}
+  .col-body{max-height:60vh}
+}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>News</h1>
+  <a class="home" href="/">← ricburton.com</a>
+  <span class="updated" id="updated"></span>
+  <button id="refresh">Refresh</button>
+</div>
+
+<div class="columns" id="columns"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// SOURCES
+// ═══════════════════════════════════════════════════════════
+const SOURCES = [
+  {
+    id: 'hn',
+    name: 'Hacker News',
+    home: 'https://news.ycombinator.com',
+    accent: '#ff6600',
+    fetch: fetchHackerNews,
+  },
+  {
+    id: 'techmeme',
+    name: 'Techmeme',
+    home: 'https://www.techmeme.com',
+    accent: '#4ec9b0',
+    fetch: () => fetchRss('https://www.techmeme.com/feed.xml'),
+  },
+  {
+    id: 'economist',
+    name: 'The Economist',
+    home: 'https://www.economist.com',
+    accent: '#e3120b',
+    fetch: () => fetchRss('https://www.economist.com/latest/rss.xml'),
+  },
+  {
+    id: 'wsj',
+    name: 'WSJ',
+    home: 'https://www.wsj.com',
+    accent: '#d5c8a8',
+    fetch: () => fetchRssMerged([
+      'https://feeds.content.dowjones.io/public/rss/RSSWorldNews',
+      'https://feeds.content.dowjones.io/public/rss/RSSWSJD',
+    ]),
+  },
+  {
+    id: 'bbc',
+    name: 'BBC News',
+    home: 'https://www.bbc.com/news',
+    accent: '#bb1919',
+    fetch: () => fetchRss('https://feeds.bbci.co.uk/news/rss.xml'),
+  },
+];
+
+const MAX_ITEMS = 30;
+const REFRESH_MS = 5 * 60 * 1000;
+const CACHE_KEY = 'news.cache.v1';
+
+// Public CORS relays used only as fallback when a direct fetch is blocked.
+const PROXIES = [
+  u => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
+  u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
+  u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u),
+];
+
+// ═══════════════════════════════════════════════════════════
+// FETCH LAYER — direct first, then CORS relays
+// ═══════════════════════════════════════════════════════════
+async function fetchAny(url, asJson) {
+  const attempts = [u => u, ...PROXIES];
+  let lastErr;
+  for (const wrap of attempts) {
+    try {
+      const res = await fetch(wrap(url), { headers: { 'Accept': asJson ? 'application/json' : '*/*' } });
+      if (!res.ok) throw new Error('http ' + res.status);
+      return asJson ? await res.json() : await res.text();
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr;
+}
+
+// ═══════════════════════════════════════════════════════════
+// PARSERS — every source resolves to [{title, link, time, meta?}]
+// ═══════════════════════════════════════════════════════════
+async function fetchHackerNews() {
+  const data = await fetchAny('https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=' + MAX_ITEMS, true);
+  return data.hits.map(h => ({
+    title: h.title,
+    link: h.url || ('https://news.ycombinator.com/item?id=' + h.objectID),
+    time: Date.parse(h.created_at),
+    meta: h.points + ' points · ',
+    metaLink: { href: 'https://news.ycombinator.com/item?id=' + h.objectID, text: (h.num_comments || 0) + ' comments' },
+  }));
+}
+
+function decodeEntities(s) {
+  const el = document.createElement('textarea');
+  el.innerHTML = s;
+  return el.value;
+}
+
+function parseRss(xmlText) {
+  const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+  if (doc.querySelector('parsererror')) throw new Error('bad feed');
+  const items = [...doc.querySelectorAll('item')].map(it => {
+    const get = tag => (it.querySelector(tag) || {}).textContent || '';
+    const date = get('pubDate') || get('date');
+    return {
+      title: decodeEntities(get('title').trim()),
+      link: get('link').trim(),
+      time: date ? Date.parse(date) : NaN,
+    };
+  });
+  // Atom fallback
+  if (!items.length) {
+    return [...doc.querySelectorAll('entry')].map(it => ({
+      title: decodeEntities(((it.querySelector('title') || {}).textContent || '').trim()),
+      link: (it.querySelector('link') || {}).getAttribute ? (it.querySelector('link').getAttribute('href') || '') : '',
+      time: Date.parse((it.querySelector('updated,published') || {}).textContent || ''),
+    }));
+  }
+  return items;
+}
+
+async function fetchRss(url) {
+  const items = parseRss(await fetchAny(url, false));
+  return sortRecent(items);
+}
+
+async function fetchRssMerged(urls) {
+  const results = await Promise.allSettled(urls.map(u => fetchAny(u, false).then(parseRss)));
+  const ok = results.filter(r => r.status === 'fulfilled').flatMap(r => r.value);
+  if (!ok.length) throw (results[0].reason || new Error('all feeds failed'));
+  // De-dupe by link across the merged feeds
+  const seen = new Set();
+  return sortRecent(ok.filter(it => !seen.has(it.link) && seen.add(it.link)));
+}
+
+function sortRecent(items) {
+  return items
+    .filter(it => it.title && it.link)
+    .sort((a, b) => (b.time || 0) - (a.time || 0))
+    .slice(0, MAX_ITEMS);
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+const cache = store.get(CACHE_KEY, {});
+const bodies = {};
+const statuses = {};
+
+function ago(ts) {
+  if (!ts || isNaN(ts)) return '';
+  const s = Math.max(0, (Date.now() - ts) / 1000);
+  if (s < 60) return 'now';
+  if (s < 3600) return Math.floor(s / 60) + 'm';
+  if (s < 86400) return Math.floor(s / 3600) + 'h';
+  return Math.floor(s / 86400) + 'd';
+}
+
+function buildColumns() {
+  const wrap = document.getElementById('columns');
+  for (const src of SOURCES) {
+    const col = document.createElement('div');
+    col.className = 'col';
+    col.style.setProperty('--accent', src.accent);
+    col.innerHTML =
+      '<div class="col-head"><span class="dot"></span>' +
+      '<a href="' + src.home + '" target="_blank" rel="noopener"></a>' +
+      '<span class="status"></span></div>' +
+      '<div class="col-body"><div class="skel">' + '<div class="bar"></div>'.repeat(8) + '</div></div>';
+    col.querySelector('.col-head a').textContent = src.name;
+    wrap.appendChild(col);
+    bodies[src.id] = col.querySelector('.col-body');
+    statuses[src.id] = col.querySelector('.status');
+  }
+}
+
+function renderItems(src, items) {
+  const body = bodies[src.id];
+  body.textContent = '';
+  const now = Date.now();
+  for (const it of items) {
+    const a = document.createElement('a');
+    const ageH = it.time ? (now - it.time) / 3600000 : Infinity;
+    a.className = 'item' + (ageH < 1 ? ' fresh' : ageH > 12 ? ' old' : '');
+    a.href = it.link;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    const age = document.createElement('span');
+    age.className = 'age';
+    age.textContent = ago(it.time);
+    const title = document.createElement('span');
+    title.className = 'title';
+    title.textContent = it.title;
+    if (it.meta || it.metaLink) {
+      const meta = document.createElement('span');
+      meta.className = 'meta';
+      meta.appendChild(document.createTextNode(it.meta || ''));
+      if (it.metaLink) {
+        const ml = document.createElement('a');
+        ml.href = it.metaLink.href;
+        ml.target = '_blank';
+        ml.rel = 'noopener';
+        ml.textContent = it.metaLink.text;
+        ml.addEventListener('click', e => e.stopPropagation());
+        meta.appendChild(ml);
+      }
+      title.appendChild(meta);
+    }
+    a.append(age, title);
+    body.appendChild(a);
+  }
+}
+
+function renderError(src, err) {
+  const body = bodies[src.id];
+  body.textContent = '';
+  const note = document.createElement('div');
+  note.className = 'note err';
+  note.textContent = 'Couldn’t load ' + src.name + ' right now.';
+  const btn = document.createElement('button');
+  btn.textContent = 'Retry';
+  btn.addEventListener('click', () => loadSource(src));
+  note.appendChild(btn);
+  body.appendChild(note);
+  statuses[src.id].textContent = 'offline';
+}
+
+async function loadSource(src) {
+  statuses[src.id].textContent = '…';
+  try {
+    const items = await src.fetch();
+    cache[src.id] = { items, at: Date.now() };
+    store.set(CACHE_KEY, cache);
+    renderItems(src, items);
+    statuses[src.id].textContent = items.length + '';
+  } catch (e) {
+    // Keep stale cache on screen if we have it; otherwise show the error.
+    if (cache[src.id] && cache[src.id].items.length) {
+      renderItems(src, cache[src.id].items);
+      statuses[src.id].textContent = 'stale';
+    } else {
+      renderError(src, e);
+    }
+  }
+}
+
+let lastRefresh = 0;
+async function refreshAll() {
+  const btn = document.getElementById('refresh');
+  btn.disabled = true;
+  await Promise.allSettled(SOURCES.map(loadSource));
+  lastRefresh = Date.now();
+  tickUpdated();
+  btn.disabled = false;
+}
+
+function tickUpdated() {
+  const el = document.getElementById('updated');
+  el.textContent = lastRefresh ? 'updated ' + ago(lastRefresh) + (ago(lastRefresh) === 'now' ? '' : ' ago') : '';
+  // Re-stamp visible ages so "3m" doesn't go stale between refreshes
+  for (const src of SOURCES) {
+    const cached = cache[src.id];
+    if (!cached) continue;
+    const ages = bodies[src.id].querySelectorAll('.item .age');
+    cached.items.forEach((it, i) => { if (ages[i]) ages[i].textContent = ago(it.time); });
+  }
+}
+
+buildColumns();
+// Paint instantly from cache, then fetch fresh
+for (const src of SOURCES) {
+  if (cache[src.id] && cache[src.id].items.length) {
+    renderItems(src, cache[src.id].items);
+    statuses[src.id].textContent = 'cached';
+  }
+}
+refreshAll();
+setInterval(refreshAll, REFRESH_MS);
+setInterval(tickUpdated, 30 * 1000);
+document.getElementById('refresh').addEventListener('click', refreshAll);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && Date.now() - lastRefresh > REFRESH_MS) refreshAll();
+});
+</script>
+</body>
+</html>
