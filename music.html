@@ -691,6 +691,18 @@ async function sync(force) {
   }
 }
 
+// One-time key import: open music.html#cid=YOUR_CLIENT_ID to save a client_id
+// into this browser's localStorage. The fragment is scrubbed from the URL
+// immediately and never sent to the server, so the key stays out of the repo,
+// logs and history.
+(function importCidFromUrl() {
+  const m = (location.hash + '&' + location.search).match(/[#&?]cid=([0-9a-zA-Z]{20,40})/);
+  if (m) {
+    store.set(CID_KEY, m[1]);
+    history.replaceState(null, '', location.pathname);
+  }
+})();
+
 (function boot() {
   const cached = store.get(CACHE_KEY, null);
   if (cached && cached.tracks) {
