@@ -136,7 +136,7 @@ footer a{color:rgba(255,255,255,0.5)}
 
 <div class="page-head">
   <h1>Music <em>·</em> Long Mixes</h1>
-  <p>Every 1&nbsp;hour+ mix from my SoundCloud likes, reposts &amp; playlists — pulled live from SoundCloud in your browser — with three picks for what to listen to next.</p>
+  <p>Every 1&nbsp;hour+ mix from my SoundCloud likes, reposts &amp; playlists — synced automatically every few hours — with three picks for what to listen to next.</p>
 </div>
 
 <div class="status-bar">
@@ -703,9 +703,25 @@ async function sync(force) {
   }
 })();
 
-(function boot() {
+// Preferred data source: music-data.json, refreshed on a schedule by the
+// SoundCloud sync GitHub Action — instant load, no client-side scraping.
+async function loadSiteData() {
+  try {
+    const res = await fetch('music-data.json', { cache: 'no-cache' });
+    if (!res.ok) return null;
+    const j = await res.json();
+    return (j && Array.isArray(j.tracks) && j.tracks.length) ? j : null;
+  } catch { return null; }
+}
+
+(async function boot() {
   const cached = store.get(CACHE_KEY, null);
-  if (cached && cached.tracks) {
+  const site = await loadSiteData();
+  if (site && (!cached || !cached.tracks || site.syncedAt >= (cached.syncedAt || 0))) {
+    model = site;
+    setStatus(`${mixes().length} long mixes · updated ${fmtAgo(model.syncedAt)}`, false);
+    renderAll();
+  } else if (cached && cached.tracks) {
     model = cached;
     setStatus(`Loaded cache from ${fmtAgo(model.syncedAt)}`, false);
     renderAll();
