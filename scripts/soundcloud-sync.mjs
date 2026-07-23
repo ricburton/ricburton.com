@@ -20,14 +20,26 @@ async function get(url, asJson = true) {
 }
 
 async function discoverClientId() {
-  const html = await get('https://soundcloud.com/', false);
-  const scripts = [...html.matchAll(/src="(https:\/\/a-v2\.sndcdn\.com\/assets\/[^"]+\.js)"/g)].map(m => m[1]);
-  for (const src of scripts.reverse()) {
-    try {
-      const js = await get(src, false);
-      const m = js.match(/client_id\s*[:=]\s*"([0-9a-zA-Z]{32})"/);
-      if (m) return m[1];
-    } catch {}
+  const pages = ['https://soundcloud.com/', 'https://soundcloud.com/discover', 'https://m.soundcloud.com/'];
+  for (const pageUrl of pages) {
+    let html;
+    try { html = await get(pageUrl, false); }
+    catch (e) { console.log(`discovery: ${pageUrl} → ${e.message}`); continue; }
+
+    // Some pages inline the client_id directly
+    const direct = html.match(/["']?client_id["']?\s*[:=]\s*["']([0-9a-zA-Z]{32})["']/);
+    if (direct) { console.log(`discovery: inline client_id on ${pageUrl}`); return direct[1]; }
+
+    const scripts = [...new Set([...html.matchAll(/["'](https:\/\/[^"']*sndcdn\.com\/[^"']+\.js)["']/g)].map(m => m[1]))];
+    console.log(`discovery: ${pageUrl} → ${html.length} bytes, ${scripts.length} script candidates`);
+    for (const src of scripts.reverse()) {
+      try {
+        const js = await get(src, false);
+        const m = js.match(/client_id\s*[:=]\s*["']([0-9a-zA-Z]{32})["']/) || js.match(/client_id=([0-9a-zA-Z]{32})/);
+        if (m) { console.log(`discovery: found in ${src.split('/').pop()}`); return m[1]; }
+      } catch (e) { console.log(`discovery: ${src.split('/').pop()} → ${e.message}`); }
+    }
+    if (!scripts.length) console.log(`discovery: page head sample: ${html.slice(0, 300).replace(/\s+/g, ' ')}`);
   }
   throw new Error('Could not discover a client_id from soundcloud.com bundles');
 }
