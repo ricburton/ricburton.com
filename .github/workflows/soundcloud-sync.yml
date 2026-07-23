@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '17 */6 * * *'   # every 6 hours
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/soundcloud-sync.yml'
+      - 'scripts/soundcloud-sync.mjs'
 
 permissions:
   contents: write
