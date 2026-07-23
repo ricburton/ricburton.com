@@ -1,0 +1,46 @@
+name: News sync
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'   # every 30 minutes
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/news-sync.yml'
+      - 'scripts/news-sync.mjs'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: news-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Fetch news feeds
+        run: node scripts/news-sync.mjs
+
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
+          git add news-data.json
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "Update news data"
+            git push
+          fi

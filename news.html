@@ -128,17 +128,30 @@ body{
 }
 .item:hover{background:rgba(255,255,255,0.05)}
 .item:last-child{border-bottom:none}
-.item .age{
+.item .when{
   flex:none;
-  width:34px;
+  width:46px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:3px;
+  padding-top:2px;
+}
+.item .age{
   font-size:11px;
   font-weight:600;
   font-variant-numeric:tabular-nums;
   color:var(--dim);
-  padding-top:2px;
-  text-align:right;
 }
 .item.fresh .age{color:var(--accent)}
+.item .tags{
+  font-size:10px;
+  line-height:1;
+  letter-spacing:1px;
+  opacity:0.85;
+  white-space:nowrap;
+}
+.item.old .tags{opacity:0.5}
 .item .title{
   font-size:13px;
   line-height:1.42;
@@ -186,6 +199,10 @@ body{
 }
 .skel .bar:nth-child(odd){width:85%}
 @keyframes shimmer{to{background-position:-200% 0}}
+
+/* Gentle fade when a column's content is replaced by fresher data */
+.col-body.swap{animation:fadeswap 0.4s ease}
+@keyframes fadeswap{from{opacity:0.35}to{opacity:1}}
 
 /* ── Responsive ── */
 @media (max-width:1200px){
@@ -259,6 +276,52 @@ const MAX_ITEMS = 30;
 const REFRESH_MS = 5 * 60 * 1000;
 const CACHE_KEY = 'news.cache.v1';
 
+// ═══════════════════════════════════════════════════════════
+// EMOJI CATEGORISER — keyword rules in priority order; each
+// headline gets 3 emoji (matches first, source flavour fills the rest)
+// ═══════════════════════════════════════════════════════════
+const EMOJI_RULES = [
+  ['🤖', /\b(ai|a\.i\.|artificial intelligence|openai|chatgpt|gpt-?\d\w*|llms?|anthropic|claude|gemini|copilot|machine learning|neural|deepmind|deepseek|agentic|chatbots?)\b/i],
+  ['🪙', /\b(crypto\w*|bitcoin|btc|ethereum|blockchain|stablecoins?|coinbase|binance|defi|nfts?)\b/i],
+  ['🔒', /\b(hack(ed|ers?|ing)?|breach(es)?|cyber\w*|malware|ransomware|phishing|spyware|passwords?|encryption|privacy|surveillance|leak(s|ed)?)\b/i],
+  ['⚔️', /\b(wars?|ukraine|russia|gaza|israel|iran|military|missiles?|drones?|strikes?|troops|nato|ceasefire|airstrikes?|invasion|hamas|hezbollah|kremlin|putin|zelensky)\b/i],
+  ['🏛️', /\b(trump|biden|congress|senate|elections?|president(ial)?|governments?|white house|parliament|ministers?|policy|senators?|governors?|democrats?|republicans?|labour|tories|downing street|brexit|immigration|mayor)\b/i],
+  ['⚖️', /\b(courts?|lawsuits?|judges?|antitrust|rulings?|trials?|su(es|ed|ing)|regulat\w*|ban(s|ned)?|fined?|fines|guilty|verdicts?|indict\w*|appeals?|justice|doj|ftc|sec|settlements?|subpoena\w*)\b/i],
+  ['💰', /\b(markets?|stocks?|shares|investors?|invest\w*|earnings|profits?|revenue|billions?|millions?|\$\d\w*|ipo|banks?|funds?|econom\w*|inflation|prices?|fed|tariffs?|tax(es)?|gdp|wall street|deals?|acquisitions?|acqui\w*|mergers?|valuations?|funding|venture|debt|bonds|raises?|buys?|sells?)\b/i],
+  ['🚀', /\b(space|spacex|nasa|rockets?|satellites?|mars|lunar|moon|orbit\w*|astronauts?|starship)\b/i],
+  ['⚡', /\b(energy|oil|gas|nuclear|solar|wind farms?|power|grids?|electricity|batter(y|ies)|renewables?|opec|fusion)\b/i],
+  ['🩺', /\b(health\w*|cancer|drugs?|vaccines?|hospitals?|diseases?|fda|medic\w*|doctors?|obesity|virus|outbreak|nhs|therapy)\b/i],
+  ['🌡️', /\b(climate|warming|emissions?|floods?|wildfires?|hurricanes?|earthquakes?|heatwaves?|droughts?|storms?|carbon|weather)\b/i],
+  ['🔬', /\b(stud(y|ies)|research(ers)?|scientists?|physics|quantum|dna|genes?|discover\w*|experiments?|breakthroughs?|biology|maths?|theorem)\b/i],
+  ['🚗', /\b(cars?|evs?|tesla|airlines?|flights?|boeing|airbus|trains?|uber|waymo|self-driving|autonomous|aviation|traffic|vehicles?)\b/i],
+  ['🎬', /\b(films?|movies?|music|netflix|disney|hollywood|gam(e|es|ing)|streaming|celebrit\w*|concerts?|albums?|box office|oscars?|actors?)\b/i],
+  ['⚽', /\b(football|soccer|nfl|nba|mlb|olympics?|tennis|cricket|f1|formula 1|golf|world cup|championships?|premier league|athletes?)\b/i],
+  ['💻', /\b(software|apps?|startups?|silicon valley|chips?|semiconductors?|apple|google|microsoft|amazon|meta|iphone|android|windows|linux|programming|developers?|cod(e|ing)|open-?source|github|browsers?|intel|amd|nvidia|cloud|saas|data ?centers?|tech\w*|internet|web|robots?)\b/i],
+];
+const SOURCE_FLAVOUR = {
+  hn: ['💻', '🔬', '📰'],
+  techmeme: ['💻', '💼', '📰'],
+  economist: ['💼', '🌍', '📰'],
+  wsj: ['💼', '🌍', '📰'],
+  bbc: ['🌍', '🏛️', '📰'],
+};
+function tagEmoji(srcId, title) {
+  const out = [];
+  for (const [emo, re] of EMOJI_RULES) {
+    if (re.test(title)) {
+      out.push(emo);
+      if (out.length === 3) return out.join('');
+    }
+  }
+  for (const emo of (SOURCE_FLAVOUR[srcId] || ['📰'])) {
+    if (!out.includes(emo)) {
+      out.push(emo);
+      if (out.length === 3) break;
+    }
+  }
+  return out.slice(0, 3).join('');
+}
+
 // Public CORS relays used only as fallback when a direct fetch is blocked.
 const PROXIES = [
   u => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
@@ -267,21 +330,32 @@ const PROXIES = [
 ];
 
 // ═══════════════════════════════════════════════════════════
-// FETCH LAYER — direct first, then CORS relays
+// FETCH LAYER — hedged: direct fetch starts immediately, each CORS
+// relay joins the race 350ms later; first good response wins and
+// the rest are aborted. Much faster than trying relays in sequence.
 // ═══════════════════════════════════════════════════════════
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function fetchAny(url, asJson) {
-  const attempts = [u => u, ...PROXIES];
-  let lastErr;
-  for (const wrap of attempts) {
-    try {
-      const res = await fetch(wrap(url), { headers: { 'Accept': asJson ? 'application/json' : '*/*' } });
-      if (!res.ok) throw new Error('http ' + res.status);
-      return asJson ? await res.json() : await res.text();
-    } catch (e) {
-      lastErr = e;
-    }
+  const wraps = [u => u, ...PROXIES];
+  const ctrls = wraps.map(() => new AbortController());
+  let won = false;
+  const attempt = async (wrap, i) => {
+    if (i) await sleep(i * 350);
+    if (won) throw new Error('cancelled');
+    const res = await fetch(wrap(url), { signal: ctrls[i].signal, headers: { 'Accept': asJson ? 'application/json' : '*/*' } });
+    if (!res.ok) throw new Error('http ' + res.status);
+    const body = asJson ? await res.json() : await res.text();
+    return { body, i };
+  };
+  try {
+    const { body, i } = await Promise.any(wraps.map(attempt));
+    won = true;
+    ctrls.forEach((c, j) => { if (j !== i) c.abort(); });
+    return body;
+  } catch (e) {
+    won = true;
+    throw new Error('all attempts failed for ' + url);
   }
-  throw lastErr;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -387,9 +461,15 @@ function buildColumns() {
   }
 }
 
+const onScreen = {}; // src.id -> items currently rendered
+
 function renderItems(src, items) {
+  onScreen[src.id] = items;
   const body = bodies[src.id];
   body.textContent = '';
+  body.classList.remove('swap');
+  void body.offsetWidth; // restart the fade animation
+  body.classList.add('swap');
   const now = Date.now();
   for (const it of items) {
     const a = document.createElement('a');
@@ -398,9 +478,15 @@ function renderItems(src, items) {
     a.href = it.link;
     a.target = '_blank';
     a.rel = 'noopener';
+    const when = document.createElement('span');
+    when.className = 'when';
     const age = document.createElement('span');
     age.className = 'age';
     age.textContent = ago(it.time);
+    const tags = document.createElement('span');
+    tags.className = 'tags';
+    tags.textContent = tagEmoji(src.id, it.title);
+    when.append(age, tags);
     const title = document.createElement('span');
     title.className = 'title';
     title.textContent = it.title;
@@ -419,7 +505,7 @@ function renderItems(src, items) {
       }
       title.appendChild(meta);
     }
-    a.append(age, title);
+    a.append(when, title);
     body.appendChild(a);
   }
 }
@@ -438,17 +524,23 @@ function renderError(src, err) {
   statuses[src.id].textContent = 'offline';
 }
 
+const liveLoaded = new Set(); // columns that have rendered a live fetch this session
+
 async function loadSource(src) {
   statuses[src.id].textContent = '…';
   try {
     const items = await src.fetch();
+    liveLoaded.add(src.id);
     cache[src.id] = { items, at: Date.now() };
     store.set(CACHE_KEY, cache);
     renderItems(src, items);
     statuses[src.id].textContent = items.length + '';
   } catch (e) {
-    // Keep stale cache on screen if we have it; otherwise show the error.
-    if (cache[src.id] && cache[src.id].items.length) {
+    // Keep whatever is already on screen (snapshot or stale cache);
+    // only show the error state if the column is empty.
+    if (bodies[src.id].querySelector('.item')) {
+      statuses[src.id].textContent = 'stale';
+    } else if (cache[src.id] && cache[src.id].items.length) {
       renderItems(src, cache[src.id].items);
       statuses[src.id].textContent = 'stale';
     } else {
@@ -472,21 +564,47 @@ function tickUpdated() {
   el.textContent = lastRefresh ? 'updated ' + ago(lastRefresh) + (ago(lastRefresh) === 'now' ? '' : ' ago') : '';
   // Re-stamp visible ages so "3m" doesn't go stale between refreshes
   for (const src of SOURCES) {
-    const cached = cache[src.id];
-    if (!cached) continue;
+    const items = onScreen[src.id];
+    if (!items) continue;
     const ages = bodies[src.id].querySelectorAll('.item .age');
-    cached.items.forEach((it, i) => { if (ages[i]) ages[i].textContent = ago(it.time); });
+    items.forEach((it, i) => { if (ages[i]) ages[i].textContent = ago(it.time); });
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+// SNAPSHOT — news-data.json is committed by a GitHub Action every
+// 30 minutes, so it's served same-origin and paints near-instantly.
+// Live feeds then replace each column as they arrive.
+// ═══════════════════════════════════════════════════════════
+async function loadSnapshot() {
+  try {
+    const res = await fetch('news-data.json', { cache: 'no-cache' });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data || !data.sources) return;
+    for (const src of SOURCES) {
+      const snap = data.sources[src.id];
+      if (!snap || !snap.items || !snap.items.length) continue;
+      if (liveLoaded.has(src.id)) continue; // live data already on screen
+      const cachedAt = cache[src.id] ? cache[src.id].at : 0;
+      if (data.generatedAt <= cachedAt) continue; // local cache is fresher
+      renderItems(src, snap.items);
+      const a = ago(data.generatedAt);
+      statuses[src.id].textContent = a === 'now' ? 'now' : a + ' ago';
+    }
+  } catch {}
+}
+
 buildColumns();
-// Paint instantly from cache, then fetch fresh
+// 1. Paint instantly from localStorage cache (synchronous)
 for (const src of SOURCES) {
   if (cache[src.id] && cache[src.id].items.length) {
     renderItems(src, cache[src.id].items);
     statuses[src.id].textContent = 'cached';
   }
 }
+// 2. Snapshot (fast, same-origin) and live feeds race; live wins per column
+loadSnapshot();
 refreshAll();
 setInterval(refreshAll, REFRESH_MS);
 setInterval(tickUpdated, 30 * 1000);
