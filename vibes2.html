@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Vibes II — Richard Burton</title>
+<meta name="description" content="A touch-responsive musical flow field. A galaxy of points bends toward your finger.">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#090909;overflow:hidden;overscroll-behavior:none}
+body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;color:#fff;-webkit-font-smoothing:antialiased;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+canvas{position:fixed;inset:0;display:block;cursor:crosshair}
+
+/* ── Intro overlay ── */
+.veil{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(ellipse at 50% 40%,rgba(40,18,44,0.5),rgba(9,9,9,0.92) 75%);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:opacity 1.2s ease;text-align:center;padding:24px}
+.veil.gone{opacity:0;pointer-events:none}
+.veil h1{font-size:52px;font-weight:800;letter-spacing:-1px;background:linear-gradient(90deg,#ff9ec6,#ffb3aa,#c58bff,#7ab8ff);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:hueflow 8s ease-in-out infinite alternate}
+@keyframes hueflow{to{background-position:100% 0}}
+.veil p{font-size:15px;color:rgba(255,255,255,0.55);line-height:1.6;max-width:340px}
+.veil .go{margin-top:6px;padding:13px 34px;border-radius:999px;border:1px solid rgba(255,255,255,0.22);background:rgba(255,255,255,0.08);color:#fff;font-size:15px;font-weight:650;letter-spacing:0.3px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:background .3s,transform .3s;animation:breathe 3.2s ease-in-out infinite}
+.veil .go:hover{background:rgba(255,255,255,0.16);transform:scale(1.04)}
+@keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(255,150,200,0.35)}50%{box-shadow:0 0 0 16px rgba(255,150,200,0)}}
+
+/* ── Quiet corner controls ── */
+.corner{position:fixed;z-index:5;bottom:calc(14px + env(safe-area-inset-bottom));left:0;right:0;display:flex;justify-content:center;gap:10px;opacity:0;transition:opacity .8s ease;pointer-events:none}
+.corner.show{opacity:1;pointer-events:auto}
+.corner a,.corner button{font-family:inherit;font-size:12px;font-weight:600;letter-spacing:0.3px;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:999px;padding:7px 15px;text-decoration:none;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:color .3s,background .3s}
+.corner a:hover,.corner button:hover{color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.12)}
+</style>
+</head>
+<body>
+
+<div class="veil" id="veil">
+  <h1>vibes ii</h1>
+  <p>A galaxy of points, bending toward your touch. Drag slowly and the field sings.</p>
+  <button class="go" id="go">begin</button>
+</div>
+
+<div class="corner" id="corner">
+  <a href="/">← home</a>
+  <a href="/vibes.html">vibes i</a>
+  <button id="mute">sound on</button>
+</div>
+
+<script type="module">
+import * as THREE from './lib/three.module.min.js';
+
+/*
+  Three.js conversion of a p5.js flow-field sketch:
+
+    t=0,draw=$=>{t||createCanvas(w=400,w)+strokeWeight(2);background(9);
+    X=mouseX||w*noise(t+=.01);Y=mouseY||w*noise(9,t);
+    for(i=4e3;i--;){x=i%63*7;y=i/9%441;
+    k=.98**dist(x+=9*cos(n=9*noise(x/99,y/99,t)),y+=9*sin(n),X,Y);
+    stroke(v=255*k+60,99+99*k,170,v);
+    point(lerp(x,X,k),lerp(y,Y,k))}}
+
+  All the per-point math — the noise field, the 0.98^distance pull toward
+  the touch, and the colour ramp — runs on the GPU in the vertex shader,
+  which lets us draw ~16k points instead of 4k at a steady 60fps.
+  The 441×441 point domain is cover-scaled and centred on the viewport.
+*/
+
+const DOMAIN = 441;      // the sketch's coordinate space
+const GRID = 126;        // 126×126 ≈ 16k points (original spacing 7 → 3.5)
+
+/* ───────────────────────── scene ───────────────────────── */
+const renderer = new THREE.WebGLRenderer({ antialias: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setClearColor(0x090909, 1);
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+// Screen-pixel orthographic camera, y down — same frame as p5
+const camera = new THREE.OrthographicCamera(0, 1, 0, 1, -1, 1);
+
+// The point grid, in domain units
+const positions = new Float32Array(GRID * GRID * 3);
+{
+  let p = 0;
+  const step = DOMAIN / (GRID - 1);
+  for (let gy = 0; gy < GRID; gy++)
+    for (let gx = 0; gx < GRID; gx++) {
+      positions[p++] = gx * step;
+      positions[p++] = gy * step;
+      positions[p++] = 0;
+    }
+}
+const geo = new THREE.BufferGeometry();
+geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e6); // never cull
+
+const uniforms = {
+  uTime:   { value: 0 },
+  uTouch:  { value: new THREE.Vector2(DOMAIN / 2, DOMAIN / 2) }, // domain units
+  uScale:  { value: new THREE.Vector2(1, 1) },  // domain → clip, baked per-resize
+  uOffset: { value: new THREE.Vector2(0, 0) },
+  uSize:   { value: 2 },                        // base point size, device px
+};
+
+const mat = new THREE.ShaderMaterial({
+  uniforms,
+  transparent: true,
+  depthTest: false,
+  depthWrite: false,
+  vertexShader: /* glsl */`
+    uniform float uTime;
+    uniform vec2  uTouch;
+    uniform vec2  uScale;
+    uniform vec2  uOffset;
+    uniform float uSize;
+    varying vec4  vColor;
+
+    // Ashima 3D simplex noise (MIT) — stand-in for p5's Perlin noise
+    vec4 permute(vec4 x){ return mod(((x*34.0)+1.0)*x, 289.0); }
+    vec4 taylorInvSqrt(vec4 r){ return 1.79284291400159 - 0.85373472095314 * r; }
+    float snoise(vec3 v){
+      const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+      const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+      vec3 i  = floor(v + dot(v, C.yyy));
+      vec3 x0 = v - i + dot(i, C.xxx);
+      vec3 g = step(x0.yzx, x0.xyz);
+      vec3 l = 1.0 - g;
+      vec3 i1 = min(g.xyz, l.zxy);
+      vec3 i2 = max(g.xyz, l.zxy);
+      vec3 x1 = x0 - i1 + 1.0 * C.xxx;
+      vec3 x2 = x0 - i2 + 2.0 * C.xxx;
+      vec3 x3 = x0 - 1.0 + 3.0 * C.xxx;
+      i = mod(i, 289.0);
+      vec4 p = permute(permute(permute(
+                 i.z + vec4(0.0, i1.z, i2.z, 1.0))
+               + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+               + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+      float n_ = 1.0/7.0;
+      vec3 ns = n_ * D.wyz - D.xzx;
+      vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+      vec4 x_ = floor(j * ns.z);
+      vec4 y_ = floor(j - 7.0 * x_);
+      vec4 x = x_ * ns.x + ns.yyyy;
+      vec4 y = y_ * ns.x + ns.yyyy;
+      vec4 h = 1.0 - abs(x) - abs(y);
+      vec4 b0 = vec4(x.xy, y.xy);
+      vec4 b1 = vec4(x.zw, y.zw);
+      vec4 s0 = floor(b0)*2.0 + 1.0;
+      vec4 s1 = floor(b1)*2.0 + 1.0;
+      vec4 sh = -step(h, vec4(0.0));
+      vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+      vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+      vec3 p0 = vec3(a0.xy, h.x);
+      vec3 p1 = vec3(a0.zw, h.y);
+      vec3 p2 = vec3(a1.xy, h.z);
+      vec3 p3 = vec3(a1.zw, h.w);
+      vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+      p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+      vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+      m = m * m;
+      return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+    }
+
+    void main(){
+      vec2 p = position.xy;                                   // domain units
+
+      // n = 9 * noise(x/99, y/99, t)   (p5 noise is 0..1, simplex is -1..1)
+      float n = 9.0 * (0.5 + 0.5 * snoise(vec3(p / 99.0, uTime)));
+      p += 9.0 * vec2(cos(n), sin(n));
+
+      // k = 0.98 ^ dist(p, touch)
+      float k = pow(0.98, distance(p, uTouch));
+
+      // point(lerp(x, X, k), ...)
+      vec2 q = mix(p, uTouch, k);
+
+      // stroke(v = 255k+60, 99+99k, 170, v)
+      float v = min(255.0 * k + 60.0, 255.0) / 255.0;
+      vColor = vec4(v, (99.0 + 99.0 * k) / 255.0, 170.0 / 255.0, v);
+
+      // domain → clip space (transform baked into the uniforms on resize)
+      gl_Position = vec4(q * uScale + uOffset, 0.0, 1.0);
+      gl_PointSize = uSize * (0.75 + 1.1 * k);
+    }
+  `,
+  fragmentShader: /* glsl */`
+    varying vec4 vColor;
+    void main(){
+      float d = length(gl_PointCoord - 0.5);
+      float m = smoothstep(0.5, 0.32, d);
+      if (m < 0.01) discard;
+      gl_FragColor = vec4(vColor.rgb, vColor.a * m);
+    }
+  `,
+});
+scene.add(new THREE.Points(geo, mat));
+
+let W = 0, H = 0, S = 1, OX = 0, OY = 0; // domain→px scale + centring offset
+function resize(){
+  W = window.innerWidth; H = window.innerHeight;
+  renderer.setSize(W, H);
+  S = Math.max(W, H) / DOMAIN;                 // cover the viewport
+  OX = (DOMAIN * S - W) / 2;
+  OY = (DOMAIN * S - H) / 2;
+  // Bake domain→clip: clip.x = (q.x*S - OX)/W*2 - 1,  clip.y = 1 - (q.y*S - OY)/H*2
+  uniforms.uScale.value.set(2 * S / W, -2 * S / H);
+  uniforms.uOffset.value.set(-(2 * OX / W + 1), 2 * OY / H + 1);
+  uniforms.uSize.value = 2 * S * Math.min(window.devicePixelRatio || 1, 2) * 0.55;
+}
+window.addEventListener('resize', resize);
+resize();
+
+/* ─────────────── touch, wander, and easing ─────────────── */
+const touch = { x: DOMAIN / 2, y: DOMAIN / 2 }; // eased attractor, domain units
+let target = { x: DOMAIN / 2, y: DOMAIN / 2 };
+let touching = false;
+
+function toDomain(cx, cy){ return { x: (cx + OX) / S, y: (cy + OY) / S }; }
+
+// Idle drift — layered sines standing in for p5's noise walk
+function wander(t){
+  return {
+    x: DOMAIN * (0.5 + 0.30 * Math.sin(t * 0.23) + 0.16 * Math.sin(t * 0.57 + 1.7) + 0.07 * Math.sin(t * 1.31 + 4.2)),
+    y: DOMAIN * (0.5 + 0.30 * Math.sin(t * 0.19 + 2.6) + 0.16 * Math.sin(t * 0.49 + 0.8) + 0.07 * Math.sin(t * 1.13 + 5.1)),
+  };
+}
+
+/* ───────────────────────── audio ───────────────────────── */
+// Same gentle engine as vibes i — pentatonic chimes with an echo wash.
+const SCALE = [];
+{
+  const semis = [0, 2, 4, 7, 9];
+  for (let oct = 0; oct < 3; oct++)
+    for (const s of semis) SCALE.push(220 * Math.pow(2, (oct * 12 + s + 3) / 12));
+}
+let AC = null, master = null, muted = false;
+
+function initAudio(){
+  if (AC) return;
+  AC = new (window.AudioContext || window.webkitAudioContext)();
+  master = AC.createGain(); master.gain.value = 0.8;
+  const comp = AC.createDynamicsCompressor();
+  comp.threshold.value = -22; comp.knee.value = 24;
+  comp.ratio.value = 6; comp.attack.value = 0.01; comp.release.value = 0.4;
+  const delay = AC.createDelay(2); delay.delayTime.value = 0.42;
+  const fb = AC.createGain(); fb.gain.value = 0.42;
+  const wet = AC.createGain(); wet.gain.value = 0.35;
+  const damp = AC.createBiquadFilter(); damp.type = 'lowpass'; damp.frequency.value = 1800;
+  delay.connect(damp); damp.connect(fb); fb.connect(delay); delay.connect(wet);
+  master.connect(delay); master.connect(comp); wet.connect(comp);
+  comp.connect(AC.destination);
+}
+
+function playNote(freq, vel){
+  if (!AC || muted) return;
+  const t = AC.currentTime;
+  const g = AC.createGain();
+  const lp = AC.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = Math.min(freq * 4, 4200); lp.Q.value = 0.6;
+  const o1 = AC.createOscillator(); o1.type = 'sine';     o1.frequency.value = freq;
+  const o2 = AC.createOscillator(); o2.type = 'triangle'; o2.frequency.value = freq * 2.003;
+  const g2 = AC.createGain(); g2.gain.value = 0.18;
+  const peak = 0.16 * vel;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.001), t + 0.025);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+  o1.connect(lp); o2.connect(g2); g2.connect(lp); lp.connect(g); g.connect(master);
+  o1.start(t); o2.start(t); o1.stop(t + 2.5); o2.stop(t + 2.5);
+  o1.onended = () => { g.disconnect(); lp.disconnect(); };
+}
+
+function playBass(freq, vel){
+  if (!AC || muted) return;
+  const t = AC.currentTime;
+  const o = AC.createOscillator(); o.type = 'sine'; o.frequency.value = freq / 2;
+  const g = AC.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.11 * vel, 0.001), t + 0.06);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 3.2);
+  o.connect(g); g.connect(master);
+  o.start(t); o.stop(t + 3.3);
+}
+
+function noteAt(cy){
+  const idx = Math.max(0, Math.min(SCALE.length - 1, Math.floor((1 - cy / H) * SCALE.length)));
+  return SCALE[idx];
+}
+
+const MIN_STEP = 34, MIN_GAP = 70;
+let lastX = 0, lastY = 0, lastNote = 0;
+
+function pointerDown(e){
+  if (AC && AC.state === 'suspended') AC.resume();
+  touching = true;
+  target = toDomain(e.clientX, e.clientY);
+  lastX = e.clientX; lastY = e.clientY; lastNote = performance.now();
+  playNote(noteAt(e.clientY), 0.9);
+  playBass(noteAt(e.clientY), 0.7);
+}
+function pointerMove(e){
+  if (!touching) return;
+  target = toDomain(e.clientX, e.clientY);
+  const now = performance.now();
+  const dist = Math.hypot(e.clientX - lastX, e.clientY - lastY);
+  if (dist >= MIN_STEP && now - lastNote >= MIN_GAP){
+    playNote(noteAt(e.clientY), Math.min(0.35 + dist / 90, 1) * 0.8);
+    lastX = e.clientX; lastY = e.clientY; lastNote = now;
+  }
+}
+function pointerUp(){ touching = false; }
+
+const el = renderer.domElement;
+el.addEventListener('pointerdown', pointerDown);
+el.addEventListener('pointermove', pointerMove);
+el.addEventListener('pointerup', pointerUp);
+el.addEventListener('pointercancel', pointerUp);
+el.addEventListener('pointerleave', pointerUp);
+
+/* ───────────────────────── loop ───────────────────────── */
+function animate(){
+  uniforms.uTime.value += 0.01;               // same clock as the sketch
+
+  if (!touching) target = wander(uniforms.uTime.value);
+  touch.x += (target.x - touch.x) * (touching ? 0.35 : 0.04);
+  touch.y += (target.y - touch.y) * (touching ? 0.35 : 0.04);
+  uniforms.uTouch.value.set(touch.x, touch.y);
+
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+
+/* ───────────────────────── intro / controls ───────────────────────── */
+const veil = document.getElementById('veil');
+const corner = document.getElementById('corner');
+const muteBtn = document.getElementById('mute');
+
+function begin(){
+  initAudio();
+  if (AC.state === 'suspended') AC.resume();
+  veil.classList.add('gone');
+  corner.classList.add('show');
+  [0, 2, 4].forEach((step, i) => setTimeout(() => playNote(SCALE[step + 5], 0.6), i * 240));
+}
+document.getElementById('go').addEventListener('click', begin);
+veil.addEventListener('pointerdown', (e) => { if (e.target === veil) begin(); });
+
+muteBtn.addEventListener('click', () => {
+  muted = !muted;
+  muteBtn.textContent = muted ? 'sound off' : 'sound on';
+});
+</script>
+</body>
+</html>
