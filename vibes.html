@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Vibes — Richard Burton</title>
+<meta name="description" content="A touch-responsive musical generator. Move your finger and waves of colour and sound follow.">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#06070d;overflow:hidden;overscroll-behavior:none}
+body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;color:#fff;-webkit-font-smoothing:antialiased;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+
+/* ── Intro overlay ── */
+.veil{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(ellipse at 50% 40%,rgba(20,24,44,0.55),rgba(6,7,13,0.92) 75%);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:opacity 1.2s ease;text-align:center;padding:24px}
+.veil.gone{opacity:0;pointer-events:none}
+.veil h1{font-size:52px;font-weight:800;letter-spacing:-1px;background:linear-gradient(90deg,#7ab8ff,#c58bff,#ff8bb8,#ffc98b);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:hueflow 8s ease-in-out infinite alternate}
+@keyframes hueflow{to{background-position:100% 0}}
+.veil p{font-size:15px;color:rgba(255,255,255,0.55);line-height:1.6;max-width:340px}
+.veil .go{margin-top:6px;padding:13px 34px;border-radius:999px;border:1px solid rgba(255,255,255,0.22);background:rgba(255,255,255,0.08);color:#fff;font-size:15px;font-weight:650;letter-spacing:0.3px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:background .3s,transform .3s;animation:breathe 3.2s ease-in-out infinite}
+.veil .go:hover{background:rgba(255,255,255,0.16);transform:scale(1.04)}
+@keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(160,150,255,0.35)}50%{box-shadow:0 0 0 16px rgba(160,150,255,0)}}
+
+/* ── Quiet corner controls ── */
+.corner{position:fixed;z-index:5;bottom:calc(14px + env(safe-area-inset-bottom));left:0;right:0;display:flex;justify-content:center;gap:10px;opacity:0;transition:opacity .8s ease;pointer-events:none}
+.corner.show{opacity:1;pointer-events:auto}
+.corner a,.corner button{font-family:inherit;font-size:12px;font-weight:600;letter-spacing:0.3px;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:999px;padding:7px 15px;text-decoration:none;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:color .3s,background .3s}
+.corner a:hover,.corner button:hover{color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.12)}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="veil" id="veil">
+  <h1>vibes</h1>
+  <p>A little musical instrument. Move your finger across the screen — sounds and colours will follow you in waves.</p>
+  <button class="go" id="go">begin</button>
+</div>
+
+<div class="corner" id="corner">
+  <a href="/">← home</a>
+  <button id="mute">sound on</button>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ───────────────────────── canvas ───────────────────────── */
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+
+function resize(){
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+resize();
+window.addEventListener('resize', resize);
+
+/* ───────────────────────── audio ───────────────────────── */
+// C major pentatonic across three octaves — every note sounds good next to every other.
+const SCALE = [];
+{
+  const semis = [0, 2, 4, 7, 9];
+  for (let oct = 0; oct < 3; oct++)
+    for (const s of semis) SCALE.push(220 * Math.pow(2, (oct * 12 + s + 3) / 12)); // start at C4-ish
+}
+
+let AC = null, master = null, delay = null, muted = false;
+
+function initAudio(){
+  if (AC) return;
+  AC = new (window.AudioContext || window.webkitAudioContext)();
+
+  master = AC.createGain();
+  master.gain.value = 0.8;
+
+  // Soft compressor so overlapping notes stay gentle
+  const comp = AC.createDynamicsCompressor();
+  comp.threshold.value = -22; comp.knee.value = 24;
+  comp.ratio.value = 6; comp.attack.value = 0.01; comp.release.value = 0.4;
+
+  // Echo wash for a dreamy, ambient tail
+  delay = AC.createDelay(2);
+  delay.delayTime.value = 0.42;
+  const fb = AC.createGain(); fb.gain.value = 0.42;
+  const wet = AC.createGain(); wet.gain.value = 0.35;
+  const damp = AC.createBiquadFilter(); damp.type = 'lowpass'; damp.frequency.value = 1800;
+  delay.connect(damp); damp.connect(fb); fb.connect(delay);
+  delay.connect(wet);
+
+  master.connect(delay);
+  master.connect(comp);
+  wet.connect(comp);
+  comp.connect(AC.destination);
+}
+
+// A soft chime: two detuned sines through a lowpass, gentle attack, long release.
+function playNote(freq, vel){
+  if (!AC || muted) return;
+  const t = AC.currentTime;
+  const g = AC.createGain();
+  const lp = AC.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = Math.min(freq * 4, 4200);
+  lp.Q.value = 0.6;
+
+  const o1 = AC.createOscillator(); o1.type = 'sine';     o1.frequency.value = freq;
+  const o2 = AC.createOscillator(); o2.type = 'triangle'; o2.frequency.value = freq * 2.003;
+  const g2 = AC.createGain(); g2.gain.value = 0.18; // faint shimmer an octave up
+
+  const peak = 0.16 * vel;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.001), t + 0.025);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+
+  o1.connect(lp); o2.connect(g2); g2.connect(lp);
+  lp.connect(g); g.connect(master);
+  o1.start(t); o2.start(t);
+  o1.stop(t + 2.5); o2.stop(t + 2.5);
+  o1.onended = () => { g.disconnect(); lp.disconnect(); };
+}
+
+// Low, slow bass note for taps — a warm anchor under the chimes.
+function playBass(freq, vel){
+  if (!AC || muted) return;
+  const t = AC.currentTime;
+  const o = AC.createOscillator(); o.type = 'sine'; o.frequency.value = freq / 2;
+  const g = AC.createGain();
+  const peak = 0.11 * vel;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.001), t + 0.06);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 3.2);
+  o.connect(g); g.connect(master);
+  o.start(t); o.stop(t + 3.3);
+}
+
+/* ───────────────────────── visuals ───────────────────────── */
+// Expanding rings + drifting glow motes, drawn additively over a slow fade.
+const ripples = [];   // {x, y, r, maxR, hue, born}
+const motes = [];     // {x, y, vx, vy, hue, life, size}
+let hueDrift = 0;
+
+function spawnWave(x, y, hue, strength){
+  ripples.push({ x, y, r: 6, speed: 1.6 + strength * 2.2, hue, alpha: 0.5 + strength * 0.3, width: 2 + strength * 3 });
+  const n = 5 + Math.round(strength * 7);
+  for (let i = 0; i < n; i++){
+    const a = Math.random() * Math.PI * 2;
+    const sp = 0.3 + Math.random() * 1.4 * (0.5 + strength);
+    motes.push({
+      x, y,
+      vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 0.15,
+      hue: hue + (Math.random() - 0.5) * 40,
+      life: 1,
+      decay: 0.006 + Math.random() * 0.010,
+      size: 2 + Math.random() * 5 * (0.5 + strength)
+    });
+  }
+}
+
+function frame(now){
+  // Slow fade to black — leaves gentle trails
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = 'rgba(6, 7, 13, 0.085)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.globalCompositeOperation = 'lighter';
+  hueDrift += 0.05;
+
+  // Rings
+  for (let i = ripples.length - 1; i >= 0; i--){
+    const p = ripples[i];
+    p.r += p.speed;
+    p.alpha *= 0.965;
+    if (p.alpha < 0.01){ ripples.splice(i, 1); continue; }
+    // A ring that wobbles slightly, like water
+    ctx.beginPath();
+    const segs = 40;
+    for (let s = 0; s <= segs; s++){
+      const a = (s / segs) * Math.PI * 2;
+      const wob = Math.sin(a * 5 + now * 0.004 + p.r * 0.05) * p.r * 0.045;
+      const rr = p.r + wob;
+      const px = p.x + Math.cos(a) * rr, py = p.y + Math.sin(a) * rr;
+      s === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.strokeStyle = `hsla(${p.hue + hueDrift}, 85%, 65%, ${p.alpha})`;
+    ctx.lineWidth = p.width;
+    ctx.stroke();
+  }
+
+  // Motes
+  for (let i = motes.length - 1; i >= 0; i--){
+    const m = motes[i];
+    m.life -= m.decay;
+    if (m.life <= 0){ motes.splice(i, 1); continue; }
+    m.x += m.vx; m.y += m.vy;
+    m.vx *= 0.985; m.vy = m.vy * 0.985 - 0.008; // drift upward like sparks
+    const r = m.size * m.life;
+    const grad = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, r * 3);
+    grad.addColorStop(0, `hsla(${m.hue + hueDrift}, 90%, 70%, ${0.35 * m.life})`);
+    grad.addColorStop(1, 'hsla(0, 0%, 0%, 0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, r * 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  requestAnimationFrame(frame);
+}
+ctx.fillStyle = '#06070d';
+ctx.fillRect(0, 0, W, H);
+requestAnimationFrame(frame);
+
+/* ─────────────────── touch → sound + colour ─────────────────── */
+// Position on screen chooses the note and the colour:
+//   left → right  = hue sweeps around the wheel
+//   bottom → top  = pitch rises through the pentatonic scale
+function noteAt(x, y){
+  const idx = Math.max(0, Math.min(SCALE.length - 1,
+    Math.floor((1 - y / H) * SCALE.length)));
+  return SCALE[idx];
+}
+function hueAt(x){ return (x / W) * 300 + 180; }
+
+const pointers = new Map(); // id → {x, y, lastX, lastY, lastNote}
+const MIN_STEP = 34;        // px of travel between notes while dragging
+const MIN_GAP = 70;         // ms between notes per finger
+
+function pointerDown(e){
+  if (AC && AC.state === 'suspended') AC.resume();
+  const s = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, lastNote: 0 };
+  pointers.set(e.pointerId, s);
+  const hue = hueAt(e.clientX);
+  spawnWave(e.clientX, e.clientY, hue, 0.9);
+  playNote(noteAt(e.clientX, e.clientY), 0.9);
+  playBass(noteAt(e.clientX, e.clientY), 0.7);
+  s.lastNote = performance.now();
+}
+
+function pointerMove(e){
+  const s = pointers.get(e.pointerId);
+  if (!s) return;
+  const now = performance.now();
+  const dx = e.clientX - s.lastX, dy = e.clientY - s.lastY;
+  const dist = Math.hypot(dx, dy);
+  const hue = hueAt(e.clientX);
+
+  // Always leave a faint colour trail while moving
+  if (dist > 4) spawnWave(e.clientX, e.clientY, hue, Math.min(dist / 60, 0.5) * 0.4);
+
+  // A new note once you've travelled far enough
+  if (dist >= MIN_STEP && now - s.lastNote >= MIN_GAP){
+    const vel = Math.min(0.35 + dist / 90, 1);
+    spawnWave(e.clientX, e.clientY, hue, vel * 0.8);
+    playNote(noteAt(e.clientX, e.clientY), vel * 0.8);
+    s.lastX = e.clientX; s.lastY = e.clientY; s.lastNote = now;
+  }
+  s.x = e.clientX; s.y = e.clientY;
+}
+
+function pointerUp(e){ pointers.delete(e.pointerId); }
+
+canvas.addEventListener('pointerdown', pointerDown);
+canvas.addEventListener('pointermove', pointerMove);
+canvas.addEventListener('pointerup', pointerUp);
+canvas.addEventListener('pointercancel', pointerUp);
+canvas.addEventListener('pointerleave', pointerUp);
+
+/* ─────────────── idle shimmer: the page breathes ─────────────── */
+// When nobody is touching, a soft wave drifts across on its own (visual only).
+let lastTouch = 0;
+canvas.addEventListener('pointerdown', () => { lastTouch = performance.now(); });
+canvas.addEventListener('pointermove', () => { lastTouch = performance.now(); });
+setInterval(() => {
+  if (performance.now() - lastTouch < 4000) return;
+  const x = Math.random() * W, y = Math.random() * H;
+  spawnWave(x, y, hueAt(x), 0.25);
+}, 2600);
+
+/* ───────────────────────── intro / controls ───────────────────────── */
+const veil = document.getElementById('veil');
+const corner = document.getElementById('corner');
+const muteBtn = document.getElementById('mute');
+
+function begin(){
+  initAudio();
+  if (AC.state === 'suspended') AC.resume();
+  veil.classList.add('gone');
+  corner.classList.add('show');
+  // A little welcome chord blooms from the centre
+  const cx = W / 2, cy = H / 2;
+  [0, 2, 4].forEach((step, i) => {
+    setTimeout(() => {
+      const f = SCALE[step + 5];
+      playNote(f, 0.6);
+      spawnWave(cx + (i - 1) * 70, cy, 200 + i * 45, 0.8);
+    }, i * 240);
+  });
+}
+document.getElementById('go').addEventListener('click', begin);
+veil.addEventListener('pointerdown', (e) => { if (e.target === veil) begin(); });
+
+muteBtn.addEventListener('click', () => {
+  muted = !muted;
+  muteBtn.textContent = muted ? 'sound off' : 'sound on';
+});
+})();
+</script>
+</body>
+</html>
