@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Vibes III — Richard Burton</title>
+<meta name="description" content="A musical night garden. Tap the earth and plants grow, bloom, and chime.">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#05070a;overflow:hidden;overscroll-behavior:none}
+body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;color:#fff;-webkit-font-smoothing:antialiased;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+
+/* ── Intro overlay ── */
+.veil{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(ellipse at 50% 40%,rgba(16,36,24,0.55),rgba(5,7,10,0.92) 75%);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:opacity 1.2s ease;text-align:center;padding:24px}
+.veil.gone{opacity:0;pointer-events:none}
+.veil h1{font-size:52px;font-weight:800;letter-spacing:-1px;background:linear-gradient(90deg,#8bffb0,#c5ff8b,#ffd98b,#ff9ec6);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:hueflow 8s ease-in-out infinite alternate}
+@keyframes hueflow{to{background-position:100% 0}}
+.veil p{font-size:15px;color:rgba(255,255,255,0.55);line-height:1.6;max-width:340px}
+.veil .go{margin-top:6px;padding:13px 34px;border-radius:999px;border:1px solid rgba(255,255,255,0.22);background:rgba(255,255,255,0.08);color:#fff;font-size:15px;font-weight:650;letter-spacing:0.3px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:background .3s,transform .3s;animation:breathe 3.2s ease-in-out infinite}
+.veil .go:hover{background:rgba(255,255,255,0.16);transform:scale(1.04)}
+@keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(140,255,180,0.3)}50%{box-shadow:0 0 0 16px rgba(140,255,180,0)}}
+
+/* ── Quiet corner controls ── */
+.corner{position:fixed;z-index:5;bottom:calc(14px + env(safe-area-inset-bottom));left:0;right:0;display:flex;justify-content:center;gap:10px;opacity:0;transition:opacity .8s ease;pointer-events:none}
+.corner.show{opacity:1;pointer-events:auto}
+.corner a,.corner button{font-family:inherit;font-size:12px;font-weight:600;letter-spacing:0.3px;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:999px;padding:7px 15px;text-decoration:none;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:color .3s,background .3s}
+.corner a:hover,.corner button:hover{color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.12)}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="veil" id="veil">
+  <h1>vibes iii</h1>
+  <p>A night garden. Tap the earth and a plant will grow, bloom, and chime. Drag to scatter grass.</p>
+  <button class="go" id="go">begin</button>
+</div>
+
+<div class="corner" id="corner">
+  <a href="/">← home</a>
+  <a href="/vibes.html">vibes i</a>
+  <a href="/vibes2.html">vibes ii</a>
+  <button id="mute">sound on</button>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ───────────────────────── canvas ───────────────────────── */
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+function resize(){
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+resize();
+window.addEventListener('resize', resize);
+
+const rand = (a, b) => a + Math.random() * (b - a);
+
+/* ───────────────────────── audio ───────────────────────── */
+// The family instrument: pentatonic chimes with a soft echo wash.
+const SCALE = [];
+{
+  const semis = [0, 2, 4, 7, 9];
+  for (let oct = 0; oct < 3; oct++)
+    for (const s of semis) SCALE.push(220 * Math.pow(2, (oct * 12 + s + 3) / 12));
+}
+let AC = null, master = null, muted = false;
+
+function initAudio(){
+  if (AC) return;
+  AC = new (window.AudioContext || window.webkitAudioContext)();
+  master = AC.createGain(); master.gain.value = 0.8;
+  const comp = AC.createDynamicsCompressor();
+  comp.threshold.value = -22; comp.knee.value = 24;
+  comp.ratio.value = 6; comp.attack.value = 0.01; comp.release.value = 0.4;
+  const delay = AC.createDelay(2); delay.delayTime.value = 0.42;
+  const fb = AC.createGain(); fb.gain.value = 0.42;
+  const wet = AC.createGain(); wet.gain.value = 0.35;
+  const damp = AC.createBiquadFilter(); damp.type = 'lowpass'; damp.frequency.value = 1800;
+  delay.connect(damp); damp.connect(fb); fb.connect(delay); delay.connect(wet);
+  master.connect(delay); master.connect(comp); wet.connect(comp);
+  comp.connect(AC.destination);
+}
+
+function playNote(freq, vel){
+  if (!AC || muted) return;
+  const t = AC.currentTime;
+  const g = AC.createGain();
+  const lp = AC.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = Math.min(freq * 4, 4200); lp.Q.value = 0.6;
+  const o1 = AC.createOscillator(); o1.type = 'sine';     o1.frequency.value = freq;
+  const o2 = AC.createOscillator(); o2.type = 'triangle'; o2.frequency.value = freq * 2.003;
+  const g2 = AC.createGain(); g2.gain.value = 0.18;
+  const peak = 0.16 * vel;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.001), t + 0.025);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+  o1.connect(lp); o2.connect(g2); g2.connect(lp); lp.connect(g); g.connect(master);
+  o1.start(t); o2.start(t); o1.stop(t + 2.5); o2.stop(t + 2.5);
+  o1.onended = () => { g.disconnect(); lp.disconnect(); };
+}
+
+function playBass(freq, vel){
+  if (!AC || muted) return;
+  const t = AC.currentTime;
+  const o = AC.createOscillator(); o.type = 'sine'; o.frequency.value = freq / 2;
+  const g = AC.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.11 * vel, 0.001), t + 0.06);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 3.2);
+  o.connect(g); g.connect(master);
+  o.start(t); o.stop(t + 3.3);
+}
+
+// Bloom chimes queue up so a burst of flowers becomes an arpeggio, not a clang.
+const chimeQueue = [];
+let lastChime = 0;
+function queueChime(freq, vel){ if (chimeQueue.length < 24) chimeQueue.push({ freq, vel }); }
+function pumpChimes(now){
+  if (!chimeQueue.length || now - lastChime < 110) return;
+  const c = chimeQueue.shift();
+  playNote(c.freq, c.vel);
+  lastChime = now;
+}
+
+/* ───────────────────────── plants ───────────────────────── */
+/*
+  A plant is a list of branches, parents before children. Each branch
+  stores only its *shape genes* (relative angle, length, bend, depth);
+  world geometry is re-walked every frame from the root so the whole
+  plant can sway in the breeze. When a branch finishes growing it
+  spawns children — or a flower at the final depth, with a chime.
+*/
+const plants = [];
+const grass = [];
+const fireflies = [];
+const MAX_PLANTS = 10;
+const MAX_GRASS = 220;
+
+function makeBranch(parent, angle, len, depth, plant){
+  return {
+    parent,                      // index into plant.branches, -1 for trunk
+    angle,                       // radians, relative to parent tip direction
+    len,
+    depth,
+    bend: rand(-0.5, 0.5),       // total curvature along the branch
+    progress: 0,
+    growRate: rand(0.010, 0.016),
+    spawned: false,
+    leaves: depth >= 1 ? Array.from({ length: Math.random() < 0.7 ? rand(1, 3) | 0 : 0 },
+      () => ({ t: rand(0.3, 0.95), side: Math.random() < 0.5 ? -1 : 1, size: rand(5, 10) })) : [],
+    flower: null,                // {petals, size, bloom 0..1} once grown at max depth
+    tipX: 0, tipY: 0, tipDir: 0, // filled in by the frame walk
+    plant,
+  };
+}
+
+function plantAt(x, y){
+  const p = {
+    x, y,
+    hue: rand(0, 360),           // blossom colour — every plant its own
+    leafHue: rand(95, 150),
+    phase: rand(0, Math.PI * 2),
+    maxDepth: 2 + (Math.random() * 3 | 0),   // 2..4
+    alpha: 0, dying: false,
+    branches: [],
+    baseNote: Math.max(0, Math.min(SCALE.length - 6, Math.floor((1 - y / H) * 9))),
+  };
+  const trunk = makeBranch(-1, -Math.PI / 2 + rand(-0.12, 0.12), rand(60, 110) * Math.min(1, H / 700), 0, p);
+  trunk.bend = rand(-0.25, 0.25);
+  p.branches.push(trunk);
+  plants.push(p);
+
+  if (plants.filter(q => !q.dying).length > MAX_PLANTS){
+    const oldest = plants.find(q => !q.dying);
+    if (oldest) oldest.dying = true;
+  }
+  return p;
+}
+
+function finishBranch(b, p){
+  b.spawned = true;
+  if (b.depth < p.maxDepth){
+    const kids = b.depth === 0 ? 2 + (Math.random() * 2 | 0) : Math.random() < 0.75 ? 2 : 1;
+    const spread = rand(0.4, 0.75);
+    for (let k = 0; k < kids; k++){
+      const off = kids === 1 ? rand(-0.2, 0.2) : -spread + (2 * spread) * (k / (kids - 1)) + rand(-0.1, 0.1);
+      p.branches.push(makeBranch(p.branches.indexOf(b), off, b.len * rand(0.62, 0.78), b.depth + 1, p));
+    }
+    // gentle tick as the plant reaches upward
+    queueChime(SCALE[p.baseNote + b.depth + 1] || SCALE[SCALE.length - 1], 0.22);
+  } else {
+    b.flower = { petals: 5 + (Math.random() * 3 | 0), size: rand(6, 11), bloom: 0 };
+    queueChime(SCALE[Math.min(p.baseNote + 4 + (Math.random() * 3 | 0), SCALE.length - 1)], 0.4);
+  }
+}
+
+/* ───────────────────────── drawing ───────────────────────── */
+const SEGS = 6;
+
+function drawPlant(p, time){
+  // fade in / out
+  p.alpha += p.dying ? -0.012 : (p.alpha < 1 ? 0.05 : 0);
+  if (p.alpha <= 0 && p.dying){ p.remove = true; return; }
+  ctx.globalAlpha = Math.max(0, Math.min(1, p.alpha));
+
+  const breeze = Math.sin(time * 0.0008 + p.phase) + 0.4 * Math.sin(time * 0.0021 + p.phase * 2);
+
+  for (const b of p.branches){
+    if (b.progress < 1){
+      b.progress = Math.min(1, b.progress + b.growRate);
+      if (b.progress >= 1 && !b.spawned) finishBranch(b, p);
+    }
+
+    let x, y, dir;
+    if (b.parent === -1){ x = p.x; y = p.y; dir = b.angle; }
+    else { const par = p.branches[b.parent]; x = par.tipX; y = par.tipY; dir = par.tipDir + b.angle; }
+
+    // deeper branches sway more, like real stems
+    dir += breeze * 0.018 * (b.depth + 1);
+
+    const L = b.len * b.progress;
+    const step = L / SEGS;
+    const bendStep = (b.bend * b.progress) / SEGS;
+
+    ctx.strokeStyle = `hsl(${p.leafHue}, 45%, ${26 - b.depth * 2}%)`;
+    ctx.lineWidth = Math.max(0.8, 4.5 - b.depth * 1.1);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    const leafPts = [];
+    for (let s = 1; s <= SEGS; s++){
+      dir += bendStep;
+      x += Math.cos(dir) * step;
+      y += Math.sin(dir) * step;
+      ctx.lineTo(x, y);
+      leafPts.push({ x, y, dir, t: s / SEGS });
+    }
+    ctx.stroke();
+    b.tipX = x; b.tipY = y; b.tipDir = dir;
+
+    // leaves appear once growth passes them
+    for (const lf of b.leaves){
+      if (b.progress < lf.t) continue;
+      const pt = leafPts[Math.min(SEGS - 1, Math.floor(lf.t * SEGS))];
+      const grow = Math.min(1, (b.progress - lf.t) * 6);
+      const a = pt.dir + lf.side * 1.1 + breeze * 0.04;
+      const sz = lf.size * grow;
+      ctx.fillStyle = `hsla(${p.leafHue}, 55%, 38%, 0.9)`;
+      ctx.save();
+      ctx.translate(pt.x, pt.y);
+      ctx.rotate(a);
+      ctx.beginPath();
+      ctx.ellipse(sz * 0.9, 0, sz, sz * 0.42, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // the flower blooms with a little overshoot
+    if (b.flower){
+      const f = b.flower;
+      f.bloom = Math.min(1, f.bloom + 0.03);
+      const s = f.size * (f.bloom < 0.8 ? f.bloom * 1.25 : 1.2 - (f.bloom - 0.8));
+      ctx.save();
+      ctx.translate(b.tipX, b.tipY);
+      ctx.rotate(breeze * 0.05);
+      ctx.fillStyle = `hsla(${p.hue}, 80%, 68%, 0.92)`;
+      for (let k = 0; k < f.petals; k++){
+        const a = (k / f.petals) * Math.PI * 2 + time * 0.0001;
+        ctx.beginPath();
+        ctx.ellipse(Math.cos(a) * s * 0.7, Math.sin(a) * s * 0.7, s * 0.62, s * 0.34, a, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = `hsla(${(p.hue + 45) % 360}, 90%, 80%, 1)`;
+      ctx.beginPath();
+      ctx.arc(0, 0, s * 0.32, 0, Math.PI * 2);
+      ctx.fill();
+      // faint halo while blooming
+      if (f.bloom < 1){
+        ctx.strokeStyle = `hsla(${p.hue}, 90%, 75%, ${0.5 * (1 - f.bloom)})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, s * (1.2 + f.bloom * 1.6), 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawGrass(time){
+  for (let i = grass.length - 1; i >= 0; i--){
+    const g = grass[i];
+    g.grow = Math.min(1, g.grow + 0.06);
+    const sway = Math.sin(time * 0.0012 + g.phase) * 0.15;
+    ctx.strokeStyle = `hsla(${g.hue}, 45%, 32%, ${0.8 * g.grow})`;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(g.x, g.y);
+    const a = -Math.PI / 2 + g.tilt + sway;
+    const L = g.len * g.grow;
+    ctx.quadraticCurveTo(
+      g.x + Math.cos(a) * L * 0.5, g.y + Math.sin(a) * L * 0.5,
+      g.x + Math.cos(a + g.curl) * L, g.y + Math.sin(a + g.curl) * L);
+    ctx.stroke();
+  }
+}
+
+function drawFireflies(time){
+  while (fireflies.length < 18)
+    fireflies.push({ x: rand(0, W), y: rand(0, H), phase: rand(0, Math.PI * 2), speed: rand(0.1, 0.35) });
+  for (const f of fireflies){
+    f.x += Math.sin(time * 0.0004 + f.phase * 3) * f.speed;
+    f.y += Math.cos(time * 0.0005 + f.phase * 2) * f.speed * 0.7;
+    if (f.x < -10) f.x = W + 10; if (f.x > W + 10) f.x = -10;
+    if (f.y < -10) f.y = H + 10; if (f.y > H + 10) f.y = -10;
+    const tw = 0.5 + 0.5 * Math.sin(time * 0.003 + f.phase * 7);
+    const grad = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, 8);
+    grad.addColorStop(0, `hsla(65, 90%, 70%, ${0.35 * tw})`);
+    grad.addColorStop(1, 'hsla(65, 90%, 70%, 0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(f.x, f.y, 8, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+/* ───────────────────────── loop ───────────────────────── */
+let bgGrad = null, bgH = 0;
+function frame(time){
+  if (bgH !== H){
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#04060b');
+    bgGrad.addColorStop(0.72, '#060a0c');
+    bgGrad.addColorStop(1, '#0a1408');
+    bgH = H;
+  }
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  drawFireflies(time);
+  drawGrass(time);
+  for (const p of plants) drawPlant(p, time);
+  for (let i = plants.length - 1; i >= 0; i--) if (plants[i].remove) plants.splice(i, 1);
+
+  pumpChimes(performance.now());
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ─────────────────── touch → seeds & grass ─────────────────── */
+let downAt = null, moved = 0, lastGX = 0, lastGY = 0;
+
+function seedGrass(x, y){
+  for (let k = 0; k < 3; k++){
+    if (grass.length >= MAX_GRASS) grass.shift();
+    grass.push({
+      x: x + rand(-8, 8), y: y + rand(-4, 4),
+      len: rand(10, 26), tilt: rand(-0.4, 0.4), curl: rand(-0.5, 0.5),
+      hue: rand(90, 150), phase: rand(0, Math.PI * 2), grow: 0,
+    });
+  }
+}
+
+canvas.addEventListener('pointerdown', e => {
+  if (AC && AC.state === 'suspended') AC.resume();
+  downAt = { x: e.clientX, y: e.clientY, t: performance.now() };
+  moved = 0; lastGX = e.clientX; lastGY = e.clientY;
+});
+canvas.addEventListener('pointermove', e => {
+  if (!downAt) return;
+  moved += Math.hypot(e.clientX - lastGX, e.clientY - lastGY);
+  if (Math.hypot(e.clientX - lastGX, e.clientY - lastGY) > 14){
+    seedGrass(e.clientX, e.clientY);
+    lastGX = e.clientX; lastGY = e.clientY;
+  }
+});
+function release(e){
+  if (!downAt) return;
+  // a tap (not a drag) plants a seed
+  if (moved < 12){
+    const p = plantAt(downAt.x, downAt.y);
+    playBass(SCALE[p.baseNote], 0.8);
+    playNote(SCALE[p.baseNote], 0.7);
+  }
+  downAt = null;
+}
+canvas.addEventListener('pointerup', release);
+canvas.addEventListener('pointercancel', () => { downAt = null; });
+
+/* ───────────────────────── intro / controls ───────────────────────── */
+const veil = document.getElementById('veil');
+const corner = document.getElementById('corner');
+const muteBtn = document.getElementById('mute');
+
+function begin(){
+  initAudio();
+  if (AC.state === 'suspended') AC.resume();
+  veil.classList.add('gone');
+  corner.classList.add('show');
+  // a first plant grows from the centre of the garden
+  setTimeout(() => {
+    const p = plantAt(W / 2, H * 0.78);
+    playBass(SCALE[p.baseNote], 0.7);
+    playNote(SCALE[p.baseNote], 0.6);
+  }, 500);
+}
+document.getElementById('go').addEventListener('click', begin);
+veil.addEventListener('pointerdown', (e) => { if (e.target === veil) begin(); });
+
+muteBtn.addEventListener('click', () => {
+  muted = !muted;
+  muteBtn.textContent = muted ? 'sound off' : 'sound on';
+});
+})();
+</script>
+</body>
+</html>
