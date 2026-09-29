@@ -1,0 +1,422 @@
+[
+  {
+    "id": "sutro-tower",
+    "name": "Sutro Tower 1",
+    "sub": "San Francisco",
+    "lat": 37.76,
+    "lon": -122.45,
+    "elevM": 254,
+    "elevLabel": "833 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-SutroTower1/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-SutroTower1",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-SutroTower1",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:37.906319+00:00",
+    "lastFrameAt": "2026-09-29T16:03:01+00:00"
+  },
+  {
+    "id": "wolfback-ridge",
+    "name": "Wolfback Ridge",
+    "sub": "Marin Headlands",
+    "lat": 37.85,
+    "lon": -122.5,
+    "elevM": 339,
+    "elevLabel": "1,112 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-WolfbackRidge/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-WolfbackRidge",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-WolfbackRidge",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:37.961480+00:00",
+    "lastFrameAt": "2026-09-29T16:03:14+00:00"
+  },
+  {
+    "id": "muir-beach",
+    "name": "Muir Beach Overlook",
+    "sub": "Marin coast",
+    "lat": 37.86,
+    "lon": -122.59,
+    "elevM": 148,
+    "elevLabel": "486 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-MuirBeach/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-MuirBeach",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-MuirBeach",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:38.023260+00:00",
+    "lastFrameAt": "2026-09-29T16:02:55+00:00"
+  },
+  {
+    "id": "bolinas",
+    "name": "Bolinas",
+    "sub": "Marin coast",
+    "lat": 37.94,
+    "lon": -122.71,
+    "elevM": 103,
+    "elevLabel": "338 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-Bolinas/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-Bolinas",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-Bolinas",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:38.025109+00:00",
+    "lastFrameAt": "2026-09-29T16:02:46+00:00"
+  },
+  {
+    "id": "barnabe-peak",
+    "name": "Barnabe Peak East",
+    "sub": "West Marin",
+    "lat": 38.03,
+    "lon": -122.72,
+    "elevM": 445,
+    "elevLabel": "1,460 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-BarnabeEast/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-BarnabeEast",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-BarnabeEast",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:37.952145+00:00",
+    "lastFrameAt": "2026-09-29T16:03:24+00:00"
+  },
+  {
+    "id": "big-rock-ridge",
+    "name": "Big Rock Ridge 1",
+    "sub": "Marin County",
+    "lat": 38.06,
+    "lon": -122.6,
+    "elevM": 575,
+    "elevLabel": "1,886 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-BigRock/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-BigRock",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-BigRock",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:38.133035+00:00",
+    "lastFrameAt": "2026-09-29T16:03:11+00:00"
+  },
+  {
+    "id": "mount-burdell",
+    "name": "Mt. Burdell 1",
+    "sub": "North Marin",
+    "lat": 38.15,
+    "lon": -122.59,
+    "elevM": 477,
+    "elevLabel": "1,565 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-Burdell/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-Burdell",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-Burdell",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:39.024893+00:00",
+    "lastFrameAt": "2026-09-29T16:03:00+00:00"
+  },
+  {
+    "id": "san-rafael-hill",
+    "name": "San Rafael Hill",
+    "sub": "San Rafael",
+    "lat": 37.98,
+    "lon": -122.53,
+    "elevM": 188,
+    "elevLabel": "617 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-SanRafaelHill1/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-SanRafaelHill1",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-SanRafaelHill1",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:38.827015+00:00",
+    "lastFrameAt": "2026-09-29T16:02:56+00:00"
+  },
+  {
+    "id": "nichol-knob",
+    "name": "Nichol Knob",
+    "sub": "Point Richmond",
+    "lat": 37.92,
+    "lon": -122.38,
+    "elevM": 113,
+    "elevLabel": "371 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-NicholKnob1/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-NicholKnob1",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-NicholKnob1",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:38.512102+00:00",
+    "lastFrameAt": "2026-09-29T16:03:17+00:00"
+  },
+  {
+    "id": "berkeley",
+    "name": "Berkeley Downtown",
+    "sub": "Berkeley",
+    "lat": 37.87,
+    "lon": -122.27,
+    "elevM": 57,
+    "elevLabel": "187 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-Berkeley/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-Berkeley",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-Berkeley",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:38.908003+00:00",
+    "lastFrameAt": "2026-09-29T16:03:17+00:00"
+  },
+  {
+    "id": "chabot",
+    "name": "Chabot",
+    "sub": "Oakland hills",
+    "lat": 37.82,
+    "lon": -122.19,
+    "elevM": 467,
+    "elevLabel": "1,532 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-Chabot/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-Chabot",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-Chabot",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:38.953627+00:00",
+    "lastFrameAt": "2026-09-29T16:02:55+00:00"
+  },
+  {
+    "id": "round-top",
+    "name": "Round Top",
+    "sub": "East Bay hills",
+    "lat": 37.85,
+    "lon": -122.19,
+    "elevM": 526,
+    "elevLabel": "1,726 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-RoundTop/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-RoundTop",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-RoundTop",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:39.092563+00:00",
+    "lastFrameAt": "2026-09-29T16:03:24+00:00"
+  },
+  {
+    "id": "rocky-ridge",
+    "name": "Rocky Ridge 1",
+    "sub": "East Bay hills",
+    "lat": 37.82,
+    "lon": -122.06,
+    "elevM": 614,
+    "elevLabel": "2,014 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-RockyRidge1/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-RockyRidge1",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-RockyRidge1",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:39.334407+00:00",
+    "lastFrameAt": "2026-09-29T16:03:21+00:00"
+  },
+  {
+    "id": "sunol-ridge",
+    "name": "Sunol Ridge 1",
+    "sub": "East Bay",
+    "lat": 37.62,
+    "lon": -121.92,
+    "elevM": 658,
+    "elevLabel": "2,159 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-SunolRidge1/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-SunolRidge1",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-SunolRidge1",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:39.661282+00:00",
+    "lastFrameAt": "2026-09-29T16:03:18+00:00"
+  },
+  {
+    "id": "mission-peak",
+    "name": "Mission Peak 1",
+    "sub": "South Bay hills",
+    "lat": 37.48,
+    "lon": -121.86,
+    "elevM": 706,
+    "elevLabel": "2,316 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-Mission1/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-Mission1",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-Mission1",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:39.509115+00:00",
+    "lastFrameAt": "2026-09-29T16:03:17+00:00"
+  },
+  {
+    "id": "san-bruno-mountain",
+    "name": "San Bruno Mountain",
+    "sub": "Northern Peninsula",
+    "lat": 37.69,
+    "lon": -122.44,
+    "elevM": 398,
+    "elevLabel": "1,306 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-SanBrunoMtn1/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-SanBrunoMtn1",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-SanBrunoMtn1",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:39.529588+00:00",
+    "lastFrameAt": "2026-09-29T16:02:59+00:00"
+  },
+  {
+    "id": "pillar-point",
+    "name": "Pillar Point",
+    "sub": "San Mateo coast",
+    "lat": 37.5,
+    "lon": -122.48,
+    "elevM": 1,
+    "elevLabel": "3 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-PillarPoint/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-PillarPoint",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-PillarPoint",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:39.881213+00:00",
+    "lastFrameAt": "2026-09-29T16:03:17+00:00"
+  },
+  {
+    "id": "redwood-city",
+    "name": "Redwood City 1",
+    "sub": "Peninsula",
+    "lat": 37.49,
+    "lon": -122.23,
+    "elevM": 3,
+    "elevLabel": "10 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-RedwoodCity1/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-RedwoodCity1",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-RedwoodCity1",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:39.719594+00:00",
+    "lastFrameAt": "2026-09-29T16:03:22+00:00"
+  },
+  {
+    "id": "stanford-dish",
+    "name": "Stanford Dish",
+    "sub": "Stanford foothills",
+    "lat": 37.41,
+    "lon": -122.18,
+    "elevM": 139,
+    "elevLabel": "456 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-StanfordDish/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-StanfordDish",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-StanfordDish",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:40.001334+00:00",
+    "lastFrameAt": "2026-09-29T16:03:26+00:00"
+  },
+  {
+    "id": "carol-drive",
+    "name": "Carol Drive Santa Clara 1",
+    "sub": "Santa Clara County",
+    "lat": 37.29,
+    "lon": -121.87,
+    "elevM": 134,
+    "elevLabel": "440 FT",
+    "yt": null,
+    "sources": [
+      "https://cameras.alertcalifornia.org/public-camera-data/Axis-CarolDrive1/latest-frame.jpg"
+    ],
+    "link": "https://cameras.alertcalifornia.org/?id=Axis-CarolDrive1",
+    "credit": "ALERTCalifornia | UC San Diego",
+    "refreshMs": 15000,
+    "type": "snapshot",
+    "sourceId": "Axis-CarolDrive1",
+    "locationPrecision": "Approx. 1 km (publisher coordinates)",
+    "verifiedAt": "2026-09-29T16:04:40.147058+00:00",
+    "lastFrameAt": "2026-09-29T16:03:16+00:00"
+  }
+]

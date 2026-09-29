@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bay Area Webcam Grid — Richard Burton</title>
-<meta name="description" content="A 3D synthwave terrain map of the San Francisco Bay Area with live webcams at Fort Funston, Mussel Rock, Mt Tamalpais and Mt Diablo.">
+<meta name="description" content="A measured 3D terrain map of the San Francisco Bay Area with live webcams at Fort Funston, Mussel Rock, Mt Tamalpais and Mt Diablo.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M2 26 L12 8 L18 18 L23 10 L30 26 Z' fill='none' stroke='%2300e5ff' stroke-width='2.5' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -67,14 +67,21 @@ body{
 #modes{
   position:fixed;z-index:22;top:22px;right:26px;display:flex;gap:8px;pointer-events:auto;
 }
+#view-tools{position:fixed;z-index:22;right:26px;top:66px;display:flex;gap:8px}
+#view-tools .chip{font-size:9px;padding:7px 10px;letter-spacing:1px}
+.hide-previews .cc-feed,.hide-previews .cc-wind{display:none}
+.hide-previews .cam-card{width:172px}
+.hide-previews .cc-elev{display:none}
+.cc-head>span:first-child{overflow:hidden;text-overflow:ellipsis}
 #modes .chip.active{
   background:rgba(0,229,255,0.14);color:#fff;border-color:var(--cyan);
   box-shadow:0 0 18px rgba(0,229,255,0.4),inset 0 0 12px rgba(0,229,255,0.10);
 }
 #attrib{
-  position:fixed;z-index:21;right:8px;bottom:6px;display:none;
-  font-size:8px;letter-spacing:1px;color:rgba(160,215,255,0.4);text-transform:uppercase;
+  position:fixed;z-index:21;right:8px;bottom:6px;max-width:96vw;text-align:right;
+  font-size:8px;letter-spacing:.5px;color:rgba(160,215,255,0.65);
 }
+#attrib a{color:inherit;text-decoration:none}
 @media (max-width:640px){
   #modes{top:14px;right:12px}
 }
@@ -82,8 +89,12 @@ body{
 /* ── cam chips ── */
 #chips{
   position:fixed;z-index:22;left:50%;transform:translateX(-50%);bottom:20px;
-  display:flex;gap:8px;pointer-events:auto;flex-wrap:wrap;justify-content:center;max-width:92vw;
+  display:flex;gap:8px;pointer-events:auto;flex-wrap:nowrap;justify-content:flex-start;
+  width:min(820px,90vw);overflow-x:auto;padding:4px 2px 10px;scrollbar-width:thin;
+  scrollbar-color:rgba(160,215,255,.5) transparent;overscroll-behavior:contain;
 }
+#chips .chip{flex-shrink:0}
+#chips:focus-within{z-index:25}
 .chip{
   font:inherit;font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;
   color:var(--ink);background:rgba(6,13,34,0.75);border:1px solid rgba(0,229,255,0.25);
@@ -98,7 +109,7 @@ body{
 .cam-card{
   position:fixed;z-index:15;pointer-events:auto;cursor:pointer;
   transform-origin:50% 100%;transform:translate(-50%,-100%);
-  width:232px;
+  width:196px;
   background:rgba(4,10,28,0.82);
   border:1px solid rgba(0,229,255,0.45);
   border-radius:4px;overflow:hidden;
@@ -124,7 +135,7 @@ body{
 }
 .cc-elev{color:var(--dim);font-size:8px;letter-spacing:1.5px}
 .cc-feed{position:relative;aspect-ratio:16/9;background:#02040f}
-.cc-feed img,.cc-feed iframe{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border:0;display:block}
+.cc-feed img,.cc-feed iframe{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border:0;display:block}
 .cc-shield{position:absolute;inset:0}
 .cc-fallback{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;
@@ -166,7 +177,7 @@ body{
 }
 #close:hover{color:#fff;border-color:var(--cyan);box-shadow:0 0 10px rgba(0,229,255,0.4)}
 .feed{position:relative;margin:0 18px;aspect-ratio:16/10;background:#02040f;border:1px solid rgba(0,229,255,0.2);overflow:hidden}
-.feed img{width:100%;height:100%;object-fit:cover;display:none}
+.feed img{width:100%;height:100%;object-fit:contain;display:none}
 .feed .static{
   position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
   background:
@@ -235,6 +246,10 @@ body{
 .fc-axis canvas{display:block;width:100%;height:16px}
 .fc-empty{padding:26px 18px;text-align:center;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}
 @media (max-width:640px){
+  #modes{top:106px;left:16px;right:auto}
+  #view-tools{top:148px;left:16px;right:auto;gap:6px}
+  #hud-top .sub{max-width:90vw;line-height:1.8;letter-spacing:1px}
+  #hud-top h1{max-width:90vw;font-size:18px}
   .fc-row canvas{height:46px}
   .fc-legend{display:none}
   .fc-head{gap:10px;padding:8px 12px}
@@ -257,9 +272,10 @@ body{
   #hud-top h1{letter-spacing:3px}
   #hud-scan{display:none}
   #hud-hint{display:none}
-  #chips{bottom:14px;gap:6px}
+  #chips{bottom:28px;gap:6px;width:94vw}
   .chip{padding:8px 10px;font-size:10px;letter-spacing:1px}
   .cam-card{width:152px}
+  .hide-previews .cam-card{width:140px}
   .cc-head{padding:5px 7px;font-size:8px;letter-spacing:1px}
   .cc-elev{display:none}
   .cc-wind{padding:4px 7px;font-size:8px;letter-spacing:1px}
@@ -283,6 +299,7 @@ body{
   Elevation scan
   <div class="bar"><i id="scanbar"></i></div>
   <span class="val" id="scanval">0 m</span> / 1250 m<br>
+  <span id="terrain-detail">measured terrain · ~30 m samples · 3× relief</span><br>
   contour interval 50 m · index 250 m<br>
   wind flow · live · open-meteo · 10 min
 </div>
@@ -292,15 +309,20 @@ body{
 </div>
 
 <div id="modes">
-  <button class="chip mode active" id="mode-grid">Grid</button>
-  <button class="chip mode" id="mode-sat">Satellite</button>
-  <button class="chip mode" id="mode-arcade">Arcade</button>
+  <button class="chip mode" id="mode-grid" aria-pressed="false">Grid</button>
+  <button class="chip mode active" id="mode-sat" aria-pressed="true">Satellite</button>
+  <button class="chip mode" id="mode-arcade" aria-pressed="false">Arcade</button>
 </div>
-<div id="attrib">imagery © Esri · Maxar · Earthstar Geographics</div>
+<div id="view-tools">
+  <button class="chip" id="overview">Overview</button>
+  <button class="chip" id="orbit" aria-pressed="false">Orbit</button>
+  <button class="chip" id="previews" aria-pressed="true">Previews</button>
+</div>
+<div id="attrib"><a href="./data/bay-area-elevation.json" target="_blank" rel="noopener">Terrain: USGS / NOAA · Mapzen</a> · <a href="./data/bay-area-water.json" target="_blank" rel="noopener">Water: NOAA charts</a><span id="imagery-credit" hidden> · Imagery © Esri · Maxar · Earthstar Geographics</span></div>
 
 <div id="chips"></div>
 
-<div id="panel">
+<div id="panel" inert>
   <div class="topline"></div>
   <header>
     <div>
@@ -313,7 +335,7 @@ body{
     <img id="p-img" alt="Live webcam frame">
     <div class="static" id="p-static">
       <div class="sig">◍ acquiring signal…</div>
-      <a id="p-static-link" href="#" target="_blank" rel="noopener">Open live stream ↗</a>
+      <a id="p-static-link" href="#" target="_blank" rel="noopener">Open webcam ↗</a>
     </div>
     <div class="scanline"></div>
   </div>
@@ -322,7 +344,7 @@ body{
     <span id="p-refresh"></span>
   </div>
   <footer>
-    <a id="p-link" href="#" target="_blank" rel="noopener">Open live stream ↗</a>
+    <a id="p-link" href="#" target="_blank" rel="noopener">Open webcam ↗</a>
     <div class="credit" id="p-credit"></div>
   </footer>
 </div>
@@ -418,6 +440,15 @@ const CAMS = [
   }
 ];
 
+const WIND_CAMS=CAMS.slice();
+try{
+  const response=await fetch('./data/bay-area-webcams.json');
+  if(!response.ok)throw new Error('Camera list unavailable');
+  const additions=await response.json();
+  CAMS.push(...additions);
+}catch(e){console.warn('Additional webcam list could not load',e);}
+document.querySelector('#hud-top .sub').textContent=CAMS.length+' cameras · coast, city & ridgelines';
+
 /* ── ALERTCalifornia camera discovery (rntl.net-style feeds) ──
    The visitor's browser pulls ALERTCalifornia's public camera index and
    picks the cameras nearest each peak, so the exact camera ids never go
@@ -463,135 +494,149 @@ async function discoverSources(cam){
   return cam.sources;
 }
 
-/* ═══════════════════ Geography ═══════════════════ */
+/* ═══════════════════ Measured geography ═══════════════════ */
 const LON0=-122.82, LON1=-121.80, LAT0=37.28, LAT1=38.22;
-const W=86, D=100;                 // world units
-const S=0.0115;                    // vertical exaggeration: world units per metre
-const RES=256;
-
-const toX = lon => ((lon-LON0)/(LON1-LON0)-0.5)*W;
-const toZ = lat => ((LAT1-lat)/(LAT1-LAT0)-0.5)*D;
-// distance helper in "latitude degrees" with longitude compressed by cos(38°)
-const KX=0.79;
-const d2=(lon,lat,lon2,lat2)=>{const dx=(lon-lon2)*KX, dy=lat-lat2; return dx*dx+dy*dy;};
-const segD2=(lon,lat,a,b)=>{
-  const ax=a[0]*KX, ay=a[1], bx=b[0]*KX, by=b[1], px=lon*KX, py=lat;
-  const vx=bx-ax, vy=by-ay, wx=px-ax, wy=py-ay;
-  const len2=vx*vx+vy*vy;
-  const t=len2>0?Math.max(0,Math.min(1,(wx*vx+wy*vy)/len2)):0;
-  const dx=px-(ax+vx*t), dy=py-(ay+vy*t); return dx*dx+dy*dy;
-};
-const gauss=(dd,sig)=>Math.exp(-dd/(2*sig*sig));
-const sstep=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t);};
-
-// Terrain features: [type, ...geometry, heightMetres, sigmaDegrees]
-const peak =(lon,lat,h,s)=>p=>h*gauss(d2(p[0],p[1],lon,lat),s);
-const ridge=(a,b,h,s)=>p=>h*gauss(segD2(p[0],p[1],a,b),s);
-const FEATS=[
-  peak(-122.5965,37.9235, 784,0.030),                       // Mt Tam East Peak
-  ridge([-122.66,37.930],[-122.585,37.923], 620,0.040),     // Tam massif
-  ridge([-122.72,38.03],[-122.63,37.945], 420,0.030),       // Bolinas Ridge
-  peak(-122.520,37.828, 290,0.028),                         // Marin Headlands
-  peak(-122.545,38.035, 440,0.038),                         // Big Rock Ridge
-  peak(-122.600,38.130, 400,0.045),                         // Mt Burdell
-  peak(-122.240,38.170, 380,0.060),                         // north hills
-  peak(-121.9143,37.8816, 1173,0.058),                      // Mt Diablo
-  peak(-121.892,37.897, 980,0.028),                         // Diablo North Peak
-  ridge([-122.02,37.82],[-121.95,37.86], 420,0.030),        // Diablo foothills
-  ridge([-122.245,37.925],[-122.10,37.77], 500,0.026),      // East Bay hills
-  ridge([-122.10,37.77],[-121.97,37.68], 340,0.026),        // Chabot ridge
-  peak(-121.881,37.512, 1080,0.045),                        // Mission Peak
-  ridge([-121.955,37.66],[-121.90,37.56], 420,0.028),       // Pleasanton Ridge
-  ridge([-122.455,37.687],[-122.402,37.680], 390,0.016),    // San Bruno Mtn
-  peak(-122.447,37.752, 270,0.013),                         // Twin Peaks
-  peak(-122.503,37.7168, 70,0.011),                         // Fort Funston bluff
-  ridge([-122.494,37.700],[-122.489,37.655], 170,0.011),    // Mussel Rock cliffs
-  ridge([-122.475,37.605],[-122.445,37.635], 360,0.014),    // Sweeney Ridge
-  peak(-122.455,37.556, 575,0.030),                         // Montara Mtn
-  ridge([-122.40,37.49],[-122.16,37.295], 720,0.048),       // Santa Cruz Mtns
-  peak(-122.430,37.858, 235,0.013)                          // Angel Island
-];
-
-// Pacific coastline: [lat, lon] north-bound
-const COAST=[
-  [37.28,-122.410],[37.46,-122.455],[37.52,-122.485],[37.60,-122.500],
-  [37.66,-122.495],[37.71,-122.507],[37.79,-122.513],[37.812,-122.527],
-  [37.832,-122.540],[37.87,-122.585],[37.905,-122.645],[37.95,-122.690],
-  [38.05,-122.760],[38.22,-122.820]
-];
-function coastLon(lat){
-  if(lat<=COAST[0][0])return COAST[0][1];
-  for(let i=1;i<COAST.length;i++){
-    if(lat<=COAST[i][0]){
-      const [l0,x0]=COAST[i-1],[l1,x1]=COAST[i];
-      return x0+(x1-x0)*(lat-l0)/(l1-l0);
-    }
-  }
-  return COAST[COAST.length-1][1];
-}
-// Bay water bodies as capsules/blobs → waterness 0..1
-const WATER=[
-  [[-122.530,37.818],[-122.446,37.825],0.016],  // Golden Gate strait
-  [[-122.455,37.880],[-122.350,37.800],0.050],  // Central Bay
-  [[-122.480,37.873],[-122.480,37.873],0.020],  // Richardson Bay
-  [[-122.330,37.755],[-122.060,37.480],0.052],  // South Bay
-  [[-122.395,38.065],[-122.395,38.065],0.092],  // San Pablo Bay
-  [[-122.300,38.060],[-121.830,38.055],0.024]   // Carquinez → Suisun
-];
-function waterness(lon,lat){
-  const c=coastLon(lat);
-  let w=1-sstep(c-0.012,c+0.004,lon);           // Pacific
-  for(const [a,b,r] of WATER){
-    const d=Math.sqrt(segD2(lon,lat,a,b));
-    w=Math.max(w,1-sstep(r*0.72,r,d));
-  }
-  w*=1-0.96*gauss(d2(lon,lat,-122.430,37.858),0.011); // keep Angel Island
-  return Math.min(1,Math.max(0,w));
-}
-function baseNoise(lon,lat){
-  const x=lon*40,y=lat*40;
-  let n=Math.sin(x*1.7+y*2.3)*Math.sin(x*0.9-y*1.1)
-       +0.5*Math.sin(x*4.1+y*3.3)*Math.sin(x*2.7+y*5.9);
-  return Math.max(14,26+n*15);
-}
-function elevAt(lon,lat){
-  let h=0;
-  const p=[lon,lat];
-  for(const f of FEATS)h=Math.max(h,f(p));
-  // roughen the analytic cones so contours aren't perfect circles
-  const x=lon*90,y=lat*90;
-  h*=0.90+0.20*(0.5+0.5*Math.sin(x*1.3+y*2.1)*Math.sin(x*0.7-y*1.7));
-  h=Math.max(h,baseNoise(lon,lat));
-  const w=waterness(lon,lat);
-  return h*(1-w)-95*w;
-}
-
-/* ═══════════════════ Scene ═══════════════════ */
+const W=86, D=100;
+const S=0.003; // ~3.1x vertical relief; horizontal extent is ~105 km north to south
+const compact=matchMedia('(max-width:700px)').matches;
+const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const canvas=document.getElementById('scene');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,compact?1.5:1.75));
 renderer.setSize(innerWidth,innerHeight);
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.15;
+const useSmallTerrain=compact||renderer.capabilities.maxTextureSize<3464;
+document.getElementById('terrain-detail').textContent='measured terrain · ~'+(useSmallTerrain?'60':'30')+' m samples · 3× relief';
+const RES=useSmallTerrain || (navigator.deviceMemory && navigator.deviceMemory<4) ? 385 : 769;
+const toX=lon=>((lon-LON0)/(LON1-LON0)-0.5)*W;
+const toZ=lat=>((LAT1-lat)/(LAT1-LAT0)-0.5)*D;
+const merc=lat=>Math.log(Math.tan(Math.PI/4+lat*Math.PI/360));
+const mN=merc(LAT1),mS=merc(LAT0);
+
+// Same-origin, measured Mapzen/USGS elevation. See data/bay-area-elevation.json.
+// Pixel centers at the stated bounds; rows run north to south in Web Mercator.
+function loadTerrainImage(url){
+  return new Promise((resolve,reject)=>{
+    const im=new Image();
+    const timer=setTimeout(()=>reject(new Error('Terrain download timed out')),60000);
+    im.onload=()=>{clearTimeout(timer);resolve(im);};
+    im.onerror=()=>{clearTimeout(timer);reject(new Error('Terrain download failed'));};
+    im.src=url;
+  });
+}
+let demImage,waterImage,demPixels;
+try{
+  boot.firstElementChild.textContent='Loading Bay Area terrain';
+  [demImage,waterImage]=await Promise.all([
+    loadTerrainImage(useSmallTerrain?'./data/bay-area-elevation-mobile.png':'./data/bay-area-elevation.png'),
+    loadTerrainImage('./data/bay-area-water.png')
+  ]);
+  const cv=document.createElement('canvas');
+  cv.width=demImage.width;cv.height=demImage.height;
+  const cx=cv.getContext('2d',{willReadFrequently:true});
+  cx.drawImage(demImage,0,0);
+  demPixels=cx.getImageData(0,0,cv.width,cv.height).data;
+}catch(e){
+  boot.firstElementChild.textContent='Terrain could not load';
+  const retry=document.createElement('button');
+  retry.className='chip';retry.textContent='Retry';retry.onclick=()=>location.reload();
+  boot.appendChild(retry);
+  throw e;
+}
+const demWidth=demImage.width,demHeight=demImage.height;
+function sampleElevation(lon,lat){
+  const x=Math.max(0,Math.min(demWidth-1,(lon-LON0)/(LON1-LON0)*(demWidth-1)));
+  const y=Math.max(0,Math.min(demHeight-1,(mN-merc(lat))/(mN-mS)*(demHeight-1)));
+  const x0=Math.min(demWidth-2,Math.floor(x)),y0=Math.min(demHeight-2,Math.floor(y));
+  const fx=x-x0,fy=y-y0;
+  const at=(xx,yy)=>{const i=(yy*demWidth+xx)*4;return demPixels[i]*256+demPixels[i+1]+demPixels[i+2]/256-32768;};
+  return at(x0,y0)*(1-fx)*(1-fy)+at(x0+1,y0)*fx*(1-fy)
+       +at(x0,y0+1)*(1-fx)*fy+at(x0+1,y0+1)*fx*fy;
+}
+
+/* ═══════════════════ Scene ═══════════════════ */
 
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x04071a);
 scene.fog=new THREE.FogExp2(0x04071a,0.0028);
 
 const camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,0.1,900);
-camera.position.set(-30,62,92);
+// Fit all four geographic corners inside the useful viewport, including tall windows.
+// A steeper overview on portrait screens keeps the peninsula from being cropped.
+function overviewPose(){
+  const direction=new THREE.Vector3(0,camera.aspect<1?2.1:1.05,1).normalize();
+  const up=new THREE.Vector3(0,direction.z,-direction.y);
+  const center=new THREE.Vector3(0,1.8,0),corners=[];
+  for(const x of [-W/2,W/2])for(const z of [-D/2,D/2])for(const y of [0,4.5]){
+    const p=new THREE.Vector3(x,y,z).sub(center);
+    corners.push({x:p.x,y:p.dot(up),depth:p.dot(direction)});
+  }
+  const tanV=Math.tan(THREE.MathUtils.degToRad(camera.fov/2)),tanH=tanV*camera.aspect;
+  const top=1-2*Math.min(innerHeight*0.3,innerWidth<701?195:130)/innerHeight;
+  const bottom=-1+2*Math.min(innerHeight*0.16,95)/innerHeight;
+  const side=Math.max(0.3,1-48/innerWidth);
+  const fit=distance=>{
+    let lo=-Infinity,hi=Infinity;
+    for(const c of corners){
+      const d=distance-c.depth;
+      if(d<=0||Math.abs(c.x)>d*tanH*side)return null;
+      lo=Math.max(lo,c.y-top*d*tanV);
+      hi=Math.min(hi,c.y-bottom*d*tanV);
+    }
+    return lo<=hi?{lo,hi}:null;
+  };
+  let lo=40,hi=600;
+  for(let i=0;i<32;i++){const mid=(lo+hi)/2;if(fit(mid))hi=mid;else lo=mid;}
+  const distance=hi*1.025,range=fit(distance);
+  const shift=innerWidth>700?range.lo:(range.lo+range.hi)/2;
+  const target=center.clone().addScaledVector(up,shift);
+  return {position:target.clone().addScaledVector(direction,distance),target};
+}
+let home=overviewPose(),atOverview=true;
+camera.position.copy(home.position);
 
 const controls=new OrbitControls(camera,renderer.domElement);
-controls.target.set(0,2,-4);
+controls.target.copy(home.target);
 controls.enableDamping=true;
 controls.dampingFactor=0.06;
-controls.autoRotate=true;
+controls.autoRotate=false;
 controls.autoRotateSpeed=0.35;
-controls.minDistance=25;
-controls.maxDistance=220;
-controls.maxPolarAngle=Math.PI*0.49;
-let lastInteract=-99;
-controls.addEventListener('start',()=>{lastInteract=clock?clock.elapsedTime:0;});
+controls.minDistance=12;
+controls.maxDistance=600;
+controls.minPolarAngle=0.12;
+controls.maxPolarAngle=Math.PI*0.47;
+controls.zoomSpeed=0.75;
+controls.enablePan=true;
+let flight=null,orbitEnabled=false;
+function setOrbit(on){
+  orbitEnabled=on;
+  const b=document.getElementById('orbit');
+  b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));
+}
+function flyTo(position,target){
+  setOrbit(false);
+  // Settle residual orbit damping before starting a camera transition.
+  controls.enableDamping=false;controls.update();controls.enableDamping=true;
+  if(reducedMotion){camera.position.copy(position);controls.target.copy(target);return;}
+  flight={from:camera.position.clone(),to:position,fromTarget:controls.target.clone(),target,elapsed:0};
+}
+controls.addEventListener('start',()=>{flight=null;atOverview=false;setOrbit(false);});
+document.getElementById('overview').addEventListener('click',()=>{home=overviewPose();atOverview=true;flyTo(home.position,home.target);});
+document.getElementById('orbit').addEventListener('click',()=>{flight=null;atOverview=false;setOrbit(!orbitEnabled);});
+let showPreviews=false;
+const previewButton=document.getElementById('previews');
+function updatePreviews(){
+  document.body.classList.toggle('hide-previews',!showPreviews);
+  previewButton.setAttribute('aria-pressed',String(showPreviews));
+  previewButton.classList.toggle('active',showPreviews);
+  if(!showPreviews){
+    document.querySelectorAll('.cam-card iframe').forEach(f=>f.remove());
+    document.querySelectorAll('.cam-card[data-video]').forEach(el=>{el.querySelector('.cc-feed').replaceChildren();});
+  }
+}
+previewButton.addEventListener('click',()=>{showPreviews=!showPreviews;updatePreviews();});
+updatePreviews();
 
 /* ── terrain ── */
 const geo=new THREE.PlaneGeometry(W,D,RES-1,RES-1);
@@ -602,7 +647,7 @@ for(let i=0;i<pos.count;i++){
   const x=pos.getX(i),z=pos.getZ(i);
   const lon=LON0+(x/W+0.5)*(LON1-LON0);
   const lat=LAT1-(z/D+0.5)*(LAT1-LAT0);
-  const e=elevAt(lon,lat);
+  const e=sampleElevation(lon,lat);
   elevArr[i]=e;
   pos.setY(i,e*S);
 }
@@ -619,9 +664,29 @@ geo.computeVertexNormals();
   }
 }
 
+// Terrain encoding is data, never sRGB color. Keep full source resolution for
+// slope shading even when the mobile mesh has fewer vertices.
+const waterTexture=new THREE.Texture(waterImage);
+waterTexture.colorSpace=THREE.NoColorSpace;
+waterTexture.minFilter=THREE.LinearFilter;
+waterTexture.generateMipmaps=false;
+waterTexture.needsUpdate=true;
+const demTexture=new THREE.Texture(demImage);
+demTexture.colorSpace=THREE.NoColorSpace;
+demTexture.minFilter=THREE.LinearFilter;
+demTexture.magFilter=THREE.LinearFilter;
+demTexture.generateMipmaps=false;
+demTexture.needsUpdate=true;
+demPixels=null; // The rendered mesh now supplies ground heights to beacons and wind.
 const blankTex=new THREE.DataTexture(new Uint8Array([6,12,32,255]),1,1);
 blankTex.needsUpdate=true;
 const uniforms={
+  uDem:{value:demTexture},
+  uWater:{value:waterTexture},
+  uWaterSize:{value:new THREE.Vector2(waterImage.width,waterImage.height)},
+  uDemSize:{value:new THREE.Vector2(demWidth,demHeight)},
+  uDemWorldStep:{value:new THREE.Vector2(W/(demWidth-1),D/(demHeight-1))},
+  uRelief:{value:S},
   uTime:{value:0},
   uScanMax:{value:1250},
   uMinor:{value:50},
@@ -629,7 +694,8 @@ const uniforms={
   uFog:{value:new THREE.Color(0x04071a)},
   uSat:{value:blankTex},
   uSatMix:{value:0},
-  uArcMix:{value:0}
+  uArcMix:{value:0},
+  uGridMix:{value:0}
 };
 const terrainMat=new THREE.ShaderMaterial({
   uniforms,
@@ -641,13 +707,19 @@ const terrainMat=new THREE.ShaderMaterial({
       vUv=uv;
       vec4 wp=modelMatrix*vec4(position,1.0);
       vW=wp.xyz;
-      vN=normalize(normalMatrix*normal);
+      vN=normalize(mat3(modelMatrix)*normal);
       gl_Position=projectionMatrix*viewMatrix*wp;
     }`,
   fragmentShader:/*glsl*/`
     varying float vE; varying vec3 vW; varying vec3 vN; varying vec2 vUv;
-    uniform float uTime,uScanMax,uMinor,uMajor,uSatMix,uArcMix;
-    uniform sampler2D uSat;
+    uniform float uTime,uScanMax,uMinor,uMajor,uSatMix,uArcMix,uGridMix;
+    uniform sampler2D uSat,uWater;
+    uniform highp sampler2D uDem;
+    uniform vec2 uDemSize,uDemWorldStep,uWaterSize;
+    uniform float uRelief;
+    float demElevation(vec2 uv){
+      return dot(texture2D(uDem,uv).rgb,vec3(65280.0,255.0,255.0/256.0))-32768.0;
+    }
     uniform vec3 uFog;
     float contour(float e,float step){
       float g=e/step;
@@ -655,56 +727,77 @@ const terrainMat=new THREE.ShaderMaterial({
       return 1.0-min(f,1.0);
     }
     void main(){
-      float t=clamp(vE/1200.0,0.0,1.0);
+      vec2 duv=1.0/uDemSize;
+      vec2 uv=(vUv*(uDemSize-1.0)+0.5)/uDemSize;
+      float e=demElevation(uv);
+      float water=texture2D(uWater,(vUv*(uWaterSize-1.0)+0.5)/uWaterSize).r;
+      float west=demElevation(uv-vec2(duv.x,0.0));
+      float east=demElevation(uv+vec2(duv.x,0.0));
+      float north=demElevation(uv+vec2(0.0,duv.y));
+      float south=demElevation(uv-vec2(0.0,duv.y));
+      // World-space light, normal and view vectors: illumination stays fixed while orbiting.
+      float latitude=mix(38.22,37.28,vW.z/100.0+0.5);
+      float dz=uDemWorldStep.y*cos(radians(latitude))/cos(radians(37.75));
+      vec3 N=normalize(vec3(-(east-west)*uRelief/(2.0*uDemWorldStep.x),1.0,
+                             (north-south)*uRelief/(2.0*dz)));
+      float t=clamp(e/1200.0,0.0,1.0);
       vec3 col=mix(vec3(0.040,0.10,0.26),vec3(0.043,0.16,0.42),smoothstep(0.0,0.18,t));
       col=mix(col,vec3(0.066,0.32,0.75),smoothstep(0.18,0.45,t));
       col=mix(col,vec3(0.09,0.58,0.94),smoothstep(0.45,0.75,t));
       col=mix(col,vec3(0.55,0.95,1.0),smoothstep(0.75,1.0,t));
-      if(vE<2.0)col=mix(vec3(0.012,0.03,0.10),vec3(0.028,0.075,0.20),clamp((vE+95.0)/97.0,0.0,1.0));
+      if(water>0.5)col=mix(vec3(0.012,0.03,0.10),vec3(0.028,0.075,0.20),clamp((e+95.0)/97.0,0.0,1.0));
 
       // hillshade from a cool key light
-      float dif=clamp(dot(normalize(vN),normalize(vec3(-0.5,0.8,0.35))),0.0,1.0);
-      col*=0.45+0.75*dif;
+      float dif=clamp(dot(N,normalize(vec3(-0.55,0.72,0.42))),0.0,1.0);
+      float valley=clamp(((west+east+north+south)*0.25-e)/12.0,0.0,1.0);
+      col*=(0.32+0.82*dif)*(1.0-0.18*valley);
 
-      // satellite drape: real imagery under the neon systems
-      vec3 sat=texture2D(uSat,vUv).rgb*(0.5+0.7*dif);
+      // A restrained natural relief while satellite imagery loads.
+      vec3 earth=mix(vec3(0.37,0.42,0.28),vec3(0.59,0.53,0.35),smoothstep(60.0,800.0,e));
+      earth=mix(earth,vec3(0.49,0.46,0.38),smoothstep(850.0,1250.0,e));
+      earth*=vec3(1.0,0.97,0.88)*(0.40+0.69*dif)*(1.0-0.15*valley);
+      earth=mix(earth,vec3(0.09,0.22,0.30),water);
+      col=mix(earth,col,uGridMix);
+      vec3 sat=texture2D(uSat,vUv).rgb*(0.48+0.63*dif)*(1.0-0.14*valley);
+      // Charted water removes distracting aerial-mosaic seams without inventing a coastline.
+      sat=mix(sat,vec3(0.075,0.20,0.27),water*0.82);
       col=mix(col,sat,uSatMix);
 
       // ── height lines ──
-      float land=smoothstep(2.0,14.0,vE);
-      float minor=contour(vE,uMinor)*0.38;
-      float major=contour(vE,uMajor)*0.9;
+      float land=(1.0-water)*smoothstep(0.0,8.0,e);
+      float minor=contour(e,uMinor)*0.17;
+      float major=contour(e,uMajor)*0.5;
       vec3 lineCol=vec3(0.15,0.85,1.0);
-      col+=lineCol*minor*land;
-      col+=lineCol*major*land*1.25;
+      col+=lineCol*minor*land*uGridMix;
+      col+=lineCol*major*land*uGridMix;
 
       // rising elevation scan lights the contours it passes
       float scanE=fract(uTime*0.055)*uScanMax;
-      float band=exp(-pow((vE-scanE)/22.0,2.0));
-      col+=vec3(0.55,0.98,1.0)*band*land*(0.35+1.4*max(minor,major));
+      float band=exp(-pow((e-scanE)/22.0,2.0));
+      col+=vec3(0.55,0.98,1.0)*band*land*(0.18+0.6*max(minor,major))*uGridMix;
 
       // shoreline glow
-      float shore=exp(-pow((vE-1.0)/5.0,2.0));
-      col+=vec3(0.1,0.65,1.0)*shore*0.55;
+      float shore=4.0*water*(1.0-water);
+      col+=vec3(0.1,0.65,1.0)*shore*0.35*uGridMix;
 
       // rim light on peaks
       vec3 V=normalize(cameraPosition-vW);
-      float rim=pow(1.0-clamp(dot(normalize(vN),V),0.0,1.0),3.0);
-      col+=vec3(0.1,0.5,1.0)*rim*0.45*land;
+      float rim=pow(1.0-clamp(dot(N,V),0.0,1.0),3.0);
+      col+=vec3(0.1,0.5,1.0)*rim*0.18*land*uGridMix;
 
       // ── arcade mode: cel-shaded, terraced, vibrant ──
       if(uArcMix>0.001){
         vec3 arc;
-        if(vE<1.5){
-          arc=mix(vec3(0.05,0.30,0.68),vec3(0.16,0.55,0.92),clamp((vE+35.0)/36.5,0.0,1.0));
+        if(water>0.5){
+          arc=mix(vec3(0.05,0.30,0.68),vec3(0.16,0.55,0.92),clamp((e+35.0)/36.5,0.0,1.0));
         }else{
-          float tq=clamp((floor(vE/uMinor)*uMinor)/1200.0,0.0,1.0);
+          float tq=clamp((floor(e/uMinor)*uMinor)/1200.0,0.0,1.0);
           vec3 c=mix(vec3(0.10,0.63,0.16),vec3(0.47,0.88,0.16),smoothstep(0.0,0.30,tq));
           c=mix(c,vec3(1.00,0.84,0.25),smoothstep(0.30,0.55,tq));
           c=mix(c,vec3(0.96,0.52,0.12),smoothstep(0.55,0.78,tq));
           c=mix(c,vec3(0.62,0.36,0.16),smoothstep(0.78,0.92,tq));
           c=mix(c,vec3(1.0,1.0,1.0),smoothstep(0.92,1.0,tq));
-          if(vE<4.0)c=vec3(0.99,0.88,0.45);           // sandy shoreline ring
+          if(e<4.0)c=vec3(0.99,0.88,0.45);           // sandy shoreline ring
           arc=c;
         }
         float cel=0.72+0.34*floor(dif*3.0+0.5)/3.0;   // chunky toon light bands
@@ -714,9 +807,12 @@ const terrainMat=new THREE.ShaderMaterial({
         col=mix(col,arc,uArcMix);
       }
 
+      // Distance haze separates near ridges from the far side of the bay.
+      float haze=smoothstep(55.0,190.0,distance(cameraPosition,vW))*0.48;
+      col=mix(col,uFog,haze);
       // fade map edges into the void
       float edge=max(abs(vW.x)/(0.5*${W.toFixed(1)}),abs(vW.z)/(0.5*${D.toFixed(1)}));
-      col=mix(col,uFog,smoothstep(0.86,1.0,edge));
+      col=mix(col,uFog,smoothstep(0.96,1.0,edge));
       gl_FragColor=vec4(col,1.0);
     }`
 });
@@ -734,13 +830,13 @@ const oceanMat=new THREE.ShaderMaterial({
     varying vec3 vW;
     void main(){
       vec3 p=position;
-      p.y+=0.12*sin(p.x*0.35+uTime*1.1)*sin(p.z*0.3-uTime*0.8);
+      p.y+=0.002*sin(p.x*0.35+uTime*1.1)*sin(p.z*0.3-uTime*0.8);
       vec4 wp=modelMatrix*vec4(p,1.0);
       vW=wp.xyz;
       gl_Position=projectionMatrix*viewMatrix*wp;
     }`,
   fragmentShader:/*glsl*/`
-    uniform float uTime,uSatMix,uArcMix;
+    uniform float uTime,uSatMix,uArcMix,uGridMix;
     uniform vec3 uFog;
     varying vec3 vW;
     void main(){
@@ -749,7 +845,7 @@ const oceanMat=new THREE.ShaderMaterial({
       float line=1.0-min(min(f.x,f.y),1.0);
       float pulse=0.75+0.25*sin(uTime*1.5-length(vW.xz)*0.12);
       vec3 col=vec3(0.016,0.05,0.16);
-      col+=vec3(0.10,0.42,1.0)*line*pulse*(0.9-0.45*uSatMix);
+      col+=vec3(0.10,0.42,1.0)*line*pulse*0.55*uGridMix;
       float dist=length(vW.xz);
       col=mix(col,uFog,smoothstep(90.0,210.0,dist));
       float a=mix(0.92,0.0,smoothstep(120.0,210.0,dist));
@@ -764,7 +860,7 @@ const oceanMat=new THREE.ShaderMaterial({
     }`
 });
 const ocean=new THREE.Mesh(oceanGeo,oceanMat);
-ocean.position.y=0.1;
+ocean.position.y=-0.015;
 scene.add(ocean);
 
 /* ── stars ── */
@@ -812,23 +908,23 @@ const markers=[],hitTargets=[],rings=[];
 const labelLayer=document.body;
 CAMS.forEach((cam,i)=>{
   const x=toX(cam.lon),z=toZ(cam.lat);
-  const y=Math.max(elevAt(cam.lon,cam.lat),cam.elevM)*S;
-  const beamH=9;
+  const y=heightAtWorld(x,z)+0.08;
+  const beamH=1.6;
   const grp=new THREE.Group();
   grp.position.set(x,y,z);
 
-  const beam=new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.5,beamH,20,1,true),beamMat(i*1.7));
+  const beam=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.16,beamH,12,1,true),beamMat(i*1.7));
   beam.position.y=beamH/2;
   grp.add(beam);
 
-  const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}));
-  spr.scale.set(4.5,4.5,1);
+  const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,sizeAttenuation:false,blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}));
+  spr.scale.set(0.013,0.013,1);
   spr.position.y=0.6;
   grp.add(spr);
 
   for(let k=0;k<3;k++){
     const ring=new THREE.Mesh(
-      new THREE.RingGeometry(0.92,1.0,48),
+      new THREE.RingGeometry(0.30,0.38,32),
       new THREE.MeshBasicMaterial({color:0x00c8ff,transparent:true,opacity:0.5,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false})
     );
     ring.rotation.x=-Math.PI/2;
@@ -837,7 +933,7 @@ CAMS.forEach((cam,i)=>{
     grp.add(ring);rings.push(ring);
   }
 
-  const hit=new THREE.Mesh(new THREE.SphereGeometry(3.2),new THREE.MeshBasicMaterial({visible:false}));
+  const hit=new THREE.Mesh(new THREE.SphereGeometry(1.5,12,8),new THREE.MeshBasicMaterial({visible:false}));
   hit.position.y=beamH*0.4;
   hit.userData.cam=cam;
   grp.add(hit);hitTargets.push(hit);
@@ -846,15 +942,18 @@ CAMS.forEach((cam,i)=>{
 
   const el=document.createElement('div');
   el.className='cam-card';
+  if(cam.yt)el.dataset.video='true';
+  el.setAttribute('role','button');el.setAttribute('aria-label',cam.name+' webcam');el.title=cam.name;
+  el.tabIndex=0;
   el.innerHTML=`
     <div class="cc-head"><span><span class="live"></span>${cam.name}</span><span class="cc-elev">${cam.elevLabel}</span></div>
     <div class="cc-feed"></div>
-    <div class="cc-wind"><span>WIND</span><span class="cc-wval"><i class="cc-arrow">▲</i><b>—</b></span></div>`;
+    ${cam.type==='snapshot'?'<div class="cc-wind">SNAPSHOT · 15 S REFRESH</div>':'<div class="cc-wind"><span>WIND</span><span class="cc-wval"><i class="cc-arrow">▲</i><b>—</b></span></div>'}`;
   el.addEventListener('click',()=>openPanel(cam));
+  el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openPanel(cam);}});
   labelLayer.appendChild(el);
-  initCardFeed(cam,el.querySelector('.cc-feed'));
 
-  markers.push({cam,grp,el,topY:y+beamH*0.9,lift:cam.cardLift??1.5,phase:i*1.4});
+  markers.push({cam,grp,el,feedStarted:false,topY:y+beamH*0.9,lift:0.8,phase:i*1.4});
 });
 
 /* always-on floating feeds: YouTube player when the cam has a live
@@ -864,7 +963,7 @@ function initCardFeed(cam,host){
     const f=document.createElement('iframe');
     f.src='https://www.youtube-nocookie.com/embed/'+cam.yt+'?autoplay=1&mute=1&playsinline=1&controls=0&rel=0';
     f.allow='autoplay; encrypted-media';
-    f.loading='lazy';
+    f.loading='lazy';f.title=cam.name+' live webcam';
     host.appendChild(f);
     host.insertAdjacentHTML('beforeend','<div class="cc-shield"></div>');
     return;
@@ -892,7 +991,7 @@ function initCardFeed(cam,host){
     show(working[0]);
     // each tick: fresh frame, advancing through every working view (East/West…)
     setInterval(()=>{
-      if(!working.length)return;
+      if(!working.length||document.hidden||!showPreviews||host.closest('.cam-card').style.opacity!=='1')return;
       idx=(idx+1)%working.length;
       show(working[idx]);
     },cam.refreshMs||60000);
@@ -930,7 +1029,7 @@ function compass(d){
   const pts=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
   return pts[Math.round((((d%360)+360)%360)/22.5)%16];
 }
-const stations=CAMS.map(cam=>({x:toX(cam.lon),z:toZ(cam.lat),vx:0,vz:0,spd:0}));
+const stations=WIND_CAMS.map(cam=>({x:toX(cam.lon),z:toZ(cam.lat),vx:0,vz:0,spd:0}));
 function setStation(i,spd,dir){
   if(!(spd>=0)||!(dir>=0))return;
   const s=stations[i],th=(dir+180)*DEG;   // meteo dir = where wind comes FROM
@@ -945,11 +1044,11 @@ function setStation(i,spd,dir){
     if(ar)ar.style.transform='rotate('+Math.round(dir+180)+'deg)'; // points where the wind is going
   }
 }
-CAMS.forEach((c,i)=>setStation(i,12,290)); // onshore WNW default until live data lands
-const FC={sites:CAMS.map(()=>null),nowIdx:0,days:7,hover:-1};
+WIND_CAMS.forEach((c,i)=>setStation(i,12,290)); // onshore WNW default until live data lands
+const FC={sites:WIND_CAMS.map(()=>null),nowIdx:0,days:7,hover:-1};
 async function fetchWind(){
   try{
-    const la=CAMS.map(c=>c.lat.toFixed(4)).join(','),lo=CAMS.map(c=>c.lon.toFixed(4)).join(',');
+    const la=WIND_CAMS.map(c=>c.lat.toFixed(4)).join(','),lo=WIND_CAMS.map(c=>c.lon.toFixed(4)).join(',');
     const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+la+'&longitude='+lo
       +'&current=wind_speed_10m,wind_direction_10m'
       +'&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m'
@@ -994,7 +1093,7 @@ function heightAtWorld(x,z){
          +elevArr[i01]*(1-fx)*fz+elevArr[i11]*fx*fz;
   return e*S;
 }
-const NP=460;
+const NP=compact?100:220;
 const wpos=new Float32Array(NP*6),wcol=new Float32Array(NP*6);
 const parts=[];
 function respawn(p){
@@ -1043,7 +1142,7 @@ const fcBody=document.getElementById('fc-body');
 const fcSub=document.getElementById('fc-sub');
 const fcRows=[];
 let fcAxis=null;
-CAMS.forEach((cam,i)=>{
+WIND_CAMS.forEach((cam,i)=>{
   const row=document.createElement('div');
   row.className='fc-row';
   row.innerHTML=`<div class="fc-rowhead"><span class="fc-name">${cam.name}</span><span class="fc-read">awaiting wind data…</span></div>`;
@@ -1222,56 +1321,67 @@ addEventListener('resize',()=>renderForecast());
    draped over the terrain, neon systems glowing on top. Lazy-loaded on
    the first switch to satellite mode. */
 const satState={loaded:false,loading:false};
-let satTarget=0;
+let satTarget=0,gridTarget=0,selectedMode='sat';
 async function loadSatTexture(){
-  const z=11,T=256,n=1<<z;
+  // z12 supplies ~30 m imagery on desktop; mobile keeps the lighter z11 atlas.
+  const z=!compact&&renderer.capabilities.maxTextureSize>=4096?12:11,T=256,n=1<<z;
   const px=lon=>(lon+180)/360*n*T;
-  const py=lat=>{const s=Math.sin(lat*Math.PI/180);return (0.5-Math.log((1+s)/(1-s))/(4*Math.PI))*n*T;};
+  const py=lat=>{const q=Math.sin(lat*Math.PI/180);return (0.5-Math.log((1+q)/(1-q))/(4*Math.PI))*n*T;};
   const x0=px(LON0),x1=px(LON1),y0=py(LAT1),y1=py(LAT0);
-  const canvas=document.createElement('canvas');
-  canvas.width=Math.round(x1-x0);canvas.height=Math.round(y1-y0);
-  const ctx=canvas.getContext('2d');
-  ctx.fillStyle='#0a1626';ctx.fillRect(0,0,canvas.width,canvas.height);
+  const cv=document.createElement('canvas');
+  cv.width=Math.round(x1-x0);cv.height=Math.round(y1-y0);
+  const cx=cv.getContext('2d');
   const tx0=Math.floor(x0/T),tx1=Math.floor((x1-1)/T),ty0=Math.floor(y0/T),ty1=Math.floor((y1-1)/T);
-  let ok=0,total=0;
-  const jobs=[];
-  for(let ty=ty0;ty<=ty1;ty++)for(let tx=tx0;tx<=tx1;tx++){
-    total++;
-    jobs.push(new Promise(res=>{
-      const im=new Image();
-      im.crossOrigin='anonymous';
-      im.onload=()=>{ctx.drawImage(im,Math.round(tx*T-x0),Math.round(ty*T-y0));ok++;res();};
-      im.onerror=()=>res();
-      im.src='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+z+'/'+ty+'/'+tx;
-    }));
-  }
-  await Promise.all(jobs);
-  if(ok<total*0.6)return false;
-  const tex=new THREE.CanvasTexture(canvas);
-  // no sRGB tag: this raw ShaderMaterial pipeline never re-encodes output,
-  // so a linear-decoded texture would render far too dark
-  tex.anisotropy=renderer.capabilities.getMaxAnisotropy();
+  const queue=[];
+  for(let ty=ty0;ty<=ty1;ty++)for(let tx=tx0;tx<=tx1;tx++)queue.push({tx,ty});
+  let next=0,ok=0;
+  const tile=({tx,ty})=>new Promise(resolve=>{
+    const im=new Image();im.crossOrigin='anonymous';
+    const timer=setTimeout(()=>{im.onload=null;im.onerror=null;resolve(false);},12000);
+    im.onload=()=>{
+      clearTimeout(timer);
+      cx.drawImage(im,(tx*T-x0)*cv.width/(x1-x0),(ty*T-y0)*cv.height/(y1-y0),T*cv.width/(x1-x0),T*cv.height/(y1-y0));
+      resolve(true);
+    };
+    im.onerror=()=>{clearTimeout(timer);resolve(false);};
+    im.src='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+z+'/'+ty+'/'+tx;
+  });
+  await Promise.all(Array.from({length:6},async()=>{
+    while(next<queue.length){
+      const job=queue[next++];
+      if(await tile(job)||await tile(job))ok++;
+    }
+  }));
+  if(ok!==queue.length)return false; // Never replace terrain with a patchwork of missing tiles.
+  const tex=new THREE.CanvasTexture(cv);
+  tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
   uniforms.uSat.value=tex;
   return true;
 }
 const modeGrid=document.getElementById('mode-grid');
 const modeSat=document.getElementById('mode-sat');
 const modeArc=document.getElementById('mode-arcade');
-const attrib=document.getElementById('attrib');
+const imageryCredit=document.getElementById('imagery-credit');
 let arcTarget=0;
 function setMode(m){
-  satTarget=m==='sat'?1:0;
+  selectedMode=m;
+  satTarget=m==='sat'&&satState.loaded?1:0;
+  gridTarget=m==='grid'?1:0;
   arcTarget=m==='arcade'?1:0;
   modeGrid.classList.toggle('active',m==='grid');
   modeSat.classList.toggle('active',m==='sat');
   modeArc.classList.toggle('active',m==='arcade');
-  attrib.style.display=m==='sat'?'block':'none';
+  imageryCredit.hidden=m!=='sat';
+  modeGrid.setAttribute('aria-pressed',String(m==='grid'));
+  modeSat.setAttribute('aria-pressed',String(m==='sat'));
+  modeArc.setAttribute('aria-pressed',String(m==='arcade'));
 }
-modeSat.addEventListener('click',async()=>{
+async function enableSatellite(){
+  setMode('sat');
   if(!satState.loaded){
     if(satState.loading)return;
     satState.loading=true;
-    modeSat.textContent='Loading…';
+    modeSat.textContent='Imagery…';
     const ok=await loadSatTexture().catch(()=>false);
     satState.loading=false;
     modeSat.textContent='Satellite';
@@ -1282,8 +1392,10 @@ modeSat.addEventListener('click',async()=>{
     }
     satState.loaded=true;
   }
-  setMode('sat');
-});
+  if(selectedMode==='sat')setMode('sat');
+}
+modeSat.addEventListener('click',enableSatellite);
+enableSatellite();
 modeGrid.addEventListener('click',()=>setMode('grid'));
 modeArc.addEventListener('click',()=>setMode('arcade'));
 
@@ -1348,7 +1460,7 @@ function startFeed(cam){
     ytFrame=document.createElement('iframe');
     ytFrame.src='https://www.youtube-nocookie.com/embed/'+cam.yt+'?autoplay=1&mute=1&playsinline=1&rel=0';
     ytFrame.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';
-    ytFrame.allowFullscreen=true;
+    ytFrame.allowFullscreen=true;ytFrame.title=cam.name+' live webcam';
     ytFrame.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0;';
     document.querySelector('.feed').appendChild(ytFrame);
     pStatus.innerHTML='<span class="live-tag">live stream</span>';
@@ -1371,7 +1483,7 @@ function startFeed(cam){
       if(cam!==activeCam)return;
       pImg.src=probe.src;pImg.style.display='block';pStatic.style.display='none';
       const every=cam.refreshMs||60000;
-      pStatus.innerHTML='<span class="live-tag">live frame</span>';
+      pStatus.innerHTML='<span class="live-tag">updated snapshot</span>';
       pRefresh.textContent='refreshes · '+Math.round(every/1000)+' s';
       feedTimer=setInterval(()=>{
         const next=new Image();
@@ -1385,17 +1497,24 @@ function startFeed(cam){
   discoverSources(cam).then(()=>{if(cam===activeCam)tryNext();});
 }
 function openPanel(cam){
-  activeCam=cam;
+  activeCam=cam;atOverview=false;
+  const center=new THREE.Vector3(toX(cam.lon),heightAtWorld(toX(cam.lon),toZ(cam.lat)),toZ(cam.lat));
+  const offset=camera.position.clone().sub(controls.target).normalize().multiplyScalar(compact?45:34);
+  offset.y=Math.max(offset.y,18);
+  const target=center.clone();
+  if(compact)target.y-=5;
+  flyTo(target.clone().add(offset),target);
   pName.textContent=cam.name;
-  pCoords.innerHTML=`${cam.sub}<br><b>${cam.lat.toFixed(4)}° N</b> / <b>${Math.abs(cam.lon).toFixed(4)}° W</b> · <b>${cam.elevLabel}</b>`;
+  pCoords.innerHTML=`${cam.sub}<br><b>${cam.lat.toFixed(cam.locationPrecision?2:4)}° N</b> / <b>${Math.abs(cam.lon).toFixed(cam.locationPrecision?2:4)}° W</b> · <b>${cam.elevLabel}</b>${cam.locationPrecision?'<br>'+cam.locationPrecision:''}`;
   pLink.href=cam.link;pStaticLink.href=cam.link;
   pCredit.textContent='feed · '+cam.credit;
   document.querySelectorAll('#chips .chip[data-cam]').forEach(c=>c.classList.toggle('active',c.dataset.cam===cam.id));
-  panel.classList.add('open');
+  panel.inert=false;panel.classList.add('open');
   startFeed(cam);
 }
+addEventListener('keydown',e=>{if(e.key==='Escape'&&panel.classList.contains('open'))document.getElementById('close').click();});
 document.getElementById('close').addEventListener('click',()=>{
-  panel.classList.remove('open');activeCam=null;stopFeed();
+  panel.classList.remove('open');panel.inert=true;activeCam=null;stopFeed();
   document.querySelectorAll('#chips .chip[data-cam]').forEach(c=>c.classList.remove('active'));
 });
 
@@ -1403,48 +1522,73 @@ document.getElementById('close').addEventListener('click',()=>{
 const scanval=document.getElementById('scanval'),scanbar=document.getElementById('scanbar');
 const clock=new THREE.Clock();
 const v=new THREE.Vector3();
-const NIGHT_SKY=new THREE.Color(0x04071a),DAY_SKY=new THREE.Color(0x8fd1f7),skyTmp=new THREE.Color();
+const NIGHT_SKY=new THREE.Color(0x04071a),DAY_SKY=new THREE.Color(0x8fd1f7),NATURAL_SKY=new THREE.Color(0x182a38),skyTmp=new THREE.Color();
 const crtEl=document.getElementById('crt');
 let lastAm=-1;
 function tick(){
   requestAnimationFrame(tick);
   const dt=Math.min(clock.getDelta(),0.05);
+  if(document.hidden)return;
   const t=clock.elapsedTime;
   uniforms.uTime.value=t;
+  uniforms.uGridMix.value+=(gridTarget-uniforms.uGridMix.value)*Math.min(1,dt*2.4);
   uniforms.uSatMix.value+=(satTarget-uniforms.uSatMix.value)*Math.min(1,dt*2.4);
   uniforms.uArcMix.value+=(arcTarget-uniforms.uArcMix.value)*Math.min(1,dt*2.4);
   {
     const am=uniforms.uArcMix.value;
-    skyTmp.copy(NIGHT_SKY).lerp(DAY_SKY,am);
+    const daylight=Math.max(am,(1-uniforms.uGridMix.value)*0.75);
+    skyTmp.copy(NIGHT_SKY).lerp(NATURAL_SKY,1-uniforms.uGridMix.value).lerp(DAY_SKY,am);
     scene.background.copy(skyTmp);
     scene.fog.color.copy(skyTmp);
     uniforms.uFog.value.copy(skyTmp);
-    starMat.opacity=0.75*(1-am);
+    starMat.opacity=0.5*(1-daylight);
     scene.fog.density=0.0028-0.0017*am;
-    if(Math.abs(am-lastAm)>0.002){crtEl.style.opacity=(1-am*0.85).toFixed(3);lastAm=am;}
+    if(Math.abs(daylight-lastAm)>0.002){crtEl.style.opacity=(1-daylight)*0.45;lastAm=daylight;}
   }
   updateWind(dt,t);
-  controls.autoRotate=(t-lastInteract)>8;
+  if(flight){
+    flight.elapsed+=dt;
+    const t=Math.min(1,flight.elapsed/1.35),ease=t*t*(3-2*t);
+    camera.position.lerpVectors(flight.from,flight.to,ease);
+    controls.target.lerpVectors(flight.fromTarget,flight.target,ease);
+    if(t===1)flight=null;
+  }
+  controls.autoRotate=orbitEnabled&&!flight;
   controls.update();
 
   for(const r of rings){
     const s=(t*0.45+r.userData.off)%1;
-    const sc=0.6+s*6.5;
+    const sc=0.6+s*2.0;
     r.scale.set(sc,sc,1);
-    r.material.opacity=(1-s)*0.55;
+    r.material.opacity=(1-s)*0.24;
   }
-  for(const m of markers){
-    const bob=Math.sin(t*0.8+m.phase)*0.45;
-    v.set(m.grp.position.x,m.topY+m.lift+bob,m.grp.position.z).project(camera);
-    const behind=v.z>1;
-    m.el.style.opacity=behind?0:1;
-    m.el.style.pointerEvents=behind?'none':'auto';
-    m.el.style.left=(v.x*0.5+0.5)*innerWidth+'px';
-    m.el.style.top=(-v.y*0.5+0.5)*innerHeight+'px';
+  const occupied=[];
+  const ordered=markers.slice().sort((a,b)=>(a.cam===activeCam?-1:b.cam===activeCam?1:
+    camera.position.distanceToSquared(a.grp.position)-camera.position.distanceToSquared(b.grp.position)));
+  for(const m of ordered){
+    const bob=reducedMotion?0:Math.sin(t*0.8+m.phase)*0.18;
+    v.set(m.grp.position.x,(showPreviews?m.topY+m.lift:m.grp.position.y+1.2)+bob,m.grp.position.z).project(camera);
+    const x=(v.x*0.5+0.5)*innerWidth,y=(-v.y*0.5+0.5)*innerHeight;
     const dist=camera.position.distanceTo(m.grp.position);
-    const s=Math.min(1.1,Math.max(0.42,90/dist));
-    m.el.style.transform=`translate(-50%,-100%) scale(${s.toFixed(3)})`;
-    m.el.style.zIndex=Math.max(1,Math.round(1600-dist*4));
+    const scale=Math.min(1.05,Math.max(0.65,90/dist));
+    const width=(showPreviews?(compact?152:196):(compact?140:172))*scale;
+    const height=(showPreviews?(compact?124:160):26)*scale;
+    const box={left:x-width/2-5,right:x+width/2+5,top:y-height-5,bottom:y+5};
+    const overlaps=occupied.some(r=>box.left<r.right&&box.right>r.left&&box.top<r.bottom&&box.bottom>r.top);
+    const visible=v.z>=-1&&v.z<=1&&box.left>4&&box.right<innerWidth-4
+      &&box.top>(compact?190:118)&&box.bottom<innerHeight-95&&!overlaps;
+    m.el.style.opacity=visible?1:0;
+    m.el.style.pointerEvents=visible?'auto':'none';
+    m.el.tabIndex=visible?0:-1;
+    m.el.style.left=x+'px';m.el.style.top=y+'px';
+    m.el.style.transform=`translate(-50%,-100%) scale(${scale.toFixed(3)})`;
+    m.el.style.zIndex=m.cam===activeCam?'19':'15';
+    if(!visible&&m.cam.yt){m.el.querySelectorAll('iframe').forEach(f=>f.remove());m.feedStarted=false;}
+    if(visible){
+      occupied.push(box);
+      if(showPreviews&&(!m.feedStarted||(m.cam.yt&&!m.el.querySelector('iframe')))){m.feedStarted=true;initCardFeed(m.cam,m.el.querySelector('.cc-feed'));}
+    }
+
   }
   const scanE=(t*0.055%1)*uniforms.uScanMax.value;
   scanval.textContent=Math.round(scanE)+' m';
@@ -1458,6 +1602,8 @@ boot.classList.add('done');
 addEventListener('resize',()=>{
   camera.aspect=innerWidth/innerHeight;
   camera.updateProjectionMatrix();
+  home=overviewPose();
+  if(atOverview){flight=null;camera.position.copy(home.position);controls.target.copy(home.target);}
   renderer.setSize(innerWidth,innerHeight);
 });
 </script>

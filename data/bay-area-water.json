@@ -1,0 +1,151 @@
+{
+  "file": "bay-area-water.png",
+  "width": 2972,
+  "height": 3464,
+  "bounds": {
+    "west": -122.82,
+    "east": -121.8,
+    "south": 37.28,
+    "north": 38.22
+  },
+  "projection": "EPSG:3857",
+  "encoding": "Single-channel 8-bit PNG. 255 = charted water; 0 = land or inland area not covered by charted water polygons.",
+  "pixelConvention": "First and last pixel centers coincide with geographic bounds. Columns increase west to east; rows increase north to south. Rows are uniformly spaced in Web Mercator, not latitude.",
+  "sampling": {
+    "u": "(longitude - west) / (east - west)",
+    "v": "(merc(latitude) - merc(south)) / (merc(north) - merc(south)); merc(lat) = log(tan(pi/4 + lat*pi/360))",
+    "cpu": "x = u * (width - 1); y = (1 - v) * (height - 1); bilinear decoded elevations",
+    "texture": "For a flipY=true texture: uv = (vec2(u, v) * (textureSize - 1) + 0.5) / textureSize; no sRGB color transform."
+  },
+  "source": "https://encdirect.noaa.gov/arcgis/rest/services/encdirect/enc_coastal/MapServer",
+  "sourceLayers": [
+    {
+      "layer": "Canal",
+      "url": "https://encdirect.noaa.gov/arcgis/rest/services/encdirect/enc_coastal/MapServer/129/query?where=1%3D1&geometry=-122.82%2C37.28%2C-121.8%2C38.22&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=%2A&outSR=4326&returnGeometry=true&f=geojson",
+      "featureCount": 0,
+      "sha256": "ed778c73ea51338d6576fb5992b189f2b94d9f3d5e199f46c1af520d6b0b3e6c",
+      "bytes": 42
+    },
+    {
+      "layer": "Depth Area",
+      "url": "https://encdirect.noaa.gov/arcgis/rest/services/encdirect/enc_coastal/MapServer/166/query?where=1%3D1&geometry=-122.82%2C37.28%2C-121.8%2C38.22&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=%2A&outSR=4326&returnGeometry=true&f=geojson",
+      "featureCount": 66,
+      "sha256": "d901fe6197382d67a2f84cfa285296baeee68fa0f54f9b203d268b2ee2a53254",
+      "bytes": 5590837
+    },
+    {
+      "layer": "Dredged Area",
+      "url": "https://encdirect.noaa.gov/arcgis/rest/services/encdirect/enc_coastal/MapServer/167/query?where=1%3D1&geometry=-122.82%2C37.28%2C-121.8%2C38.22&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=%2A&outSR=4326&returnGeometry=true&f=geojson",
+      "featureCount": 2,
+      "sha256": "618c049f85ea75b6585df94466039e59a234fe1a413d48e21de0e85640d172bb",
+      "bytes": 2423
+    },
+    {
+      "layer": "Lake",
+      "url": "https://encdirect.noaa.gov/arcgis/rest/services/encdirect/enc_coastal/MapServer/170/query?where=1%3D1&geometry=-122.82%2C37.28%2C-121.8%2C38.22&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=%2A&outSR=4326&returnGeometry=true&f=geojson",
+      "featureCount": 24,
+      "sha256": "0d4a678e7d4b58cd2651be8423b8f886964ba1a1b53193391a27694e9bdf6331",
+      "bytes": 58105
+    },
+    {
+      "layer": "River",
+      "url": "https://encdirect.noaa.gov/arcgis/rest/services/encdirect/enc_coastal/MapServer/174/query?where=1%3D1&geometry=-122.82%2C37.28%2C-121.8%2C38.22&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=%2A&outSR=4326&returnGeometry=true&f=geojson",
+      "featureCount": 55,
+      "sha256": "4fd9ecbd84553a1eb3fc50ef50a47564bf36c9683f6bc8f288600a187690a4aa",
+      "bytes": 257506
+    }
+  ],
+  "sourceCharts": [
+    "US3CA14M.000",
+    "US3CA1GE.000",
+    "US3CA1GF.000",
+    "US3CA52M.000"
+  ],
+  "attribution": "Water polygons provided by NOAA Office of Coast Survey, ENC Direct to GIS.",
+  "license": "Public-domain U.S. government chart data. NOAA Office of Coast Survey publishes its products with no restrictions on use.",
+  "licenseDocumentation": "https://www.nauticalcharts.noaa.gov/data/data-licensing.html",
+  "sourceDocumentation": "https://encdirect.noaa.gov/help/encdirect_help.html",
+  "modifications": [
+    "Water feature polygons were reprojected from WGS84 to the terrain's Web Mercator grid.",
+    "Charted depth, dredged, lake, river and canal areas were rasterized and combined; no elevation threshold determines this coastline."
+  ],
+  "limitations": "Coastal ENC chart detail and survey dates vary; the texture's roughly 30 m raster spacing is not a shoreline accuracy claim. Charted intertidal areas may be included. Inland water not included in these coastal charts remains unclassified. Water at inland elevation must not be flattened to sea level. For visual presentation only, never navigation.",
+  "createdAt": "2026-09-29T16:09:57.786413+00:00",
+  "sha256": "2822486c4d353dff17e1287f91ffe88084e104a494154e5f612d6ee181fdbb84",
+  "bytes": 44721,
+  "waterFraction": 0.34700177017832334,
+  "sanityCheckSamples": [
+    {
+      "name": "Pacific Ocean",
+      "longitude": -122.7,
+      "latitude": 37.6,
+      "water": true
+    },
+    {
+      "name": "Golden Gate",
+      "longitude": -122.48,
+      "latitude": 37.82,
+      "water": true
+    },
+    {
+      "name": "Central Bay",
+      "longitude": -122.4,
+      "latitude": 37.85,
+      "water": true
+    },
+    {
+      "name": "San Pablo Bay",
+      "longitude": -122.39,
+      "latitude": 38.05,
+      "water": true
+    },
+    {
+      "name": "South Bay",
+      "longitude": -122.2,
+      "latitude": 37.6,
+      "water": true
+    },
+    {
+      "name": "Mount Tamalpais",
+      "longitude": -122.5965,
+      "latitude": 37.9235,
+      "water": false
+    },
+    {
+      "name": "Mount Diablo",
+      "longitude": -121.9143,
+      "latitude": 37.8816,
+      "water": false
+    },
+    {
+      "name": "San Francisco",
+      "longitude": -122.44,
+      "latitude": 37.76,
+      "water": false
+    },
+    {
+      "name": "Berkeley",
+      "longitude": -122.27,
+      "latitude": 37.87,
+      "water": false
+    },
+    {
+      "name": "San Francisco Airport",
+      "longitude": -122.375,
+      "latitude": 37.615,
+      "water": false
+    },
+    {
+      "name": "Alameda",
+      "longitude": -122.26,
+      "latitude": 37.77,
+      "water": false
+    },
+    {
+      "name": "Angel Island",
+      "longitude": -122.432,
+      "latitude": 37.861,
+      "water": false
+    }
+  ]
+}
