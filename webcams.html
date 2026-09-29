@@ -24,7 +24,9 @@ body{
   color:var(--ink);
   -webkit-font-smoothing:antialiased;
 }
-#scene{position:fixed;inset:0;display:block}
+#scene-stage{position:fixed;inset:0 416px 0 0;overflow:hidden}
+#scene{width:100%;height:100%;display:block}
+.hide-previews #scene-stage{inset-inline-end:0}
 
 /* CRT scanlines + vignette over everything */
 #crt{
@@ -69,9 +71,7 @@ body{
 }
 #view-tools{position:fixed;z-index:22;right:26px;top:66px;display:flex;gap:8px}
 #view-tools .chip{font-size:9px;padding:7px 10px;letter-spacing:1px}
-.hide-previews .cc-feed,.hide-previews .cc-wind{display:none}
-.hide-previews .cam-card{width:172px}
-.hide-previews .cc-elev{display:none}
+
 .cc-head>span:first-child{overflow:hidden;text-overflow:ellipsis}
 #modes .chip.active{
   background:rgba(0,229,255,0.14);color:#fff;border-color:var(--cyan);
@@ -105,65 +105,95 @@ body{
 .chip:hover,.chip.active{border-color:var(--cyan);color:#fff;box-shadow:0 0 18px rgba(0,229,255,0.35),inset 0 0 12px rgba(0,229,255,0.08)}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
 
-/* ── floating cam cards over the terrain ── */
+/* ── compact geographic labels; feeds have their own gallery ── */
 .cam-card{
   position:fixed;z-index:15;pointer-events:auto;cursor:pointer;
-  transform-origin:50% 100%;transform:translate(-50%,-100%);
-  width:196px;
-  background:rgba(4,10,28,0.82);
-  border:1px solid rgba(0,229,255,0.45);
-  border-radius:4px;overflow:hidden;
-  box-shadow:0 0 26px rgba(0,140,255,0.35),inset 0 0 18px rgba(0,90,255,0.08);
-  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-  transition:opacity .2s,border-color .25s,box-shadow .25s;
+  transform-origin:50% 100%;transform:translate(-50%,-100%);width:140px;
+  background:rgba(4,10,28,.72);color:#eaffff;border:1px solid rgba(160,215,255,.3);
+  border-radius:4px;overflow:hidden;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  transition:opacity .2s,border-color .2s;
 }
-.cam-card:hover{border-color:var(--cyan);box-shadow:0 0 38px rgba(0,229,255,0.55),inset 0 0 18px rgba(0,229,255,0.10)}
-.cam-card::after{ /* stem tick pointing at the beacon */
-  content:'';position:absolute;left:50%;bottom:-1px;width:1px;height:0;
+.cam-card:hover{border-color:var(--cyan)}
+.cc-head{display:flex;align-items:center;padding:6px 8px;font-size:9px;letter-spacing:.5px;white-space:nowrap}
+.cc-head .live{display:inline-block;margin-right:6px;width:4px;height:4px;border-radius:50%;background:#84d6cc;vertical-align:1px}
+
+/* All camera previews stay in the DOM, independent of map visibility. */
+#preview-gallery{
+  position:fixed;z-index:21;inset:112px 16px 28px auto;width:400px;
+  display:flex;flex-direction:column;gap:10px;padding:12px;
+  background:rgba(6,14,25,.94);border:1px solid rgba(160,215,255,.18);border-radius:8px;
 }
-.cc-head{
-  display:flex;justify-content:space-between;align-items:center;gap:8px;
-  padding:6px 9px;font-size:9px;letter-spacing:2px;text-transform:uppercase;
-  color:#eaffff;text-shadow:0 0 8px rgba(0,229,255,0.8);
-  border-bottom:1px solid rgba(0,229,255,0.25);
-  background:linear-gradient(180deg,rgba(0,229,255,0.10),transparent);
-  white-space:nowrap;
+.hide-previews #preview-gallery{display:none}
+.gallery-heading{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-shrink:0}
+.gallery-heading h2{font-size:11px;letter-spacing:1px;color:#eaffff;font-weight:500}
+.gallery-heading p{font-size:8px;line-height:1.5;color:#94acba;text-align:right}
+.gallery-scroll-hint{display:none}
+#preview-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr));gap:6px;min-height:0;flex:1}
+@media (min-width:900px) and (max-height:600px){
+  #preview-grid{grid-template-rows:none;grid-auto-rows:96px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+  .gallery-scroll-hint{display:inline}
 }
-.cc-head .live{
-  display:inline-block;margin-right:6px;width:5px;height:5px;border-radius:50%;
-  background:var(--pink);box-shadow:0 0 8px var(--pink);animation:blink 1.6s infinite;vertical-align:1px;
+.preview-card{
+  font:inherit;display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:3px;min-width:0;min-height:0;
+  text-align:start;color:#d3e4ed;background:#0b1a28;border:1px solid rgba(160,215,255,.17);border-radius:4px;
+  padding:3px;cursor:pointer;overflow:hidden;
 }
-.cc-elev{color:var(--dim);font-size:8px;letter-spacing:1.5px}
-.cc-feed{position:relative;aspect-ratio:16/9;background:#02040f}
-.cc-feed img,.cc-feed iframe{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border:0;display:block}
-.cc-shield{position:absolute;inset:0}
-.cc-fallback{
-  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;
-  font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);padding:8px;line-height:1.8;
-  background:
-    repeating-linear-gradient(0deg,rgba(0,229,255,0.05) 0 1px,transparent 1px 4px),
-    radial-gradient(ellipse at 50% 60%,rgba(0,90,255,0.20),transparent 70%);
+.preview-card:hover,.preview-card.active{border-color:#83b9c8;background:#10283a}
+.preview-card:focus-visible,.chip:focus-visible,.cam-card:focus-visible{outline:2px solid #d4efff;outline-offset:3px}
+.preview-image{position:relative;display:block;min-height:0;overflow:hidden;background:#07111b;border-radius:2px}
+.preview-image img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+.preview-image img[hidden],.preview-placeholder[hidden]{display:none}
+.preview-placeholder{display:flex;align-items:center;justify-content:center;height:100%;min-height:0;padding:4px;font-size:8px;line-height:1.35;text-align:center;color:#8fa6b5}
+.preview-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;line-height:1.3}
+.preview-kind{display:block;color:#96adbb;font-size:7px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body:not(.hide-previews) #chips{left:26px;right:442px;transform:none;width:auto;bottom:28px}
+body:not(.hide-previews) #chips [data-cam]{display:none}
+body:not(.hide-previews) #hud-scan{bottom:86px;font-size:8px;letter-spacing:1px;line-height:1.6}
+body:not(.hide-previews) #hud-hint{right:442px;bottom:28px;letter-spacing:1px}
+body:not(.hide-previews) #attrib{right:442px;max-width:calc(100vw - 460px);font-size:7px}
+@media (max-width:1100px){
+  #hud-top h1{font-size:20px;letter-spacing:3px}
+  #hud-top .sub{letter-spacing:1px}
+  body:not(.hide-previews) #hud-scan{display:none}
+  body:not(.hide-previews) #hud-hint{display:none}
 }
-.cc-wind{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:5px 9px;font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);
-  border-top:1px solid rgba(0,229,255,0.2);
+@media (max-width:899px){
+  :root{--gallery-height:min(220px,36dvh)}
+  #scene-stage{inset:0 0 var(--gallery-height)}
+  .hide-previews #scene-stage{inset:0}
+  #preview-gallery{inset:auto 0 0;width:auto;height:var(--gallery-height);padding:10px 12px max(10px,env(safe-area-inset-bottom));border-radius:10px 10px 0 0;gap:8px}
+  .gallery-scroll-hint{display:inline}
+  #preview-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:112px;overflow-y:auto;overscroll-behavior:contain;padding:2px 2px 10px;scrollbar-width:thin}
+  .preview-card{padding:4px;gap:4px}
+  .preview-name{font-size:10px}
+  .preview-kind{font-size:8px}
+  body:not(.hide-previews) #chips{bottom:calc(var(--gallery-height) + 10px);left:16px;right:auto;padding:0}
+  body:not(.hide-previews) #attrib{bottom:calc(var(--gallery-height) + 8px);right:10px;max-width:calc(100vw - 180px);font-size:6px}
+  body:not(.hide-previews) #hud-hint,body:not(.hide-previews) #hud-scan{display:none}
 }
-.cc-wind b{font-weight:400;color:var(--cyan);text-shadow:0 0 8px rgba(0,229,255,0.6)}
-.cc-wval{display:inline-flex;align-items:center;gap:6px}
-.cc-arrow{
-  font-style:normal;display:inline-block;color:var(--cyan);font-size:9px;line-height:1;
-  text-shadow:0 0 8px rgba(0,229,255,0.8);transition:transform .8s ease;
+@media (max-width:640px){
+  #preview-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:116px}
+  #hud-top{top:12px;left:16px}
+  #hud-top a.back{margin-bottom:7px;font-size:9px}
+  #hud-top h1{font-size:16px;letter-spacing:2px}
+  #hud-top .sub{margin-top:6px;font-size:8px;line-height:1.5}
+  #modes{top:90px;left:16px;right:auto;gap:6px}
+  #view-tools{top:138px;left:16px;right:auto;gap:6px}
+  #modes .chip,#view-tools .chip{min-height:42px;padding:8px 11px;font-size:9px;letter-spacing:.5px}
+  body:not(.hide-previews) #chips .chip{min-height:36px;font-size:8px;padding:6px 8px;letter-spacing:.5px}
+}
+@media (max-width:360px){
+  #hud-top h1{font-size:14px;letter-spacing:1.5px}
 }
 
 /* ── stream panel ── */
 #panel{
-  position:fixed;z-index:40;top:20px;right:20px;width:min(420px,calc(100vw - 40px));
+  position:fixed;z-index:40;top:112px;right:16px;width:min(400px,calc(100vw - 32px));
   background:var(--panel);border:1px solid var(--edge);border-radius:4px;
   box-shadow:0 0 40px rgba(0,120,255,0.25),inset 0 0 30px rgba(0,90,255,0.05);
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   transform:translateX(calc(100% + 40px));transition:transform .45s cubic-bezier(.22,.9,.3,1);
-  overflow:hidden;
+  max-height:calc(100dvh - 132px);overflow:auto;
 }
 #panel.open{transform:translateX(0)}
 #panel .topline{height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);box-shadow:0 0 12px var(--cyan)}
@@ -246,10 +276,10 @@ body{
 .fc-axis canvas{display:block;width:100%;height:16px}
 .fc-empty{padding:26px 18px;text-align:center;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}
 @media (max-width:640px){
-  #modes{top:106px;left:16px;right:auto}
-  #view-tools{top:148px;left:16px;right:auto;gap:6px}
+  #modes{top:90px;left:16px;right:auto}
+  #view-tools{top:138px;left:16px;right:auto;gap:6px}
   #hud-top .sub{max-width:90vw;line-height:1.8;letter-spacing:1px}
-  #hud-top h1{max-width:90vw;font-size:18px}
+  #hud-top h1{max-width:90vw;font-size:16px}
   .fc-row canvas{height:46px}
   .fc-legend{display:none}
   .fc-head{gap:10px;padding:8px 12px}
@@ -269,24 +299,19 @@ body{
 
 @media (max-width:640px){
   #hud-top{top:14px;left:16px}
-  #hud-top h1{letter-spacing:3px}
   #hud-scan{display:none}
   #hud-hint{display:none}
   #chips{bottom:28px;gap:6px;width:94vw}
   .chip{padding:8px 10px;font-size:10px;letter-spacing:1px}
-  .cam-card{width:152px}
-  .hide-previews .cam-card{width:140px}
   .cc-head{padding:5px 7px;font-size:8px;letter-spacing:1px}
-  .cc-elev{display:none}
-  .cc-wind{padding:4px 7px;font-size:8px;letter-spacing:1px}
-  #panel{top:auto;bottom:0;right:0;left:0;width:100%;border-radius:12px 12px 0 0;transform:translateY(110%)}
+  #panel{top:auto;bottom:0;right:0;left:0;width:100%;max-height:calc(100dvh - 190px);border-radius:12px 12px 0 0;transform:translateY(110%)}
   #panel.open{transform:translateY(0)}
 }
 </style>
 </head>
 <body>
 
-<canvas id="scene"></canvas>
+<div id="scene-stage"><canvas id="scene"></canvas></div>
 <div id="crt"></div>
 
 <div class="hud" id="hud-top">
@@ -314,13 +339,17 @@ body{
   <button class="chip mode" id="mode-arcade" aria-pressed="false">Arcade</button>
 </div>
 <div id="view-tools">
-  <button class="chip" id="overview">Overview</button>
+  <button class="chip" id="overview" title="Return to the Ocean Beach view">Ocean Beach</button>
   <button class="chip" id="orbit" aria-pressed="false">Orbit</button>
   <button class="chip" id="previews" aria-pressed="true">Previews</button>
 </div>
 <div id="attrib"><a href="./data/bay-area-elevation.json" target="_blank" rel="noopener">Terrain: USGS / NOAA · Mapzen</a> · <a href="./data/bay-area-water.json" target="_blank" rel="noopener">Water: NOAA charts</a><span id="imagery-credit" hidden> · Imagery © Esri · Maxar · Earthstar Geographics</span></div>
 
 <div id="chips"></div>
+<aside id="preview-gallery" aria-label="All webcam previews">
+  <div class="gallery-heading"><h2><span id="preview-count">24</span> cameras</h2><p>Snapshots &amp; video previews<br><span class="gallery-scroll-hint">Scroll for all cameras · </span>Select to open</p></div>
+  <div id="preview-grid"></div>
+</aside>
 
 <div id="panel" inert>
   <div class="topline"></div>
@@ -481,17 +510,23 @@ function kmBetween(lat1,lon1,lat2,lon2){
 }
 function withTimeout(p,ms,fb){return Promise.race([p,new Promise(res=>setTimeout(()=>res(fb),ms))]);}
 async function discoverSources(cam){
-  if(!cam.discover||cam._discovered)return cam.sources;
-  cam._discovered=true;
-  const cams=await withTimeout(acCameras(),5000,[]);
-  const near=cams
-    .map(c=>({c,d:kmBetween(cam.discover.lat,cam.discover.lon,c.lat,c.lon)}))
-    .filter(o=>o.d<=cam.discover.km)
-    .sort((a,b)=>a.d-b.d)
-    .slice(0,cam.discover.max||3)
-    .map(o=>'https://cameras.alertcalifornia.org/public-camera-data/'+o.c.id+'/latest-frame.jpg');
-  if(near.length)cam.sources=[...near,...cam.sources.filter(u=>!near.includes(u))];
-  return cam.sources;
+  if(!cam.discover)return cam.sources;
+  // The gallery and selected player can ask for the same peak simultaneously.
+  // Both await one discovery result instead of racing against stale aliases.
+  if(!cam._sourcePromise){
+    cam._sourcePromise=(async()=>{
+      const cams=await withTimeout(acCameras(),5000,[]);
+      const near=cams
+        .map(c=>({c,d:kmBetween(cam.discover.lat,cam.discover.lon,c.lat,c.lon)}))
+        .filter(o=>o.d<=cam.discover.km)
+        .sort((a,b)=>a.d-b.d)
+        .slice(0,cam.discover.max||3)
+        .map(o=>'https://cameras.alertcalifornia.org/public-camera-data/'+o.c.id+'/latest-frame.jpg');
+      if(near.length)cam.sources=[...near,...cam.sources.filter(u=>!near.includes(u))];
+      return cam.sources;
+    })();
+  }
+  return cam._sourcePromise;
 }
 
 /* ═══════════════════ Measured geography ═══════════════════ */
@@ -501,9 +536,11 @@ const S=0.003; // ~3.1x vertical relief; horizontal extent is ~105 km north to s
 const compact=matchMedia('(max-width:700px)').matches;
 const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const canvas=document.getElementById('scene');
+const sceneStage=document.getElementById('scene-stage');
+const sceneSize=()=>({width:sceneStage.clientWidth,height:sceneStage.clientHeight});
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,compact?1.5:1.75));
-renderer.setSize(innerWidth,innerHeight);
+renderer.setSize(sceneSize().width,sceneSize().height);
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.15;
 const useSmallTerrain=compact||renderer.capabilities.maxTextureSize<3464;
@@ -561,39 +598,28 @@ const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x04071a);
 scene.fog=new THREE.FogExp2(0x04071a,0.0028);
 
-const camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,0.1,900);
-// Fit all four geographic corners inside the useful viewport, including tall windows.
-// A steeper overview on portrait screens keeps the peninsula from being cropped.
-function overviewPose(){
-  const direction=new THREE.Vector3(0,camera.aspect<1?2.1:1.05,1).normalize();
-  const up=new THREE.Vector3(0,direction.z,-direction.y);
-  const center=new THREE.Vector3(0,1.8,0),corners=[];
-  for(const x of [-W/2,W/2])for(const z of [-D/2,D/2])for(const y of [0,4.5]){
-    const p=new THREE.Vector3(x,y,z).sub(center);
-    corners.push({x:p.x,y:p.dot(up),depth:p.dot(direction)});
-  }
-  const tanV=Math.tan(THREE.MathUtils.degToRad(camera.fov/2)),tanH=tanV*camera.aspect;
-  const top=1-2*Math.min(innerHeight*0.3,innerWidth<701?195:130)/innerHeight;
-  const bottom=-1+2*Math.min(innerHeight*0.16,95)/innerHeight;
-  const side=Math.max(0.3,1-48/innerWidth);
-  const fit=distance=>{
-    let lo=-Infinity,hi=Infinity;
-    for(const c of corners){
-      const d=distance-c.depth;
-      if(d<=0||Math.abs(c.x)>d*tanH*side)return null;
-      lo=Math.max(lo,c.y-top*d*tanV);
-      hi=Math.min(hi,c.y-bottom*d*tanV);
-    }
-    return lo<=hi?{lo,hi}:null;
-  };
-  let lo=40,hi=600;
-  for(let i=0;i<32;i++){const mid=(lo+hi)/2;if(fit(mid))hi=mid;else lo=mid;}
-  const distance=hi*1.025,range=fit(distance);
-  const shift=innerWidth>700?range.lo:(range.lo+range.hi)/2;
-  const target=center.clone().addScaledVector(up,shift);
+const camera=new THREE.PerspectiveCamera(52,sceneSize().width/sceneSize().height,0.1,900);
+function fitSceneProjection(size){
+  camera.aspect=size.width/size.height;
+  // Keep the coastal focus below the phone toolbar without changing its 45° angle.
+  if(innerWidth<=640)camera.setViewOffset(size.width,size.height,0,-60,size.width,size.height);
+  else camera.clearViewOffset();
+  camera.updateProjectionMatrix();
+}
+fitSceneProjection(sceneSize());
+// Preserve the home ground height before the decoded DEM buffer is released.
+const oceanBeachGround=sampleElevation(-122.509,37.759)*S;
+// Look northeast from offshore: a 45° descent toward the middle of Ocean Beach,
+// with the coast running diagonally through the view and San Francisco beyond it.
+function oceanBeachPose(){
+  const lon=-122.509,lat=37.759;
+  const target=new THREE.Vector3(toX(lon),oceanBeachGround,toZ(lat));
+  const direction=new THREE.Vector3(-0.5,Math.SQRT1_2,0.5);
+  // Hold the same coastal composition as the preview rail changes the map aspect.
+  const distance=34*Math.max(1,Math.min(1.35,0.95/camera.aspect));
   return {position:target.clone().addScaledVector(direction,distance),target};
 }
-let home=overviewPose(),atOverview=true;
+let home=oceanBeachPose(),atOverview=true;
 camera.position.copy(home.position);
 
 const controls=new OrbitControls(camera,renderer.domElement);
@@ -622,18 +648,19 @@ function flyTo(position,target){
   flight={from:camera.position.clone(),to:position,fromTarget:controls.target.clone(),target,elapsed:0};
 }
 controls.addEventListener('start',()=>{flight=null;atOverview=false;setOrbit(false);});
-document.getElementById('overview').addEventListener('click',()=>{home=overviewPose();atOverview=true;flyTo(home.position,home.target);});
+document.getElementById('overview').addEventListener('click',()=>{
+  document.getElementById('close').click();
+  home=oceanBeachPose();atOverview=true;flyTo(home.position,home.target);
+});
 document.getElementById('orbit').addEventListener('click',()=>{flight=null;atOverview=false;setOrbit(!orbitEnabled);});
-let showPreviews=false;
+let showPreviews=true;
 const previewButton=document.getElementById('previews');
 function updatePreviews(){
   document.body.classList.toggle('hide-previews',!showPreviews);
   previewButton.setAttribute('aria-pressed',String(showPreviews));
   previewButton.classList.toggle('active',showPreviews);
-  if(!showPreviews){
-    document.querySelectorAll('.cam-card iframe').forEach(f=>f.remove());
-    document.querySelectorAll('.cam-card[data-video]').forEach(el=>{el.querySelector('.cc-feed').replaceChildren();});
-  }
+  // The canvas occupies the remaining layout space; notify its sizing handler.
+  requestAnimationFrame(()=>dispatchEvent(new Event('resize')));
 }
 previewButton.addEventListener('click',()=>{showPreviews=!showPreviews;updatePreviews();});
 updatePreviews();
@@ -942,82 +969,92 @@ CAMS.forEach((cam,i)=>{
 
   const el=document.createElement('div');
   el.className='cam-card';
-  if(cam.yt)el.dataset.video='true';
   el.setAttribute('role','button');el.setAttribute('aria-label',cam.name+' webcam');el.title=cam.name;
   el.tabIndex=0;
-  el.innerHTML=`
-    <div class="cc-head"><span><span class="live"></span>${cam.name}</span><span class="cc-elev">${cam.elevLabel}</span></div>
-    <div class="cc-feed"></div>
-    ${cam.type==='snapshot'?'<div class="cc-wind">SNAPSHOT · 15 S REFRESH</div>':'<div class="cc-wind"><span>WIND</span><span class="cc-wval"><i class="cc-arrow">▲</i><b>—</b></span></div>'}`;
+  el.innerHTML=`<div class="cc-head"><span><span class="live"></span>${cam.name}</span></div>`;
   el.addEventListener('click',()=>openPanel(cam));
   el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openPanel(cam);}});
   labelLayer.appendChild(el);
 
-  markers.push({cam,grp,el,feedStarted:false,topY:y+beamH*0.9,lift:0.8,phase:i*1.4});
+  markers.push({cam,grp,el,phase:i*1.4});
 });
 
-/* always-on floating feeds: YouTube player when the cam has a live
-   stream, refreshing frames otherwise, styled fallback if neither loads */
-function initCardFeed(cam,host){
-  if(cam.yt){
-    const f=document.createElement('iframe');
-    f.src='https://www.youtube-nocookie.com/embed/'+cam.yt+'?autoplay=1&mute=1&playsinline=1&controls=0&rel=0';
-    f.allow='autoplay; encrypted-media';
-    f.loading='lazy';f.title=cam.name+' live webcam';
-    host.appendChild(f);
-    host.insertAdjacentHTML('beforeend','<div class="cc-shield"></div>');
-    return;
+/* ── bounded, silent gallery previews ──
+   YouTube cards use poster images, never players. Snapshot refreshes only
+   run while their card and this document are visible, with four requests
+   in flight at most. Failed requests keep the last frame with an honest label. */
+const previewGrid=document.getElementById('preview-grid');
+document.getElementById('preview-count').textContent=CAMS.length;
+const galleryItems=[];
+let galleryRequests=0;
+const galleryObserver=new IntersectionObserver(entries=>{
+  for(const entry of entries){
+    const item=galleryItems.find(item=>item.button===entry.target);
+    if(item)item.visible=entry.isIntersecting;
   }
-  const img=document.createElement('img');
-  img.alt=cam.name+' live frame';
-  img.style.display='none';
-  host.appendChild(img);
-  const working=[];
-  let idx=0,started=false;
-  const show=u=>{
-    const n=new Image();
-    n.onload=()=>{
-      img.src=n.src;
-      img.style.display='block';
-      const fb=host.querySelector('.cc-fallback');
-      if(fb)fb.remove();
-    };
-    n.onerror=()=>{const k=working.indexOf(u);if(k>=0)working.splice(k,1);};
-    n.src=bust(u);
-  };
-  const start=()=>{
-    if(started)return;
-    started=true;
-    show(working[0]);
-    // each tick: fresh frame, advancing through every working view (East/West…)
-    setInterval(()=>{
-      if(!working.length||document.hidden||!showPreviews||host.closest('.cam-card').style.opacity!=='1')return;
-      idx=(idx+1)%working.length;
-      show(working[idx]);
-    },cam.refreshMs||60000);
-  };
-  discoverSources(cam).then(srcs=>{
-    let pending=srcs.length;
-    if(!pending){
-      host.insertAdjacentHTML('beforeend','<div class="cc-fallback">◍ signal via<br>external stream</div>');
-      return;
-    }
-    srcs.forEach(u=>{
-      const probe=new Image();
-      probe.onload=()=>{
-        working.push(u);
-        start();
-        pending--;
-      };
-      probe.onerror=()=>{
-        if(--pending===0&&!working.length){
-          host.insertAdjacentHTML('beforeend','<div class="cc-fallback">◍ signal via<br>external stream</div>');
-        }
-      };
-      probe.src=bust(u);
-    });
+  refreshGallery();
+},{root:previewGrid,threshold:.01});
+CAMS.forEach(cam=>{
+  const button=document.createElement('button');
+  button.type='button';button.className='preview-card';button.dataset.cam=cam.id;
+  button.title=cam.name+(cam.yt?' · Video preview · open to play':' · Snapshot · select to open');
+  button.setAttribute('aria-label',button.title);
+  button.innerHTML='<span class="preview-image"><span class="preview-placeholder">Loading preview</span><img hidden alt=""></span><span class="preview-name"></span><span class="preview-kind"></span>';
+  button.querySelector('.preview-name').textContent=cam.name;
+  const kind=button.querySelector('.preview-kind');
+  kind.textContent=cam.yt?'Video preview · open to play':'Snapshot';
+  const item={cam,button,kind,img:button.querySelector('img'),placeholder:button.querySelector('.preview-placeholder'),visible:false,busy:false,due:0,hasFrame:false,source:0};
+  button.addEventListener('click',()=>openPanel(cam));
+  galleryItems.push(item);previewGrid.appendChild(button);galleryObserver.observe(button);
+});
+function loadPreviewImage(url){
+  return new Promise(resolve=>{
+    const image=new Image();let settled=false;
+    const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);image.onload=null;image.onerror=null;resolve(value);};
+    const timer=setTimeout(()=>{image.src='';finish(null);},12000);
+    image.onload=()=>finish(image.naturalWidth>1?image.src:null);
+    image.onerror=()=>finish(null);image.src=url;
   });
 }
+async function loadGalleryItem(item){
+  item.busy=true;galleryRequests++;
+  try{
+    const sources=item.cam.yt?['https://i.ytimg.com/vi/'+item.cam.yt+'/hqdefault.jpg']:await discoverSources(item.cam);
+    let loaded=null;
+    // Try at most two candidates per refresh to bound a failing provider.
+    for(let attempt=0;attempt<Math.min(2,sources.length);attempt++){
+      if(document.hidden||!showPreviews||!item.visible)break;
+      const source=sources[(item.source+attempt)%sources.length];
+      loaded=await loadPreviewImage(item.cam.yt?source:bust(source));
+      if(loaded){item.source=(item.source+attempt)%sources.length;break;}
+    }
+    if(loaded){
+      item.img.src=loaded;item.img.hidden=false;item.placeholder.hidden=true;item.hasFrame=true;
+      item.kind.textContent=item.cam.yt?'Video preview · open to play':'Snapshot';
+    }else if(item.hasFrame){
+      item.source=sources.length?(item.source+2)%sources.length:0;
+      item.kind.textContent=item.cam.yt?'Video preview · open to play':'Last snapshot · retrying';
+    }else{
+      item.source=sources.length?(item.source+2)%sources.length:0;
+      item.placeholder.textContent='Preview unavailable · open feed';
+      item.kind.textContent=item.cam.yt?'Video preview unavailable':'Snapshot unavailable';
+    }
+    item.due=Date.now()+(loaded?(item.cam.yt?300000:(item.cam.refreshMs||60000)):60000);
+  }catch{
+    item.due=Date.now()+60000;
+    item.kind.textContent=item.hasFrame?'Last snapshot · retrying':'Preview unavailable';
+    if(!item.hasFrame)item.placeholder.textContent='Preview unavailable · open feed';
+  }finally{item.busy=false;galleryRequests--;refreshGallery();}
+}
+function refreshGallery(){
+  if(document.hidden||!showPreviews)return;
+  for(const item of galleryItems.slice().sort((a,b)=>a.due-b.due)){
+    if(galleryRequests>=4)break;
+    if(item.visible&&!item.busy&&item.due<=Date.now())loadGalleryItem(item);
+  }
+}
+setInterval(refreshGallery,1000);
+document.addEventListener('visibilitychange',refreshGallery);
 
 /* ═════════ live wind → flowing airlines over the terrain ═════════
    Current wind speed/direction at each of the four sites (Open-Meteo,
@@ -1425,13 +1462,15 @@ canvas.addEventListener('pointerup',e=>{
   const moved=Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1]);
   downAt=null;
   if(moved>6)return;
-  ptr.x=(e.clientX/innerWidth)*2-1;ptr.y=-(e.clientY/innerHeight)*2+1;
+  const rect=canvas.getBoundingClientRect();
+  ptr.x=((e.clientX-rect.left)/rect.width)*2-1;ptr.y=-((e.clientY-rect.top)/rect.height)*2+1;
   ray.setFromCamera(ptr,camera);
   const hit=ray.intersectObjects(hitTargets,false)[0];
   if(hit)openPanel(hit.object.userData.cam);
 });
 canvas.addEventListener('pointermove',e=>{
-  ptr.x=(e.clientX/innerWidth)*2-1;ptr.y=-(e.clientY/innerHeight)*2+1;
+  const rect=canvas.getBoundingClientRect();
+  ptr.x=((e.clientX-rect.left)/rect.width)*2-1;ptr.y=-((e.clientY-rect.top)/rect.height)*2+1;
   ray.setFromCamera(ptr,camera);
   canvas.style.cursor=ray.intersectObjects(hitTargets,false).length?'pointer':'grab';
 });
@@ -1508,14 +1547,14 @@ function openPanel(cam){
   pCoords.innerHTML=`${cam.sub}<br><b>${cam.lat.toFixed(cam.locationPrecision?2:4)}° N</b> / <b>${Math.abs(cam.lon).toFixed(cam.locationPrecision?2:4)}° W</b> · <b>${cam.elevLabel}</b>${cam.locationPrecision?'<br>'+cam.locationPrecision:''}`;
   pLink.href=cam.link;pStaticLink.href=cam.link;
   pCredit.textContent='feed · '+cam.credit;
-  document.querySelectorAll('#chips .chip[data-cam]').forEach(c=>c.classList.toggle('active',c.dataset.cam===cam.id));
+  document.querySelectorAll('#chips .chip[data-cam],.preview-card[data-cam]').forEach(c=>c.classList.toggle('active',c.dataset.cam===cam.id));
   panel.inert=false;panel.classList.add('open');
   startFeed(cam);
 }
 addEventListener('keydown',e=>{if(e.key==='Escape'&&panel.classList.contains('open'))document.getElementById('close').click();});
 document.getElementById('close').addEventListener('click',()=>{
   panel.classList.remove('open');panel.inert=true;activeCam=null;stopFeed();
-  document.querySelectorAll('#chips .chip[data-cam]').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('#chips .chip[data-cam],.preview-card[data-cam]').forEach(c=>c.classList.remove('active'));
 });
 
 /* ── loop ── */
@@ -1562,33 +1601,25 @@ function tick(){
     r.scale.set(sc,sc,1);
     r.material.opacity=(1-s)*0.24;
   }
-  const occupied=[];
+  const occupied=[],stage=canvas.getBoundingClientRect();
   const ordered=markers.slice().sort((a,b)=>(a.cam===activeCam?-1:b.cam===activeCam?1:
     camera.position.distanceToSquared(a.grp.position)-camera.position.distanceToSquared(b.grp.position)));
   for(const m of ordered){
     const bob=reducedMotion?0:Math.sin(t*0.8+m.phase)*0.18;
-    v.set(m.grp.position.x,(showPreviews?m.topY+m.lift:m.grp.position.y+1.2)+bob,m.grp.position.z).project(camera);
-    const x=(v.x*0.5+0.5)*innerWidth,y=(-v.y*0.5+0.5)*innerHeight;
+    v.set(m.grp.position.x,m.grp.position.y+1.2+bob,m.grp.position.z).project(camera);
+    const x=stage.left+(v.x*.5+.5)*stage.width,y=stage.top+(-v.y*.5+.5)*stage.height;
     const dist=camera.position.distanceTo(m.grp.position);
-    const scale=Math.min(1.05,Math.max(0.65,90/dist));
-    const width=(showPreviews?(compact?152:196):(compact?140:172))*scale;
-    const height=(showPreviews?(compact?124:160):26)*scale;
+    const scale=Math.min(1,Math.max(.7,90/dist)),width=140*scale,height=26*scale;
     const box={left:x-width/2-5,right:x+width/2+5,top:y-height-5,bottom:y+5};
     const overlaps=occupied.some(r=>box.left<r.right&&box.right>r.left&&box.top<r.bottom&&box.bottom>r.top);
-    const visible=v.z>=-1&&v.z<=1&&box.left>4&&box.right<innerWidth-4
-      &&box.top>(compact?190:118)&&box.bottom<innerHeight-95&&!overlaps;
-    m.el.style.opacity=visible?1:0;
-    m.el.style.pointerEvents=visible?'auto':'none';
-    m.el.tabIndex=visible?0:-1;
+    const visible=v.z>=-1&&v.z<=1&&box.left>stage.left+4&&box.right<stage.right-4
+      &&box.top>(innerWidth<=640?190:118)&&box.bottom<stage.bottom-58&&!overlaps;
+    m.el.style.opacity=visible?1:0;m.el.setAttribute('aria-hidden',String(!visible));
+    m.el.style.pointerEvents=visible?'auto':'none';m.el.tabIndex=visible?0:-1;
     m.el.style.left=x+'px';m.el.style.top=y+'px';
     m.el.style.transform=`translate(-50%,-100%) scale(${scale.toFixed(3)})`;
     m.el.style.zIndex=m.cam===activeCam?'19':'15';
-    if(!visible&&m.cam.yt){m.el.querySelectorAll('iframe').forEach(f=>f.remove());m.feedStarted=false;}
-    if(visible){
-      occupied.push(box);
-      if(showPreviews&&(!m.feedStarted||(m.cam.yt&&!m.el.querySelector('iframe')))){m.feedStarted=true;initCardFeed(m.cam,m.el.querySelector('.cc-feed'));}
-    }
-
+    if(visible)occupied.push(box);
   }
   const scanE=(t*0.055%1)*uniforms.uScanMax.value;
   scanval.textContent=Math.round(scanE)+' m';
@@ -1600,11 +1631,11 @@ tick();
 boot.classList.add('done');
 
 addEventListener('resize',()=>{
-  camera.aspect=innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  home=overviewPose();
+  const size=sceneSize();
+  fitSceneProjection(size);
+  home=oceanBeachPose();
   if(atOverview){flight=null;camera.position.copy(home.position);controls.target.copy(home.target);}
-  renderer.setSize(innerWidth,innerHeight);
+  renderer.setSize(size.width,size.height);
 });
 </script>
 </body>
