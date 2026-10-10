@@ -75,6 +75,10 @@ body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;overflow-x:
   font-size:10px;
   user-select:none;
 }
+.experiments-links{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 16px;padding:11px 18px;border:1px solid rgba(198,236,155,.2);border-radius:10px;background:rgba(8,17,24,.7);max-width:100%;backdrop-filter:blur(8px)}
+.experiments-links a{color:#e0eccf;text-decoration:none;font-size:12px;font-weight:500;padding:4px 0;text-underline-offset:4px}
+.experiments-links .experiments-label{color:#c6ec9b;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+.experiments-links a:hover,.experiments-links a:focus-visible{color:#fff;text-decoration:underline}
 
 .grid{
   display:grid;
@@ -429,6 +433,15 @@ body{font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;overflow-x:
     <a href="/news">News</a>
   </div>
 </div>
+
+<nav class="experiments-links" aria-label="Experiments" style="margin:0 auto 8px;width:fit-content;max-width:calc(100% - 40px)">
+  <a class="experiments-label" href="/experiments/">Experiments ↗</a>
+  <a href="/experiments/elsewhere.html">Elsewhere</a>
+  <a href="/experiments/rabbit-hole.html">Rabbit Hole</a>
+  <a href="/experiments/deep-cuts.html">Deep Cuts</a>
+  <a href="/experiments/tiny-ship.html">Tiny Ship</a>
+  <a href="/experiments/small-worlds.html">Small Worlds</a>
+</nav>
 
 <div class="grid" id="grid"></div>
 
