@@ -1,0 +1,3 @@
+# Tesla Fleet API requires this public-key directory to be served.
+include:
+  - .well-known
