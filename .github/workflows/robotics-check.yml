@@ -1,0 +1,27 @@
+name: Validate robotics calendar
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'robotics/**'
+      - 'scripts/robotics-*'
+      - '.github/workflows/robotics-check.yml'
+  pull_request:
+    paths:
+      - 'robotics/**'
+      - 'scripts/robotics-*'
+      - '.github/workflows/robotics-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/robotics-check.mjs
+      - run: node --test scripts/robotics-model.test.mjs
+      - run: node --check robotics/app.js

@@ -1,0 +1,458 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Richard Burton//Bay Area Robotics//EN
+CALSCALE:GREGORIAN
+X-WR-CALNAME:Bay Area Robotics
+X-WR-TIMEZONE:America/Los_Angeles
+REFRESH-INTERVAL;VALUE=DURATION:P1D
+BEGIN:VEVENT
+UID:ember-mason@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART:20261104T190000Z
+DTEND:20261104T200000Z
+SUMMARY:Why Is Robotics Hard? — Matt Mason
+LOCATION:UC Berkeley · Gateway 4355\, Berkeley
+DESCRIPTION:A robotics research seminar with CMU’s Matt Mason\, hosted by
+  Berkeley’s EMBER and HIC labs.\n\n11am–noon\n\nRoom change: this talk
+  is in Gateway 4355\, not the series’ usual venue.\n\nNo registration re
+ quired\n\nVerified 2026-11-03. Confirm details with organizer: https://emb
+ er-lab.eecs.berkeley.edu/seminars/
+URL:https://ember-lab.eecs.berkeley.edu/seminars/
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:robot-learning-02@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART:20261105T010000Z
+DTEND:20261105T043000Z
+SUMMARY:Robot Learning #02: World Models & Dexterous Manipulation
+LOCATION:Bright Data Web Data Loft · 625 2nd St\, San Francisco
+DESCRIPTION:Demos\, a panel\, and conversations on world models\, learning 
+ from demonstrations\, and training data for manipulation.\n\n5–8:30pm\n\
+ nFree · Host approval required\n\nVerified 2026-11-03. Confirm details wi
+ th organizer: https://luma.com/robot-learning-world-models-nov4-2026
+URL:https://luma.com/robot-learning-world-models-nov4-2026
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:stanford-cheng@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART:20261106T230000Z
+DTEND:20261107T000000Z
+SUMMARY:Contact: The Problem and the Path to Robotic Dexterity
+LOCATION:Skilling Auditorium · 494 Lomita Mall\, Stanford
+DESCRIPTION:Xianyi Cheng speaks on contact and robotic dexterity in Stanfor
+ d’s robotics seminar series.\n\n3–4pm\n\nThe linked attendance form is
+  closed. This is not an open public RSVP.\n\nRestricted · Stanford facult
+ y\, students & sponsors\n\nVerified 2026-11-03. Confirm details with organ
+ izer: https://src.stanford.edu/src-events/bot4nbr3a8ykux3lkkyvea47c9dmt0-3
+ r4ac-jymyn-yef4t-34mft-2m575-r7k3h-6lyd5-9wygr-5rsgw-ebgam-j6f9n-etrwc-4hk
+ jc-r895c-b9rnj-c95ky-ghdmp-fdhe3-d85sj
+URL:https://src.stanford.edu/src-events/bot4nbr3a8ykux3lkkyvea47c9dmt0-3r4a
+ c-jymyn-yef4t-34mft-2m575-r7k3h-6lyd5-9wygr-5rsgw-ebgam-j6f9n-etrwc-4hkjc-
+ r895c-b9rnj-c95ky-ghdmp-fdhe3-d85sj
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:makermods-hackathon@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART:20261107T160000Z
+DTEND:20261109T030000Z
+SUMMARY:MakerMods Physical AI Hackathon
+LOCATION:Founders\, Inc. · 2 Marina Blvd\, Building C\, 3rd floor\, San Fr
+ ancisco
+DESCRIPTION:Build with real bimanual robot arms and world action models. Ap
+ ply solo or with a team of 3–6.\n\nNov 7\, 8am – Nov 8\, 7pm\n\nDetail
+ ed schedule pending. Workshop: Nov 7\, 3–5pm. Audience demos: Nov 8 from
+  3pm\; separate ticket types.\n\nFree · Host approval required\n\nVerifie
+ d 2026-11-03. Confirm details with organizer: https://luma.com/pah
+URL:https://luma.com/pah
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:physical-ai-founder-funder@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART:20261110T010000Z
+DTEND:20261110T040000Z
+SUMMARY:Physical AI Founder × Funder
+LOCATION:353 Sacramento St · confirm with host\, San Francisco
+DESCRIPTION:A panel\, founder pitches\, and introductions around world mode
+ ls\, simulation\, physical data\, and embodied intelligence.\n\n5–8pm\n\
+ nOrganizer lists 353 Sacramento St\; Luma shares the final location with a
+ pproved guests. Confirm the venue and current ticket price when registerin
+ g.\n\nPaid · Host approval required\n\nVerified 2026-11-03. Confirm detai
+ ls with organizer: https://www.next100.club/events/physical-ai-nov-2026
+URL:https://www.next100.club/events/physical-ai-nov-2026
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:bara-november@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART:20261112T170000Z
+DTEND:20261112T200000Z
+SUMMARY:BARA Series: November Meeting
+LOCATION:340 E Middlefield Rd\, Mountain View
+DESCRIPTION:Member talks and networking connecting robotics and physical AI
+  founders\, engineers\, investors\, and industry teams.\n\n9am–noon\n\nF
+ ree · Host approval required\n\nVerified 2026-11-03. Confirm details with
+  organizer: https://luma.com/rxgslui1
+URL:https://luma.com/rxgslui1
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:physical-ai-conference@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART:20261112T220000Z
+DTEND:20261113T060000Z
+SUMMARY:Physical AI Conference 2026
+LOCATION:Plug & Play Tech Center · 1st floor\, Sunnyvale
+DESCRIPTION:Physical AI talks\, a Silicon Valley Robotics startup pitch ses
+ sion\, dinner\, and networking. Part 1 is in English\; Part 2 in Korean.\n
+ \n2–10pm\n\nEarly-bird period has ended. Student tickets require approva
+ l. Ticket metadata differs from the advertised price\; confirm your ticket
+  type and final address at registration.\n\nPaid · $40 standard advertise
+ d\n\nVerified 2026-11-03. Confirm details with organizer: https://luma.com
+ /y0qs8gra
+URL:https://luma.com/y0qs8gra
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:x-square-hackathon@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART;VALUE=DATE:20261114
+DTEND;VALUE=DATE:20261116
+SUMMARY:Physical AI Hackathon with X Square Robot (time to confirm)
+LOCATION:Address shared after registration\, San Francisco
+DESCRIPTION:Teams of up to three build on supplied robot kits\, with suppor
+ t from X Square Robot. Applications close November 10.\n\nNov 14\, 10am 
+ – Nov 15 · end time to confirm\n\nAgenda ends hacking Nov 15 at 3pm and
+  awards at 6pm\; event metadata ends at 8pm. Confirm the finish. Separate 
+ opening/check-in: Nov 13\, 4–7pm (linked from organizer page).\n\nFree 
+ · Host approval required\n\nVerified 2026-11-03. Confirm details with org
+ anizer: https://luma.com/21palhfw
+URL:https://luma.com/21palhfw
+STATUS:TENTATIVE
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:saratoga-vex-3@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART;VALUE=DATE:20261115
+DTEND;VALUE=DATE:20261116
+SUMMARY:Saratoga VEX V5 Robotics Competition #3 (time to confirm)
+LOCATION:Saratoga High School · 20300 Herriman Ave\, Saratoga
+DESCRIPTION:VEX V5 Override tournament for high school and middle school ro
+ botics teams.\n\nDoors 7am · Matches 8am · Finish TBC\n\nThe page lists 
+ a Nov 1 registration deadline despite showing a register control. Confirm 
+ team availability and spectator admission with the organizer.\n\n$210/team
+  · Listed deadline has passed\n\nVerified 2026-11-03. Confirm details wit
+ h organizer: https://events.vex.com/robot-competitions/vex-robotics-compet
+ ition/RE-V5RC-26-5284.html
+URL:https://events.vex.com/robot-competitions/vex-robotics-competition/RE-V
+ 5RC-26-5284.html
+STATUS:TENTATIVE
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:robotics-researcher-night@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART:20261118T030000Z
+DTEND:20261118T050000Z
+SUMMARY:Robotics Researcher Night
+LOCATION:Pebblebed · address shared after registration\, San Francisco
+DESCRIPTION:An informal evening for researchers and engineers to exchange i
+ deas on robot learning\, world models\, hardware\, and real-world deployme
+ nt.\n\n7–9pm\n\nFree · Host approval required\n\nVerified 2026-11-03. C
+ onfirm details with organizer: https://luma.com/64hul499
+URL:https://luma.com/64hul499
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:ember-adolph@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART;VALUE=DATE:20261118
+DTEND;VALUE=DATE:20261119
+SUMMARY:EMBER Robotics Seminar — Karen Adolph (time to confirm)
+LOCATION:UC Berkeley · room to confirm\, Berkeley
+DESCRIPTION:Announced guest in Berkeley’s robotics seminar series. Talk t
+ itle and individual schedule have not yet been published.\n\nTime to be co
+ nfirmed\n\nDate announced\; confirm the talk’s time and room before visi
+ ting.\n\nSeries says no registration required\n\nVerified 2026-11-03. Conf
+ irm details with organizer: https://ember-lab.eecs.berkeley.edu/seminars/
+URL:https://ember-lab.eecs.berkeley.edu/seminars/
+STATUS:TENTATIVE
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:fuse-sf@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART;VALUE=DATE:20261119
+DTEND;VALUE=DATE:20261120
+SUMMARY:FUSE San Francisco (time to confirm)
+LOCATION:The Foundry SF · 1425 Folsom St\, San Francisco
+DESCRIPTION:A technical gathering on localization\, autonomy\, and physical
+  AI\, bringing together engineers building systems that move through the w
+ orld.\n\nDoors 8am · Keynote 9am · Drinks 4pm\n\nFinal finish time not v
+ erified. Calendar export is a date-only placeholder.\n\nCheck registration
+  for price & availability\n\nVerified 2026-11-03. Confirm details with org
+ anizer: https://fuse.pointonenav.com/sf
+URL:https://fuse.pointonenav.com/sf
+STATUS:TENTATIVE
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:one-world-vex-hs@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART:20261121T154500Z
+DTEND:20261122T203000Z
+SUMMARY:One World VEX Signature Event — High School
+LOCATION:Pauley Ballroom · 2495 Bancroft Way\, Berkeley
+DESCRIPTION:Two days of VEX V5 Override competition for high school teams a
+ t UC Berkeley.\n\nNov 21\, 7:45am–6pm · Nov 22\, 7:45am–12:30pm\n\nCo
+ mpetitor registration is full. Spectator admission is not specified\; chec
+ k with the organizer. Volunteer opportunities are listed.\n\n$625/team · 
+ Full / waitlist\n\nVerified 2026-11-03. Confirm details with organizer: ht
+ tps://events.vex.com/robot-competitions/vex-robotics-competition/RE-V5RC-2
+ 6-4557.html
+URL:https://events.vex.com/robot-competitions/vex-robotics-competition/RE-V
+ 5RC-26-4557.html
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:one-world-vex-ms@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART:20261122T210000Z
+DTEND:20261124T023000Z
+SUMMARY:One World VEX Signature Event — Middle School
+LOCATION:Pauley Ballroom · 2495 Bancroft Way\, Berkeley
+DESCRIPTION:A VEX V5 Override signature competition for middle school teams
+  at UC Berkeley.\n\nNov 22\, 1–6pm · Nov 23\, 7:45am–6:30pm\n\nPage s
+ ays closed/capacity reached despite a remaining-spots counter. Confirm wai
+ tlist and spectator terms with the organizer.\n\n$625/team · Capacity rea
+ ched message\n\nVerified 2026-11-03. Confirm details with organizer: https
+ ://events.vex.com/robot-competitions/vex-robotics-competition/RE-V5RC-26-4
+ 560.html
+URL:https://events.vex.com/robot-competitions/vex-robotics-competition/RE-V
+ 5RC-26-4560.html
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:power-beans-workshop@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART:20261125T180000Z
+DTEND:20261126T000000Z
+SUMMARY:Power Beans Robotics Workshop
+LOCATION:Alviso Library · 5050 N First St\, San Jose
+DESCRIPTION:A day of robotics building for ages 10 and up at the library. B
+ ring lunch\; a signed waiver is required.\n\n10am–4pm\n\nYouth workshop 
+ (ages 10+). Check the library page for registration and waiver details.\n\
+ nRegistration opens Nov 4 at 9am\n\nVerified 2026-11-03. Confirm details w
+ ith organizer: https://sjpl.bibliocommons.com/v2/events/6adfcf8b035faf0033
+ df338a
+URL:https://sjpl.bibliocommons.com/v2/events/6adfcf8b035faf0033df338a
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:reading-club-41@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART:20261128T220000Z
+DTEND:20261129T010000Z
+SUMMARY:Robotics & World Models Reading Club #41
+LOCATION:San Francisco · venue to be announced\, San Francisco
+DESCRIPTION:A research gathering for robotic world models\, world action mo
+ dels\, and embodied intelligence\, with discussion and a paper roundtable.
+ \n\n2–5pm\n\nExact venue\, keynote speaker\, theme\, and pre-readings ar
+ e not yet listed.\n\nFree · Host approval required\n\nVerified 2026-11-03
+ . Confirm details with organizer: https://luma.com/vnw94wbh
+URL:https://luma.com/vnw94wbh
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:humanoids-summit-2026@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART;VALUE=DATE:20261201
+DTEND;VALUE=DATE:20261203
+SUMMARY:Humanoids Summit — Silicon Valley (time to confirm)
+LOCATION:San Mateo County Event Center · 1346 Saratoga Dr\, San Mateo
+DESCRIPTION:Industry gathering focused on humanoid robots\, their builders\
+ , and the companies bringing them into use.\n\nDec 1–2 · Daily times to
+  be confirmed\n\nRegistration links coexist with an “opening soon” mes
+ sage. Current ticket availability and prices are not verified.\n\nCheck or
+ ganizer for tickets\n\nVerified 2026-11-03. Confirm details with organizer
+ : https://humanoidssummit.com/silicon-valley-2026
+URL:https://humanoidssummit.com/silicon-valley-2026
+STATUS:TENTATIVE
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:ember-gil@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART;VALUE=DATE:20261202
+DTEND;VALUE=DATE:20261203
+SUMMARY:EMBER Robotics Seminar — Stephanie Gil (time to confirm)
+LOCATION:UC Berkeley · room to confirm\, Berkeley
+DESCRIPTION:Announced guest in Berkeley’s robotics seminar series. Indivi
+ dual talk details are pending.\n\nTime to be confirmed\n\nConfirm the talk
+  title\, time\, and room before visiting.\n\nSeries says no registration r
+ equired\n\nVerified 2026-11-03. Confirm details with organizer: https://em
+ ber-lab.eecs.berkeley.edu/seminars/
+URL:https://ember-lab.eecs.berkeley.edu/seminars/
+STATUS:TENTATIVE
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:ember-carlone@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART;VALUE=DATE:20261204
+DTEND;VALUE=DATE:20261205
+SUMMARY:EMBER Robotics Seminar — Luca Carlone (time to confirm)
+LOCATION:UC Berkeley · room to confirm\, Berkeley
+DESCRIPTION:Announced guest in Berkeley’s robotics seminar series. Indivi
+ dual talk details are pending.\n\nTime to be confirmed\n\nFriday date anno
+ unced\; do not assume the usual Wednesday time. Confirm the room and time.
+ \n\nSeries says no registration required\n\nVerified 2026-11-03. Confirm d
+ etails with organizer: https://ember-lab.eecs.berkeley.edu/seminars/
+URL:https://ember-lab.eecs.berkeley.edu/seminars/
+STATUS:TENTATIVE
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:berkeley-bot-bash-2@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART;VALUE=DATE:20261205
+DTEND;VALUE=DATE:20261206
+SUMMARY:Berkeley Bot Bash #2 (time to confirm)
+LOCATION:UC Berkeley · exact venue to confirm\, Berkeley
+DESCRIPTION:A college-priority combat robotics event for one-pound plastic 
+ antweight and three-pound beetleweight robots.\n\nDec 5 · Times to be con
+ firmed\n\nSource conflicts: body says venue TBD and 7am–5pm\; metadata s
+ ays Minor Hall and 8am–6pm. Timeline lists public doors 8:45am\, fights 
+ 9am. Confirm before travelling.\n\nCheck competitor and spectator admissio
+ n\n\nVerified 2026-11-03. Confirm details with organizer: https://www.robo
+ tcombatevents.com/events/9927
+URL:https://www.robotcombatevents.com/events/9927
+STATUS:TENTATIVE
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:ieee-humanoids-2026@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART;VALUE=DATE:20261206
+DTEND;VALUE=DATE:20261210
+SUMMARY:IEEE-RAS Humanoids 2026 (time to confirm)
+LOCATION:Santa Clara Convention Center\, Santa Clara
+DESCRIPTION:Research conference on humanoid robotics\, with workshops and a
+  preceding public program.\n\nDec 6–9 · Daily times to be confirmed\n\n
+ Organizer lists public programming Dec 6\, workshops Dec 7\, and main conf
+ erence Dec 8–9. IEEE’s conference listing begins Dec 7\; public-day ad
+ mission details need confirmation.\n\nPublic day + conference · Check adm
+ ission\n\nVerified 2026-11-03. Confirm details with organizer: https://hum
+ anoids.exhibitprospectus.com/
+URL:https://humanoids.exhibitprospectus.com/
+STATUS:TENTATIVE
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:ember-kamgarpour@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART;VALUE=DATE:20261214
+DTEND;VALUE=DATE:20261215
+SUMMARY:EMBER Robotics Seminar — Maryam Kamgarpour (time to confirm)
+LOCATION:UC Berkeley · room to confirm\, Berkeley
+DESCRIPTION:Announced guest in Berkeley’s robotics seminar series. Indivi
+ dual talk details are pending.\n\nTime to be confirmed\n\nMonday date anno
+ unced\; do not assume the usual Wednesday time. Confirm the room and time.
+ \n\nSeries says no registration required\n\nVerified 2026-11-03. Confirm d
+ etails with organizer: https://ember-lab.eecs.berkeley.edu/seminars/
+URL:https://ember-lab.eecs.berkeley.edu/seminars/
+STATUS:TENTATIVE
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:hri-2027@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART;VALUE=DATE:20270308
+DTEND;VALUE=DATE:20270313
+SUMMARY:ACM/IEEE Human–Robot Interaction 2027 (time to confirm)
+LOCATION:Santa Clara · venue to be announced\, Santa Clara
+DESCRIPTION:An international research conference on interactions between pe
+ ople and robots.\n\nMar 8–12 · Daily times to be confirmed\n\nSave the 
+ dates\; exact venue\, visitor registration\, and session times are not yet
+  verified.\n\nRegistration details to be confirmed\n\nVerified 2026-11-03.
+  Confirm details with organizer: https://humanrobotinteraction.org/2027/
+URL:https://humanrobotinteraction.org/2027/
+STATUS:TENTATIVE
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:nvidia-gtc-2027@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART;VALUE=DATE:20270315
+DTEND;VALUE=DATE:20270319
+SUMMARY:NVIDIA GTC 2027 (time to confirm)
+LOCATION:San Jose · McEnery Convention Center & city venues\, San Jose
+DESCRIPTION:A broader AI conference with physical AI and robotics among its
+  themes. Included for its relevance to robotics builders.\n\nMar 15–18 
+ · Daily times to be confirmed\n\nMain site says Mar 15–18\; the FAQ say
+ s Mar 14–18. Confirm any earlier activities with NVIDIA before booking. 
+ Prices and robotics session schedule are pending.\n\nRegistration not yet 
+ open\n\nVerified 2026-11-03. Confirm details with organizer: https://www.n
+ vidia.com/gtc/
+URL:https://www.nvidia.com/gtc/
+STATUS:TENTATIVE
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:physical-ai-expo-2027@ricburton.com
+DTSTAMP:20261103T120000Z
+LAST-MODIFIED:20261103T120000Z
+DTSTART;VALUE=DATE:20270616
+DTEND;VALUE=DATE:20270618
+SUMMARY:Physical AI Expo North America (time to confirm)
+LOCATION:San Jose McEnery Convention Center\, San Jose
+DESCRIPTION:An expo and conference centered on physical AI and robotics tec
+ hnology.\n\nJun 16–17 · Daily times to be confirmed\n\nDates and venue 
+ announced. Daily hours and current admission details are not verified.\n\n
+ Check organizer for tickets\n\nVerified 2026-11-03. Confirm details with o
+ rganizer: https://physicalaiconference.com/northamerica/
+URL:https://physicalaiconference.com/northamerica/
+STATUS:TENTATIVE
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR
