@@ -1,0 +1,20 @@
+[Unit]
+Description=News poller + API for ricburton.com/news
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/node /opt/news-server/news-server.mjs
+Environment=PORT=8787
+Restart=always
+RestartSec=3
+DynamicUser=yes
+StateDirectory=news-server
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+MemoryMax=200M
+
+[Install]
+WantedBy=multi-user.target

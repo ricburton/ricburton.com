@@ -279,7 +279,11 @@ const SOURCES = [
 ];
 
 const MAX_ITEMS = 30;
-const REFRESH_MS = 5 * 60 * 1000;
+const REFRESH_MS = 60 * 1000;
+// Poller on the DigitalOcean box (server/news-server.mjs): fetches every
+// feed once a minute and serves the lot as one CORS-enabled JSON file.
+const API_URL = 'https://explore-reality.ricburton.com/news-api/news.json';
+const API_STALE_MS = 10 * 60 * 1000;
 const CACHE_KEY = 'news.cache.v1';
 
 // ═══════════════════════════════════════════════════════════
@@ -511,11 +515,12 @@ function renderError(src) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// LOADING — news-data.json is committed by a GitHub Action every
-// 30 minutes and served same-origin, so it paints near-instantly and
-// is the only source for feeds the browser can't read directly.
-// Live feeds replace their column when they arrive. The snapshot is
-// re-fetched on every refresh so an open tab keeps updating.
+// LOADING — three layers, freshest first:
+//  1. The news server (API_URL) polls every feed once a minute.
+//  2. If it's unreachable or a source is stale there, the browser
+//     fetches the feeds that allow cross-origin reads directly.
+//  3. news-data.json, committed by a GitHub Action every 30 minutes
+//     and served same-origin, covers everything else.
 // ═══════════════════════════════════════════════════════════
 const SNAPSHOT_STALE_MS = 2 * 60 * 60 * 1000;
 const shownAt = {}; // src.id -> timestamp of the data currently on screen
@@ -579,12 +584,42 @@ async function loadSource(src, snapReady) {
   }
 }
 
+async function fetchApi() {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 6000);
+  try {
+    const res = await fetch(API_URL, { cache: 'no-cache', signal: ctrl.signal });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data && data.sources ? data : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Paint a column from the news server. Returns false if the server has
+// nothing recent for this source, so the caller can fall back.
+function applyApi(src, api) {
+  const s = api && api.sources[src.id];
+  if (!s || !s.items || !s.items.length) return false;
+  if (Date.now() - s.fetchedAt > API_STALE_MS) return false;
+  if (s.fetchedAt > (shownAt[src.id] || 0)) show(src, s.items, s.fetchedAt);
+  statuses[src.id].textContent = s.items.length + '';
+  return true;
+}
+
 let lastRefresh = 0;
 async function refreshAll() {
   const btn = document.getElementById('refresh');
   btn.disabled = true;
-  const snapReady = fetchSnapshot();
-  await Promise.allSettled(SOURCES.map(src => loadSource(src, snapReady)));
+  const api = await fetchApi();
+  const missing = SOURCES.filter(src => !applyApi(src, api));
+  if (missing.length) {
+    const snapReady = fetchSnapshot();
+    await Promise.allSettled(missing.map(src => loadSource(src, snapReady)));
+  }
   lastRefresh = Date.now();
   tickUpdated();
   btn.disabled = false;
@@ -611,7 +646,7 @@ for (const src of SOURCES) {
     statuses[src.id].textContent = 'cached';
   }
 }
-// 2. Snapshot (fast, same-origin) and live feeds race; live wins per column
+// 2. News server first; direct feeds and the snapshot fill any gaps
 refreshAll();
 setInterval(refreshAll, REFRESH_MS);
 setInterval(tickUpdated, 30 * 1000);
