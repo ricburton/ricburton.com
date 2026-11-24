@@ -36,11 +36,18 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin main
           git add news-data.json
           if git diff --cached --quiet; then
             echo "No changes"
-          else
-            git commit -m "Update news data"
-            git push
+            exit 0
           fi
+          git commit -m "Update news data"
+          # Commit first, then rebase: pulling with a dirty tree fails, and
+          # other scheduled jobs push to main too, so retry if we lose a race.
+          for attempt in 1 2 3; do
+            git pull --rebase origin main
+            if git push; then exit 0; fi
+            sleep 5
+          done
+          echo "Could not push after 3 attempts"
+          exit 1
