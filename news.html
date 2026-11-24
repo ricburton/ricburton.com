@@ -231,12 +231,17 @@ body{
 // ═══════════════════════════════════════════════════════════
 // SOURCES
 // ═══════════════════════════════════════════════════════════
+// `live: true` marks feeds that send CORS headers, so the browser can read
+// them directly. The rest (Techmeme, Economist, BBC) can only be read
+// server-side, so they come from news-data.json, which a GitHub Action
+// refreshes every 30 minutes.
 const SOURCES = [
   {
     id: 'hn',
     name: 'Hacker News',
     home: 'https://news.ycombinator.com',
     accent: '#ff6600',
+    live: true,
     fetch: fetchHackerNews,
   },
   {
@@ -258,6 +263,7 @@ const SOURCES = [
     name: 'WSJ',
     home: 'https://www.wsj.com',
     accent: '#d5c8a8',
+    live: true,
     fetch: () => fetchRssMerged([
       'https://feeds.content.dowjones.io/public/rss/RSSWorldNews',
       'https://feeds.content.dowjones.io/public/rss/RSSWSJD',
@@ -322,39 +328,19 @@ function tagEmoji(srcId, title) {
   return out.slice(0, 3).join('');
 }
 
-// Public CORS relays used only as fallback when a direct fetch is blocked.
-const PROXIES = [
-  u => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
-  u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
-  u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u),
-];
-
 // ═══════════════════════════════════════════════════════════
-// FETCH LAYER — hedged: direct fetch starts immediately, each CORS
-// relay joins the race 350ms later; first good response wins and
-// the rest are aborted. Much faster than trying relays in sequence.
+// FETCH LAYER — direct fetch with a timeout. (The public CORS relays
+// this used to fall back on have all shut down or gone paid.)
 // ═══════════════════════════════════════════════════════════
-const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function fetchAny(url, asJson) {
-  const wraps = [u => u, ...PROXIES];
-  const ctrls = wraps.map(() => new AbortController());
-  let won = false;
-  const attempt = async (wrap, i) => {
-    if (i) await sleep(i * 350);
-    if (won) throw new Error('cancelled');
-    const res = await fetch(wrap(url), { signal: ctrls[i].signal, headers: { 'Accept': asJson ? 'application/json' : '*/*' } });
-    if (!res.ok) throw new Error('http ' + res.status);
-    const body = asJson ? await res.json() : await res.text();
-    return { body, i };
-  };
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 10000);
   try {
-    const { body, i } = await Promise.any(wraps.map(attempt));
-    won = true;
-    ctrls.forEach((c, j) => { if (j !== i) c.abort(); });
-    return body;
-  } catch (e) {
-    won = true;
-    throw new Error('all attempts failed for ' + url);
+    const res = await fetch(url, { signal: ctrl.signal, headers: { 'Accept': asJson ? 'application/json' : '*/*' } });
+    if (!res.ok) throw new Error('http ' + res.status);
+    return asJson ? await res.json() : await res.text();
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -510,7 +496,7 @@ function renderItems(src, items) {
   }
 }
 
-function renderError(src, err) {
+function renderError(src) {
   const body = bodies[src.id];
   body.textContent = '';
   const note = document.createElement('div');
@@ -518,34 +504,78 @@ function renderError(src, err) {
   note.textContent = 'Couldn’t load ' + src.name + ' right now.';
   const btn = document.createElement('button');
   btn.textContent = 'Retry';
-  btn.addEventListener('click', () => loadSource(src));
+  btn.addEventListener('click', () => loadSource(src, fetchSnapshot()));
   note.appendChild(btn);
   body.appendChild(note);
   statuses[src.id].textContent = 'offline';
 }
 
-const liveLoaded = new Set(); // columns that have rendered a live fetch this session
+// ═══════════════════════════════════════════════════════════
+// LOADING — news-data.json is committed by a GitHub Action every
+// 30 minutes and served same-origin, so it paints near-instantly and
+// is the only source for feeds the browser can't read directly.
+// Live feeds replace their column when they arrive. The snapshot is
+// re-fetched on every refresh so an open tab keeps updating.
+// ═══════════════════════════════════════════════════════════
+const SNAPSHOT_STALE_MS = 2 * 60 * 60 * 1000;
+const shownAt = {}; // src.id -> timestamp of the data currently on screen
+let snapshot = null;
 
-async function loadSource(src) {
-  statuses[src.id].textContent = '…';
+async function fetchSnapshot() {
   try {
-    const items = await src.fetch();
-    liveLoaded.add(src.id);
-    cache[src.id] = { items, at: Date.now() };
-    store.set(CACHE_KEY, cache);
-    renderItems(src, items);
-    statuses[src.id].textContent = items.length + '';
-  } catch (e) {
-    // Keep whatever is already on screen (snapshot or stale cache);
-    // only show the error state if the column is empty.
-    if (bodies[src.id].querySelector('.item')) {
-      statuses[src.id].textContent = 'stale';
-    } else if (cache[src.id] && cache[src.id].items.length) {
-      renderItems(src, cache[src.id].items);
-      statuses[src.id].textContent = 'stale';
-    } else {
-      renderError(src, e);
+    const res = await fetch('news-data.json', { cache: 'no-cache' });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data && data.sources) snapshot = data;
+  } catch {}
+}
+
+function show(src, items, at) {
+  shownAt[src.id] = at;
+  cache[src.id] = { items, at };
+  store.set(CACHE_KEY, cache);
+  renderItems(src, items);
+}
+
+function ageLabel(at) {
+  if (Date.now() - at > SNAPSHOT_STALE_MS) return 'stale';
+  const a = ago(at);
+  return a === 'now' ? 'now' : a + ' ago';
+}
+
+// Paint the snapshot into a column if it's newer than what's there.
+// Returns true when the column ends up showing snapshot-or-newer data.
+function applySnapshot(src) {
+  const snap = snapshot && snapshot.sources[src.id];
+  if (!snap || !snap.items || !snap.items.length) return false;
+  if (snapshot.generatedAt > (shownAt[src.id] || 0)) show(src, snap.items, snapshot.generatedAt);
+  statuses[src.id].textContent = ageLabel(shownAt[src.id]);
+  return true;
+}
+
+async function loadSource(src, snapReady) {
+  statuses[src.id].textContent = '…';
+  let liveDone = false;
+  if (src.live) {
+    // Show the snapshot meanwhile if it lands before the live feed does
+    snapReady.then(() => { if (!liveDone) applySnapshot(src); });
+    try {
+      const items = await src.fetch();
+      liveDone = true;
+      show(src, items, Date.now());
+      statuses[src.id].textContent = items.length + '';
+      return;
+    } catch (e) {
+      liveDone = true;
     }
+  }
+  await snapReady;
+  if (applySnapshot(src)) return;
+  // No live feed and no snapshot: keep whatever is on screen
+  if (bodies[src.id].querySelector('.item')) {
+    statuses[src.id].textContent = shownAt[src.id] ? ageLabel(shownAt[src.id]) : 'stale';
+  } else {
+    renderError(src);
   }
 }
 
@@ -553,7 +583,8 @@ let lastRefresh = 0;
 async function refreshAll() {
   const btn = document.getElementById('refresh');
   btn.disabled = true;
-  await Promise.allSettled(SOURCES.map(loadSource));
+  const snapReady = fetchSnapshot();
+  await Promise.allSettled(SOURCES.map(src => loadSource(src, snapReady)));
   lastRefresh = Date.now();
   tickUpdated();
   btn.disabled = false;
@@ -571,40 +602,16 @@ function tickUpdated() {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
-// SNAPSHOT — news-data.json is committed by a GitHub Action every
-// 30 minutes, so it's served same-origin and paints near-instantly.
-// Live feeds then replace each column as they arrive.
-// ═══════════════════════════════════════════════════════════
-async function loadSnapshot() {
-  try {
-    const res = await fetch('news-data.json', { cache: 'no-cache' });
-    if (!res.ok) return;
-    const data = await res.json();
-    if (!data || !data.sources) return;
-    for (const src of SOURCES) {
-      const snap = data.sources[src.id];
-      if (!snap || !snap.items || !snap.items.length) continue;
-      if (liveLoaded.has(src.id)) continue; // live data already on screen
-      const cachedAt = cache[src.id] ? cache[src.id].at : 0;
-      if (data.generatedAt <= cachedAt) continue; // local cache is fresher
-      renderItems(src, snap.items);
-      const a = ago(data.generatedAt);
-      statuses[src.id].textContent = a === 'now' ? 'now' : a + ' ago';
-    }
-  } catch {}
-}
-
 buildColumns();
 // 1. Paint instantly from localStorage cache (synchronous)
 for (const src of SOURCES) {
   if (cache[src.id] && cache[src.id].items.length) {
     renderItems(src, cache[src.id].items);
+    shownAt[src.id] = cache[src.id].at || 0;
     statuses[src.id].textContent = 'cached';
   }
 }
 // 2. Snapshot (fast, same-origin) and live feeds race; live wins per column
-loadSnapshot();
 refreshAll();
 setInterval(refreshAll, REFRESH_MS);
 setInterval(tickUpdated, 30 * 1000);
