@@ -95,6 +95,10 @@ function parseItem(html, cluster, n) {
   if (!url || !title) return null;
   const summary = text(head[3]).replace(/^[—–\s]+/, '');
   const pml = html.match(/\bpml="([^"]+)"/i);
+  // Techmeme's own small crop of the article's picture, used when the
+  // article itself won't give one up.
+  const ill = ii.match(/<img\b[^>]*class="ill"[^>]*src="([^"]+)"/i);
+  const thumb = ill ? httpUrl(new URL(decode(ill[1]), 'https://www.techmeme.com/').toString()) : '';
 
   const fullStart = html.search(new RegExp(`<div id="${cluster}p${n}"`, 'i'));
   const compactStart = html.search(new RegExp(`<div id="${cluster}d${n}"`, 'i'));
@@ -105,7 +109,7 @@ function parseItem(html, cluster, n) {
     id: pml ? pml[1] : `${cluster}-${n}`,
     permalink: pml ? `https://www.techmeme.com/${pml[1].replace(/p/, '/p')}#a${pml[1]}` : '',
     ...(cite ? byline(cite[1]) : { author: '', source: '', sourceUrl: '' }),
-    title, url, summary,
+    title, url, summary, thumb,
     sections: posts,
   };
 }
@@ -131,6 +135,23 @@ export function parseTechmeme(html) {
     for (const items of byStory.values()) stories.push({ ...items[0], related: items.slice(1) });
   });
   return stories;
+}
+
+// The picture an article nominates for link previews.
+export function previewImage(html, pageUrl) {
+  const metas = [...html.matchAll(/<meta\b[^>]*>/gi)].map(m => m[0]);
+  for (const name of ['og:image:secure_url', 'og:image', 'twitter:image', 'twitter:image:src']) {
+    for (const meta of metas) {
+      if (!new RegExp(`(?:property|name)=["']${name}["']`, 'i').test(meta)) continue;
+      const content = meta.match(/content=["']([^"']+)["']/i);
+      if (!content) continue;
+      try {
+        const url = new URL(decode(content[1]).trim(), pageUrl);
+        if (url.protocol === 'https:') return url.toString();
+      } catch {}
+    }
+  }
+  return '';
 }
 
 export function countPosts(stories) {

@@ -7,7 +7,7 @@ import { createServer } from 'node:http';
 import { readFileSync, writeFileSync, renameSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
-import { parseTechmeme, countPosts } from './techmeme.mjs';
+import { parseTechmeme, countPosts, previewImage } from './techmeme.mjs';
 
 const PORT = +(process.env.PORT || 8787);
 const POLL_MS = +(process.env.POLL_MS || 60_000);
@@ -131,6 +131,61 @@ loop();
 // Techmeme's front page with every indexed post expanded, for
 // ricburton.com/techmeme. One page fetch every five minutes; the last good
 // parse is kept (and saved) so a failed fetch never empties the page.
+// Article pictures, looked up once per article: url -> { image, at }.
+// A miss (paywall, bot block, no picture) is retried after six hours.
+const IMAGE_FILE = join(STATE_DIR, 'techmeme-images.json');
+const IMAGE_RETRY_MS = 6 * 60 * 60_000;
+let images = {};
+try { images = JSON.parse(readFileSync(IMAGE_FILE, 'utf8')); } catch {}
+
+async function findImage(url) {
+  const res = await fetch(url, {
+    headers: { 'User-Agent': UA, 'Accept': 'text/html,*/*' },
+    redirect: 'follow',
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!res.ok || !/html/i.test(res.headers.get('content-type') || '')) return '';
+  // The preview tags live in <head>; don't download a whole long article.
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let head = '';
+  while (head.length < 400_000) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    head += decoder.decode(value, { stream: true });
+    if (/<\/head>/i.test(head)) break;
+  }
+  reader.cancel().catch(() => {});
+  return previewImage(head, res.url || url);
+}
+
+async function attachImages(stories) {
+  const items = stories.flatMap(s => [s, ...s.related]);
+  const now = Date.now();
+  const wanted = items.filter(it => {
+    const known = images[it.url];
+    return !known || (!known.image && now - known.at > IMAGE_RETRY_MS);
+  });
+  let next = 0;
+  await Promise.all(Array.from({ length: 4 }, async () => {
+    while (next < wanted.length) {
+      const item = wanted[next++];
+      let image = '';
+      try { image = await findImage(item.url); } catch {}
+      images[item.url] = { image, at: now };
+    }
+  }));
+  const live = new Set(items.map(it => it.url));
+  for (const url of Object.keys(images)) if (!live.has(url)) delete images[url];
+  for (const item of items) item.image = images[item.url]?.image || '';
+  if (wanted.length) {
+    try {
+      writeFileSync(IMAGE_FILE + '.tmp', JSON.stringify(images));
+      renameSync(IMAGE_FILE + '.tmp', IMAGE_FILE);
+    } catch (e) { console.error('image cache write failed: ' + e.message); }
+  }
+}
+
 let techmeme = { generatedAt: 0, stories: [], posts: 0 };
 try { techmeme = JSON.parse(readFileSync(TECHMEME_FILE, 'utf8')); } catch {}
 let techmemeBody = JSON.stringify(techmeme), techmemeEtag = '"tm-' + techmeme.generatedAt + '"';
@@ -143,6 +198,7 @@ async function pollTechmeme() {
   const known = new Map(techmeme.stories.flatMap(s => [s, ...s.related]).map(s => [s.id, s.time]));
   const stamp = s => { s.time = times.get(s.id) ?? known.get(s.id) ?? null; };
   for (const s of stories) { stamp(s); s.related.forEach(stamp); }
+  await attachImages(stories);
   techmeme = { generatedAt: Date.now(), stories, posts: countPosts(stories) };
   techmemeBody = JSON.stringify(techmeme);
   techmemeEtag = '"tm-' + createHash('sha1').update(JSON.stringify(stories)).digest('hex').slice(0, 16) + '"';
