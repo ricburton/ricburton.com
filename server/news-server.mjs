@@ -7,12 +7,15 @@ import { createServer } from 'node:http';
 import { readFileSync, writeFileSync, renameSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
+import { parseTechmeme, countPosts } from './techmeme.mjs';
 
 const PORT = +(process.env.PORT || 8787);
 const POLL_MS = +(process.env.POLL_MS || 60_000);
 const STATE_DIR = process.env.STATE_DIRECTORY || '/tmp';
 const STATE_FILE = join(STATE_DIR, 'news.json');
 const MAX_ITEMS = 30;
+const TECHMEME_POLL_MS = +(process.env.TECHMEME_POLL_MS || 5 * 60_000);
+const TECHMEME_FILE = join(STATE_DIR, 'techmeme.json');
 const UA = 'Mozilla/5.0 (compatible; ricburton.com news poller)';
 const ALLOWED_ORIGINS = new Set(['https://ricburton.com', 'https://www.ricburton.com']);
 
@@ -125,6 +128,37 @@ async function loop() {
 }
 loop();
 
+// Techmeme's front page with every indexed post expanded, for
+// ricburton.com/techmeme. One page fetch every five minutes; the last good
+// parse is kept (and saved) so a failed fetch never empties the page.
+let techmeme = { generatedAt: 0, stories: [], posts: 0 };
+try { techmeme = JSON.parse(readFileSync(TECHMEME_FILE, 'utf8')); } catch {}
+let techmemeBody = JSON.stringify(techmeme), techmemeEtag = '"tm-' + techmeme.generatedAt + '"';
+
+async function pollTechmeme() {
+  const stories = parseTechmeme(await get('https://www.techmeme.com/'));
+  if (stories.length < 5) throw new Error(`only ${stories.length} stories parsed`);
+  // The front page carries no timestamps; the feed does, for the newest stories.
+  const times = new Map((state.sources.techmeme?.items || []).map(it => [it.link.split('#a')[1], it.time]));
+  const known = new Map(techmeme.stories.flatMap(s => [s, ...s.related]).map(s => [s.id, s.time]));
+  const stamp = s => { s.time = times.get(s.id) ?? known.get(s.id) ?? null; };
+  for (const s of stories) { stamp(s); s.related.forEach(stamp); }
+  techmeme = { generatedAt: Date.now(), stories, posts: countPosts(stories) };
+  techmemeBody = JSON.stringify(techmeme);
+  techmemeEtag = '"tm-' + createHash('sha1').update(JSON.stringify(stories)).digest('hex').slice(0, 16) + '"';
+  try {
+    mkdirSync(STATE_DIR, { recursive: true });
+    writeFileSync(TECHMEME_FILE + '.tmp', techmemeBody);
+    renameSync(TECHMEME_FILE + '.tmp', TECHMEME_FILE);
+  } catch (e) { console.error('techmeme state write failed: ' + e.message); }
+}
+
+async function techmemeLoop() {
+  try { await pollTechmeme(); } catch (e) { console.error('techmeme: ' + e.message); }
+  setTimeout(techmemeLoop, TECHMEME_POLL_MS);
+}
+setTimeout(techmemeLoop, 5_000);
+
 createServer((req, res) => {
   const origin = req.headers.origin;
   const headers = { 'Vary': 'Origin', 'X-Content-Type-Options': 'nosniff' };
@@ -140,12 +174,19 @@ createServer((req, res) => {
     if (req.headers['if-none-match'] === etag) return res.writeHead(304, headers).end();
     headers['Content-Type'] = 'application/json; charset=utf-8';
     res.writeHead(200, headers).end(req.method === 'HEAD' ? undefined : body);
+  } else if (path === '/techmeme.json') {
+    headers['ETag'] = techmemeEtag;
+    headers['Cache-Control'] = 'no-cache';
+    if (req.headers['if-none-match'] === techmemeEtag) return res.writeHead(304, headers).end();
+    headers['Content-Type'] = 'application/json; charset=utf-8';
+    res.writeHead(200, headers).end(req.method === 'HEAD' ? undefined : techmemeBody);
   } else if (path === '/health') {
     const age = Math.round((Date.now() - state.generatedAt) / 1000);
     const sources = Object.fromEntries(Object.entries(state.sources).map(([id, s]) =>
       [id, { items: s.items.length, ageSeconds: Math.round((Date.now() - s.fetchedAt) / 1000), error: s.error || null }]));
     headers['Content-Type'] = 'application/json; charset=utf-8';
-    res.writeHead(age < 300 ? 200 : 503, headers).end(JSON.stringify({ ok: age < 300, pollAgeSeconds: age, sources }));
+    res.writeHead(age < 300 ? 200 : 503, headers).end(JSON.stringify({ ok: age < 300, pollAgeSeconds: age, sources,
+      techmeme: { stories: techmeme.stories.length, posts: techmeme.posts, ageSeconds: Math.round((Date.now() - techmeme.generatedAt) / 1000) } }));
   } else {
     res.writeHead(404, headers).end();
   }

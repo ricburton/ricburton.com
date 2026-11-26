@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Techmeme, expanded — Richard Burton</title>
+<meta name="description" content="Techmeme's front page with every indexed article and post spelled out.">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0b0d10;
+  --panel:rgba(255,255,255,0.03);
+  --border:rgba(255,255,255,0.08);
+  --text:rgba(255,255,255,0.9);
+  --soft:rgba(255,255,255,0.66);
+  --dim:rgba(255,255,255,0.4);
+  --accent:#4ec9b0;
+}
+html,body{background:var(--bg)}
+body{
+  font-family:-apple-system,system-ui,'Helvetica Neue',sans-serif;
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+a{color:inherit;text-decoration:none}
+
+/* ── Top bar ── */
+.top{
+  position:sticky;top:0;z-index:5;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:14px 24px;
+  background:rgba(11,13,16,0.9);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+}
+.top h1{font-size:18px;font-weight:700;letter-spacing:0.2px}
+.top h1 span{color:var(--accent)}
+.top a.home{color:var(--dim);font-size:12px;font-weight:500;transition:color 0.3s}
+.top a.home:hover{color:var(--text)}
+.top input{
+  margin-left:auto;
+  width:220px;max-width:100%;
+  background:rgba(255,255,255,0.06);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--text);
+  padding:6px 10px;
+  font-size:13px;
+  outline:none;
+}
+.top input:focus{border-color:var(--accent)}
+.top input::placeholder{color:var(--dim)}
+.top .updated{color:var(--dim);font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ── Layout ── */
+.wrap{max-width:860px;margin:0 auto;padding:18px 20px 60px}
+.lede{color:var(--dim);font-size:13px;line-height:1.5;margin:4px 2px 18px}
+.lede a{color:var(--soft);text-decoration:underline;text-underline-offset:2px}
+
+/* ── Story ── */
+.story{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:18px 20px 8px;
+  margin-bottom:16px;
+}
+.byline{font-size:12px;color:var(--dim);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.byline .src{color:var(--accent);font-weight:600}
+.byline .age{margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap}
+.byline .age a:hover{color:var(--text)}
+.headline{
+  display:block;
+  font-size:19px;line-height:1.35;font-weight:700;
+  margin:6px 0 6px;
+  overflow-wrap:anywhere;
+}
+.headline:hover{color:var(--accent)}
+.summary{font-size:14px;line-height:1.55;color:var(--soft);margin-bottom:10px}
+
+.related{
+  border-left:2px solid var(--border);
+  margin:14px 0 12px;
+  padding-left:14px;
+}
+.related .headline{font-size:15px;font-weight:650}
+.related .summary{font-size:13px}
+
+/* ── Sections of indexed posts ── */
+.section{margin:12px 0 10px}
+.section h3{
+  font-size:11px;font-weight:700;letter-spacing:0.9px;text-transform:uppercase;
+  color:var(--dim);
+  margin-bottom:4px;
+}
+.section h3 .n{font-weight:500;letter-spacing:0;margin-left:4px}
+.post{
+  display:block;
+  padding:7px 8px;margin:0 -8px;
+  border-radius:8px;
+  font-size:13.5px;line-height:1.5;
+  overflow-wrap:anywhere;
+  transition:background 0.2s;
+}
+.post:hover{background:rgba(255,255,255,0.05)}
+.post .who{color:var(--accent);font-weight:600}
+.post .by{color:var(--dim)}
+.post .t{color:var(--text)}
+.section.social .post{
+  border-left:2px solid rgba(255,255,255,0.1);
+  border-radius:0 8px 8px 0;
+  margin:0 0 4px;padding:6px 10px;
+}
+.section.social .post .who{color:var(--soft)}
+.section.social .post .t{color:var(--soft)}
+
+.note{padding:30px 4px;font-size:13px;color:var(--dim);line-height:1.5}
+.note.err{color:#e08a8a}
+mark{background:rgba(78,201,176,0.28);color:inherit;border-radius:2px}
+
+@media (max-width:640px){
+  .top{padding:12px 14px;gap:10px}
+  .top input{margin-left:0;width:100%;order:5}
+  .wrap{padding:12px 12px 40px}
+  .story{padding:14px 14px 6px}
+  .headline{font-size:17px}
+}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>Techmeme<span>, expanded</span></h1>
+  <a class="home" href="/">← ricburton.com</a>
+  <a class="home" href="/news">News</a>
+  <input id="filter" type="search" placeholder="Filter stories and posts" autocomplete="off" spellcheck="false">
+  <span class="updated" id="updated"></span>
+</div>
+
+<div class="wrap">
+  <p class="lede" id="lede">
+    Every story on <a href="https://www.techmeme.com" rel="noopener">Techmeme</a>'s front page, with all the
+    articles and posts it files underneath opened up. Story selection and headlines are Techmeme's; every link goes to the original.
+  </p>
+  <div id="stories"><p class="note">Loading…</p></div>
+</div>
+
+<script>
+// Data comes from server/news-server.mjs on the DigitalOcean box, which reads
+// Techmeme's front page every five minutes and serves the parsed stories.
+const API_URL = new URLSearchParams(location.search).get('api') && location.hostname === 'localhost'
+  ? new URLSearchParams(location.search).get('api')
+  : 'https://explore-reality.ricburton.com/news-api/techmeme.json';
+const REFRESH_MS = 2 * 60 * 1000;
+const CACHE_KEY = 'techmeme.cache.v1';
+const SOCIAL = new Set(['X', 'Bluesky', 'Threads', 'Mastodon', 'LinkedIn', 'Forums']);
+const LABELS = { More: 'More coverage' };
+
+const $stories = document.getElementById('stories');
+const $updated = document.getElementById('updated');
+const $filter = document.getElementById('filter');
+let data = null;
+let etag = '';
+
+function el(tag, cls, text) {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (text != null) node.textContent = text;
+  return node;
+}
+
+function link(cls, url) {
+  const a = el('a', cls);
+  if (/^https?:\/\//i.test(url || '')) {
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+  }
+  return a;
+}
+
+function ago(time) {
+  const mins = Math.max(0, Math.round((Date.now() - time) / 60000));
+  if (mins < 1) return 'now';
+  if (mins < 60) return mins + 'm';
+  if (mins < 60 * 36) return Math.round(mins / 60) + 'h';
+  return Math.round(mins / 1440) + 'd';
+}
+
+// Text with the filter term highlighted, built without innerHTML.
+function marked(text, term) {
+  const frag = document.createDocumentFragment();
+  if (!term) { frag.append(text); return frag; }
+  const lower = text.toLowerCase();
+  let from = 0, at;
+  while ((at = lower.indexOf(term, from)) >= 0) {
+    frag.append(text.slice(from, at), el('mark', '', text.slice(at, at + term.length)));
+    from = at + term.length;
+  }
+  frag.append(text.slice(from));
+  return frag;
+}
+
+const hit = (term, ...fields) => fields.some(f => (f || '').toLowerCase().includes(term));
+const itemHit = (item, term) => hit(term, item.title, item.summary, item.source, item.author);
+const postHit = (post, term) => hit(term, post.title, post.source, post.author);
+
+function renderPost(post, term) {
+  const a = link('post', post.url);
+  const who = post.author && post.source ? post.author + ' / ' + post.source : (post.source || post.author);
+  if (who) {
+    const w = el('span', 'who');
+    w.append(marked(who, term));
+    a.append(w, el('span', 'by', post.title ? ': ' : ''));
+  }
+  if (post.title) {
+    const t = el('span', 't');
+    t.append(marked(post.title, term));
+    a.append(t);
+  }
+  return a;
+}
+
+// With a filter, a story that matches by its own headline keeps all its
+// posts; otherwise only the matching posts are kept.
+function renderItem(item, term, showAll) {
+  const frag = document.createDocumentFragment();
+  const by = el('div', 'byline');
+  const src = el('span', 'src');
+  src.append(marked(item.source || 'Techmeme', term));
+  by.append(src);
+  if (item.author) by.append(marked(item.author, term));
+  const age = el('span', 'age');
+  const perma = link('', item.permalink);
+  perma.textContent = (item.time ? ago(item.time) + ' · ' : '') + 'on Techmeme';
+  age.append(perma);
+  by.append(age);
+
+  const head = link('headline', item.url);
+  head.append(marked(item.title, term));
+  frag.append(by, head);
+  if (item.summary) {
+    const sum = el('p', 'summary');
+    sum.append(marked(item.summary, term));
+    frag.append(sum);
+  }
+
+  for (const section of item.sections) {
+    const posts = showAll ? section.posts : section.posts.filter(p => postHit(p, term));
+    if (!posts.length) continue;
+    const box = el('div', 'section' + (SOCIAL.has(section.label) ? ' social' : ''));
+    const h = el('h3', '', LABELS[section.label] || section.label);
+    h.append(el('span', 'n', String(posts.length)));
+    box.append(h);
+    for (const post of posts) box.append(renderPost(post, term));
+    frag.append(box);
+  }
+  return frag;
+}
+
+function render() {
+  if (!data) return;
+  const term = $filter.value.trim().toLowerCase();
+  const out = document.createDocumentFragment();
+  let shown = 0;
+  for (const story of data.stories) {
+    const items = [story, ...story.related];
+    const matches = items.map(item => ({
+      item,
+      own: !term || itemHit(item, term),
+      posts: !!term && item.sections.some(s => s.posts.some(p => postHit(p, term))),
+    }));
+    if (term && !matches.some(m => m.own || m.posts)) continue;
+    const card = el('article', 'story');
+    matches.forEach((m, i) => {
+      if (term && !m.own && !m.posts && i > 0) return;
+      const body = renderItem(m.item, term, m.own);
+      if (i === 0) card.append(body);
+      else { const rel = el('div', 'related'); rel.append(body); card.append(rel); }
+    });
+    out.append(card);
+    shown++;
+  }
+  if (!shown) out.append(el('p', 'note', 'Nothing matches “' + $filter.value.trim() + '”.'));
+  $stories.replaceChildren(out);
+  const mins = Math.round((Date.now() - data.generatedAt) / 60000);
+  $updated.textContent = data.stories.length + ' stories · ' + data.posts + ' posts · ' +
+    (mins < 1 ? 'just now' : mins + 'm ago');
+}
+
+async function load() {
+  try {
+    const res = await fetch(API_URL, { headers: etag ? { 'If-None-Match': etag } : {} });
+    if (res.status === 304) { render(); return; }
+    if (!res.ok) throw new Error('http ' + res.status);
+    const next = await res.json();
+    if (!next.stories || !next.stories.length) throw new Error('no stories yet');
+    etag = res.headers.get('ETag') || '';
+    data = next;
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(next)); } catch {}
+    // Don't yank the page from under someone reading further down.
+    if (window.scrollY < 200 || !$stories.querySelector('.story')) render();
+    else $updated.textContent = 'New stories · scroll to top';
+  } catch (e) {
+    if (!data) {
+      const note = el('p', 'note err', 'Could not load Techmeme right now (' + e.message + '). ');
+      const direct = link('', 'https://www.techmeme.com');
+      direct.textContent = 'Open techmeme.com';
+      direct.style.textDecoration = 'underline';
+      note.append(direct);
+      $stories.replaceChildren(note);
+    }
+  }
+}
+
+try {
+  const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+  if (cached && cached.stories && cached.stories.length) { data = cached; render(); }
+} catch {}
+
+$filter.addEventListener('input', render);
+window.addEventListener('scroll', () => {
+  if (window.scrollY < 200 && $updated.textContent.startsWith('New stories')) render();
+}, { passive: true });
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement !== $filter) { e.preventDefault(); $filter.focus(); }
+  if (e.key === 'Escape' && document.activeElement === $filter) { $filter.value = ''; render(); $filter.blur(); }
+});
+load();
+setInterval(() => { if (!document.hidden) load(); }, REFRESH_MS);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+</script>
+</body>
+</html>
