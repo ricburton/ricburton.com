@@ -133,7 +133,7 @@ loop();
 // parse is kept (and saved) so a failed fetch never empties the page.
 // Article pictures, looked up once per article: url -> { image, at }.
 // A miss (paywall, bot block, no picture) is retried after six hours.
-const IMAGE_FILE = join(STATE_DIR, 'techmeme-images.json');
+const IMAGE_FILE = join(STATE_DIR, 'techmeme-images-v2.json');
 const IMAGE_RETRY_MS = 6 * 60 * 60_000;
 let images = {};
 try { images = JSON.parse(readFileSync(IMAGE_FILE, 'utf8')); } catch {}
@@ -170,8 +170,14 @@ async function attachImages(stories) {
   await Promise.all(Array.from({ length: 4 }, async () => {
     while (next < wanted.length) {
       const item = wanted[next++];
+      // The article itself first. Where it refuses (paywalls, bot blocks),
+      // the same story as told by the first few other outlets.
+      const coverage = (item.sections.find(s => s.label === 'More')?.posts || []).slice(0, 4).map(p => p.url);
       let image = '';
-      try { image = await findImage(item.url); } catch {}
+      for (const url of [item.url, ...coverage]) {
+        try { image = await findImage(url); } catch {}
+        if (image) break;
+      }
       images[item.url] = { image, at: now };
     }
   }));

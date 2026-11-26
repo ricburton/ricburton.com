@@ -87,6 +87,16 @@ a{color:inherit;text-decoration:none}
   border:1px solid var(--border);
 }
 .pic img{display:block;width:100%;height:100%;object-fit:cover}
+/* A full-size article picture leads the story; small crops stay small. */
+.pic.hero{
+  display:block;
+  float:none;
+  width:auto;aspect-ratio:2/1;
+  margin:-18px -20px 14px;
+  border:none;border-bottom:1px solid var(--border);
+  border-radius:13px 13px 0 0;
+}
+.pic.hero img{object-position:center 30%}
 .related .pic{width:150px}
 .section{clear:both}
 .summary{font-size:14px;line-height:1.55;color:var(--soft);margin-bottom:10px}
@@ -120,14 +130,15 @@ a{color:inherit;text-decoration:none}
 .arch{
   flex:none;
   font-size:11px;font-weight:600;letter-spacing:0.3px;
-  color:var(--dim);
-  border:1px solid var(--border);
+  color:var(--accent);
+  background:rgba(78,201,176,0.1);
+  border:1px solid rgba(78,201,176,0.35);
   border-radius:6px;
-  padding:1px 7px;
+  padding:2px 8px;
   white-space:nowrap;
   transition:color 0.2s,border-color 0.2s;
 }
-.arch:hover{color:var(--accent);border-color:var(--accent)}
+.arch:hover{background:rgba(78,201,176,0.22);border-color:var(--accent)}
 .post .who{color:var(--accent);font-weight:600}
 .post .by{color:var(--dim)}
 .post .t{color:var(--text)}
@@ -151,6 +162,7 @@ mark{background:rgba(78,201,176,0.28);color:inherit;border-radius:2px}
   .story{padding:14px 14px 6px}
   .headline{font-size:17px}
   .pic,.related .pic{float:none;width:100%;margin:8px 0 10px}
+  .pic.hero{margin:-14px -14px 12px}
 }
 </style>
 </head>
@@ -167,7 +179,7 @@ mark{background:rgba(78,201,176,0.28);color:inherit;border-radius:2px}
 <div class="wrap">
   <p class="lede" id="lede">
     Every story on <a href="https://www.techmeme.com" rel="noopener">Techmeme</a>'s front page, with all the
-    articles and posts it files underneath opened up. Story selection and headlines are Techmeme's; every link goes to the original.
+    articles and posts it files underneath opened up. Story selection and headlines are Techmeme's. Headlines go to the original; the archive.ph button beside each article opens its newest archived copy.
   </p>
   <div id="stories"><p class="note">Loading…</p></div>
 </div>
@@ -220,7 +232,7 @@ function archiveUrl(url) {
 
 function archiveLink(url) {
   const a = link('arch', archiveUrl(url));
-  a.textContent = 'archive';
+  a.textContent = 'archive.ph';
   a.title = 'Open the newest archive.ph copy';
   return a;
 }
@@ -253,10 +265,14 @@ const postHit = (post, term) => hit(term, post.title, post.source, post.author);
 
 // The article's own preview picture, then Techmeme's crop of it, then
 // nothing: a picture that fails to load takes its frame with it.
-function picture(item) {
+function picture(item, lead) {
   const sources = [item.image, item.thumb].filter(u => /^https:\/\//i.test(u || ''));
   if (!sources.length) return null;
   const a = link('pic', item.url);
+  // Lead stories open with the article's picture across the card. It drops
+  // back to a corner thumbnail if the file turns out to be small.
+  let current = '';
+  const setHero = () => a.classList.toggle('hero', !!lead && current === item.image);
   const img = el('img');
   img.alt = '';
   img.loading = 'lazy';
@@ -264,10 +280,15 @@ function picture(item) {
   img.referrerPolicy = 'no-referrer';
   img.onerror = () => {
     const next = sources.shift();
-    if (next) img.src = next; else a.remove();
+    if (next) { current = next; img.src = next; setHero(); } else a.remove();
   };
-  img.onload = () => { if (img.naturalWidth < 80) img.onerror(); };
-  img.src = sources.shift();
+  img.onload = () => {
+    if (img.naturalWidth < 80) img.onerror();
+    else if (img.naturalWidth < 600) a.classList.remove('hero');
+  };
+  current = sources.shift();
+  img.src = current;
+  setHero();
   a.append(img);
   return a;
 }
@@ -294,7 +315,7 @@ function renderPost(post, term, social) {
 
 // With a filter, a story that matches by its own headline keeps all its
 // posts; otherwise only the matching posts are kept.
-function renderItem(item, term, showAll) {
+function renderItem(item, term, showAll, lead) {
   const frag = document.createDocumentFragment();
   const by = el('div', 'byline');
   const src = el('span', 'src');
@@ -309,9 +330,10 @@ function renderItem(item, term, showAll) {
 
   const head = link('headline', item.url);
   head.append(marked(item.title, term));
-  frag.append(by);
-  const pic = picture(item);
-  if (pic) frag.append(pic);
+  const pic = picture(item, lead);
+  if (pic && pic.classList.contains('hero')) frag.append(pic, by);
+  else if (pic) frag.append(by, pic);
+  else frag.append(by);
   frag.append(head);
   if (item.summary) {
     const sum = el('p', 'summary');
@@ -349,7 +371,7 @@ function render() {
     const card = el('article', 'story');
     matches.forEach((m, i) => {
       if (term && !m.own && !m.posts && i > 0) return;
-      const body = renderItem(m.item, term, m.own);
+      const body = renderItem(m.item, term, m.own, i === 0);
       if (i === 0) card.append(body);
       else { const rel = el('div', 'related'); rel.append(body); card.append(rel); }
     });

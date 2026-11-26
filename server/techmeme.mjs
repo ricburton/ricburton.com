@@ -12,8 +12,19 @@ function decode(s) {
     .replace(/&hellip;/g, '…').replace(/&ldquo;/g, '“').replace(/&rdquo;/g, '”')
     .replace(/&lsquo;/g, '‘').replace(/&rsquo;/g, '’').replace(/&quot;/g, '"')
     .replace(/&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&([a-z]+);/gi, (whole, name) => LATIN[name] ?? whole)
     .replace(/&amp;/g, '&');
 }
+
+// Accented letters Techmeme writes as named entities (Maçães, Müller).
+const LATIN = Object.fromEntries(
+  ('agrave:à aacute:á acirc:â atilde:ã auml:ä aring:å aelig:æ ccedil:ç egrave:è eacute:é ecirc:ê euml:ë ' +
+   'igrave:ì iacute:í icirc:î iuml:ï ntilde:ñ ograve:ò oacute:ó ocirc:ô otilde:õ ouml:ö oslash:ø ugrave:ù ' +
+   'uacute:ú ucirc:û uuml:ü yacute:ý szlig:ß Agrave:À Aacute:Á Acirc:Â Atilde:Ã Auml:Ä Aring:Å AElig:Æ ' +
+   'Ccedil:Ç Egrave:È Eacute:É Ecirc:Ê Euml:Ë Iacute:Í Ntilde:Ñ Oacute:Ó Ocirc:Ô Otilde:Õ Ouml:Ö Oslash:Ø ' +
+   'Uacute:Ú Uuml:Ü euro:€ pound:£ yen:¥ cent:¢ copy:© reg:® trade:™ deg:° middot:· bull:• laquo:« raquo:»')
+    .split(' ').map(pair => pair.split(':'))
+);
 
 function safeCodePoint(n) {
   try { return String.fromCodePoint(n); } catch { return ''; }
@@ -147,6 +158,8 @@ export function previewImage(html, pageUrl) {
       if (!content) continue;
       try {
         const url = new URL(decode(content[1]).trim(), pageUrl);
+        // A site-wide logo or placeholder says nothing about the story.
+        if (/logo|default|placeholder|fallback|favicon|og-lg|social-share|share-image|brand/i.test(url.pathname)) continue;
         if (url.protocol === 'https:') return url.toString();
       } catch {}
     }
